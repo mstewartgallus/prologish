@@ -15,8 +15,8 @@ import Lam
 import Type
 import Prelude hiding ((.), id)
 
-fromHoas :: Lam k => Expr (Bound k) a b -> k a b
-fromHoas = emit . pointFree . bind
+fromHoas :: Lam k => Expr (Pf k) a b -> k a b
+fromHoas = emit . bind
 
 data Var a = Var (ST a) Int
 
@@ -78,42 +78,6 @@ class Lam k => Bindable k where
   bindVar :: Var a -> k env b -> k (env * a) b
   bindLabel :: Label b -> k env a -> k env (a + b)
 
-data Bound k a b where
-  BoundVar :: Var a -> Bound k x a
-  BoundLabel :: Label a -> Bound k a x
-  BoundBind :: Var a -> Bound k env b -> Bound k (env * a) b
-  BoundBindLabel :: Label b -> Bound k env a -> Bound k env (a + b)
-  BoundCompose :: Bound k b c -> Bound k a b -> Bound k a c
-  BoundFactor :: Bound k c a -> Bound k c b -> Bound k c (a * b)
-  BoundFactorSum :: Bound k a c -> Bound k b c -> Bound k (a + b) c
-  BoundLambda :: Bound k (env * a) b -> Bound k env (a ~> b)
-  BoundPure :: k a b -> Bound k a b
-
-instance Lam k => Bindable (Bound k) where
-  mkVar = BoundVar
-  mkLabel = BoundLabel
-  bindVar = BoundBind
-  bindLabel = BoundBindLabel
-
-instance Category k => Category (Bound k) where
-  id = BoundPure id
-  (.) = BoundCompose
-
-instance Lam k => Lam (Bound k) where
-  f # g = BoundFactor f g
-  first = BoundPure first
-  second = BoundPure second
-
-  f ! g = BoundFactorSum f g
-  left = BoundPure left
-  right = BoundPure right
-
-  lambda f = BoundLambda f
-  eval = BoundPure eval
-
-  u64 x = BoundPure (u64 x)
-  add = BoundPure add
-
 data Pf k a b where
   PfVar :: Var a -> Pf k x a
   PfLabel :: Label a -> Pf k a x
@@ -126,6 +90,27 @@ data Pf k a b where
 instance Category k => Category (Pf k) where
   id = PfPure id
   (.) = PfCompose
+
+instance Lam k => Bindable (Pf k) where
+  mkVar = PfVar
+  mkLabel = PfLabel
+  bindVar = abstractVar
+  bindLabel = abstractLabel
+
+instance Lam k => Lam (Pf k) where
+  f # g = PfFactor f g
+  first = PfPure first
+  second = PfPure second
+
+  f ! g = PfFactorSum f g
+  left = PfPure left
+  right = PfPure right
+
+  lambda f = PfLambda f
+  eval = PfPure eval
+
+  u64 x = PfPure (u64 x)
+  add = PfPure add
 
 bind :: Expr k env a -> k env a
 bind (Expr x) = evalState x 0
