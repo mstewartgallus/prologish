@@ -32,40 +32,44 @@ eqLabel (Label t m) (Label t' n)
   | m == n = eqT t t'
   | otherwise = Nothing
 
-data Expr k a b where
-  ExprId :: Expr k a a
-  ExprPure :: k a b -> Expr k a b
-  ExprCompose :: Expr k b c -> Expr k a b -> Expr k a c
-  ExprVar :: Var a -> Expr k x a
-  ExprBindVar :: ST a -> (Object (Expr k) a -> Expr k env b) -> Expr k (env * a) b
-  ExprFactor :: Expr k c a -> Expr k c b -> Expr k c (a * b)
-  ExprLabel :: Label a -> Expr k a x
-  ExprBindLabel :: ST a -> (Point (Expr k) a -> Expr k b env) -> Expr k b (env + a)
-  ExprFactorSum :: Expr k a c -> Expr k b c -> Expr k (a + b) c
-  ExprLambda :: Expr k (env * a) b -> Expr k env (a ~> b)
-
-instance Category (Expr k) where
-  id = ExprId
-  (.) = ExprCompose
-
-instance Lam k => Lam (Expr k) where
-  (#) = ExprFactor
-  first = ExprPure first
-  second = ExprPure second
-
-  (!) = ExprFactorSum
-  left = ExprPure left
-  right = ExprPure right
-
-  lambda = ExprLambda
-  eval = ExprPure eval
-
-  u64 x = ExprPure (u64 x)
-  add = ExprPure add
+newtype Expr k a b = Expr {unExpr :: State Int (Bound k a b)}
 
 instance Lam k => Hoas (Expr k) where
-  var = ExprBindVar
-  label = ExprBindLabel
+  var t f = Expr $ do
+    n <- fresh
+    let v = Var t n
+    body <- unExpr (f (Expr $ pure (BoundVar v)))
+    pure (BoundBind v body)
+  label t f = Expr $ do
+    n <- fresh
+    let v = Label t n
+    body <- unExpr (f (Expr $ pure (BoundLabel v)))
+    pure (BoundBindLabel v body)
+
+fresh :: State Int Int
+fresh = do
+  n <- get
+  put (n + 1)
+  return n
+
+instance Category k => Category (Expr k) where
+  id = Expr $ pure $ BoundPure id
+  Expr f . Expr g = Expr $ liftM2 BoundCompose f g
+
+instance Lam k => Lam (Expr k) where
+  Expr f # Expr g = Expr $ liftM2 BoundFactor f g
+  first = Expr $ pure (BoundPure first)
+  second = Expr $ pure (BoundPure second)
+
+  Expr f ! Expr g = Expr $ liftM2 BoundFactorSum f g
+  left = Expr $ pure (BoundPure left)
+  right = Expr $ pure (BoundPure right)
+
+  lambda (Expr f) = Expr $ liftM BoundLambda f
+  eval = Expr $ pure (BoundPure eval)
+
+  u64 x = Expr $ pure (BoundPure (u64 x))
+  add = Expr $ pure (BoundPure add)
 
 data Bound k a b where
   BoundVar :: Var a -> Bound k x a
@@ -74,6 +78,7 @@ data Bound k a b where
   BoundBindLabel :: Label b -> Bound k env a -> Bound k env (a + b)
   BoundCompose :: Bound k b c -> Bound k a b -> Bound k a c
   BoundFactor :: Bound k c a -> Bound k c b -> Bound k c (a * b)
+  BoundFactorSum :: Bound k a c -> Bound k b c -> Bound k (a + b) c
   BoundLambda :: Bound k (env * a) b -> Bound k env (a ~> b)
   BoundPure :: k a b -> Bound k a b
 
@@ -95,36 +100,7 @@ instance Category k => Category (Pf k) where
   (.) = PfCompose
 
 bind :: Category k => Expr k env a -> Bound k env a
-bind x = evalState (bind' x) 0
-
-bind' :: Category k => Expr k env a -> State Int (Bound k env a)
-bind' expr = case expr of
-  ExprVar x -> return (BoundVar x)
-  ExprId -> return (BoundPure id)
-  ExprPure f -> return (BoundPure f)
-  ExprCompose f g -> do
-    f' <- bind' f
-    g' <- bind' g
-    return (f' . g')
-  ExprFactor f g -> do
-    f' <- bind' f
-    g' <- bind' g
-    return (BoundFactor f' g')
-  ExprLambda f -> do
-    f' <- bind' f
-    return (BoundLambda f')
-  ExprBindLabel t f -> do
-    n <- get
-    put (n + 1)
-    let x = Label t n
-    y <- bind' (f (ExprLabel x))
-    return (BoundBindLabel x y)
-  ExprBindVar t f -> do
-    n <- get
-    put (n + 1)
-    let x = Var t n
-    y <- bind' (f (ExprVar x))
-    return (BoundBind x y)
+bind (Expr x) = evalState x 0
 
 pointFree :: Lam k => Bound k env a -> Pf k env a
 pointFree expr = case expr of
