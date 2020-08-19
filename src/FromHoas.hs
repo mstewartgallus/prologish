@@ -1,55 +1,31 @@
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module Expr (Expr, var, label, fn, compile, view) where
+module FromHoas (Expr, fromHoas) where
 
 import Control.Category
 import Control.Monad.State
 import Data.Typeable ((:~:) (..))
+import Hoas
 import Lam
 import Type
-import View
-import Prelude hiding ((.), fn, id, label, var)
+import Prelude hiding ((.), id)
 
-view :: Expr View a b -> String
-view = view' . bind
-
-view' :: Bound View a b -> String
-view' expr = case expr of
-  BoundVar (Var _ n) -> "v" ++ show n
-  BoundBind (Var _ n) x -> "v" ++ show n ++ "." ++ indent ("\n" ++ view' x)
-  BoundLabel (Label _ n) -> "l" ++ show n
-  BoundBindLabel (Label _ n) x -> "l" ++ show n ++ "." ++ indent ("\n" ++ view' x)
-  BoundCompose f g -> view' g ++ "\n" ++ view' f
-  BoundFactor f g -> view' g ++ " Δ " ++ view' f
-  BoundLambda f -> "λ " ++ view' f
-  BoundPure x -> show x
-
-indent :: String -> String
-indent = unlines . map ('\t' :) . lines
-
-var :: KnownT a => (Object (Expr k) a -> Expr k env b) -> Expr k (env * a) b
-var f = ExprBindVar inferT f
-
-label :: KnownT a => (Point (Expr k) a -> Expr k b env) -> Expr k b (env + a)
-label f = ExprBindLabel inferT f
-
-fn :: (KnownT a, Lam k) => (Object (Expr k) a -> Expr k env b) -> Expr k env (a ~> b)
-fn f = lambda (var f)
-
-compile :: Lam k => Expr k a b -> k a b
-compile = emit . pointFree . bind
+fromHoas :: Lam k => Expr k a b -> k a b
+fromHoas = emit . pointFree . bind
 
 data Var a = Var (ST a) Int
-
-data Label a = Label (ST a) Int
 
 eqVar :: Var a -> Var b -> Maybe (a :~: b)
 eqVar (Var t m) (Var t' n)
   | m == n = eqT t t'
   | otherwise = Nothing
+
+data Label a = Label (ST a) Int
 
 eqLabel :: Label a -> Label b -> Maybe (a :~: b)
 eqLabel (Label t m) (Label t' n)
@@ -60,19 +36,13 @@ data Expr k a b where
   ExprId :: Expr k a a
   ExprPure :: k a b -> Expr k a b
   ExprCompose :: Expr k b c -> Expr k a b -> Expr k a c
-
   ExprVar :: Var a -> Expr k x a
   ExprBindVar :: ST a -> (Object (Expr k) a -> Expr k env b) -> Expr k (env * a) b
   ExprFactor :: Expr k c a -> Expr k c b -> Expr k c (a * b)
-
   ExprLabel :: Label a -> Expr k a x
   ExprBindLabel :: ST a -> (Point (Expr k) a -> Expr k b env) -> Expr k b (env + a)
   ExprFactorSum :: Expr k a c -> Expr k b c -> Expr k (a + b) c
-
   ExprLambda :: Expr k (env * a) b -> Expr k env (a ~> b)
-
-expr :: k a b -> Expr k a b
-expr = ExprPure
 
 instance Category (Expr k) where
   id = ExprId
@@ -80,18 +50,22 @@ instance Category (Expr k) where
 
 instance Lam k => Lam (Expr k) where
   (#) = ExprFactor
-  first = expr first
-  second = expr second
+  first = ExprPure first
+  second = ExprPure second
 
   (!) = ExprFactorSum
-  left = expr left
-  right = expr right
+  left = ExprPure left
+  right = ExprPure right
 
   lambda = ExprLambda
-  eval = expr eval
+  eval = ExprPure eval
 
-  u64 x = expr (u64 x)
-  add = expr add
+  u64 x = ExprPure (u64 x)
+  add = ExprPure add
+
+instance Lam k => Hoas (Expr k) where
+  var = ExprBindVar
+  label = ExprBindLabel
 
 data Bound k a b where
   BoundVar :: Var a -> Bound k x a

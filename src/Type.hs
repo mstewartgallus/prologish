@@ -71,3 +71,12 @@ eqT x y = case (x, y) of
   (a :+: b, a' :+: b') -> case (eqT a a', eqT b b') of
     (Just Refl, Just Refl) -> Just Refl
     _ -> Nothing
+
+instance Show (ST a) where
+  show expr = case expr of
+    SUnit -> "Unit"
+    SVoid -> "Void"
+    SU64 -> "U64"
+    x :-> y -> "(" ++ show x ++ " ~> " ++ show y ++ ")"
+    x :*: y -> "(" ++ show x ++ " * " ++ show y ++ ")"
+    x :+: y -> "(" ++ show x ++ " + " ++ show y ++ ")"

@@ -1,34 +1,69 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE KindSignatures #-}
 
-module View (View) where
+module View (View, view) where
 
 import Control.Category
+import Control.Monad.State
+import Hoas
 import Lam
 import Type
+import Prelude hiding ((.), id)
 
-newtype View (a :: T) (b :: T) = View String
+newtype View (a :: T) (b :: T) = View {unView :: State Int String}
+
+view :: View a b -> String
+view (View v) = evalState v 0
 
 instance Category View where
-  id = View "id"
-  View f . View g = View $ g ++ "\n" ++ f
+  id = View $ pure "id"
+  View f . View g = View $ do
+    g' <- g
+    f' <- f
+    pure (g' ++ "\n" ++ f')
 
 instance Lam View where
-  View x `letBe` View f = View $ x ++ " be " ++ f
+  View x `letBe` View f = View $ do
+    x' <- x
+    f' <- f
+    pure (x' ++ " be " ++ f')
 
-  View f # View x = View $ f ++ " Δ " ++ x
-  first = View ".0"
-  second = View ".1"
+  View f # View x = View $ do
+    f' <- f
+    x' <- x
+    pure (f' ++ " Δ " ++ x')
+  first = View $ pure ".0"
+  second = View $ pure ".1"
 
-  View f ! View x = View $ f ++ " + " ++ x
-  left = View "#l"
-  right = View "#r"
+  View f ! View x = View $ do
+    f' <- f
+    x' <- x
+    pure (f' ++ " + " ++ x')
+  left = View $ pure "#l"
+  right = View $ pure "#r"
 
-  lambda (View f) = View $ "λ " ++ f
-  eval = View "!"
+  lambda (View f) = View $ do
+    f' <- f
+    pure ("λ " ++ f')
+  eval = View $ pure "!"
 
-  u64 x = View (show x)
-  add = View "+"
+  u64 x = View $ pure (show x)
+  add = View $ pure "+"
 
-instance Show (View a b) where
-  show (View x) = x
+instance Hoas View where
+  var t f = View $ do
+    n <- fresh
+    let v = "v" ++ show n
+    body <- unView (f (View $ pure v))
+    pure (v ++ ": " ++ show t ++ ".\n" ++ body)
+  label t f = View $ do
+    n <- fresh
+    let v = "l" ++ show n
+    body <- unView (f (View $ pure v))
+    pure (v ++ ": " ++ show t ++ ".\n" ++ body)
+
+fresh :: State Int Int
+fresh = do
+  n <- get
+  put (n + 1)
+  return n
