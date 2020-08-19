@@ -12,6 +12,7 @@ import Prelude hiding ((<*>))
 main :: IO ()
 main = do
   putStrLn (view program)
+  putStrLn (view compiled)
   putStrLn (show result)
 
 program :: Hoas k => Object k U64
