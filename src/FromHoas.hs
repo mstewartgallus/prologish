@@ -115,17 +115,6 @@ instance Lam k => Lam (Pf k) where
 bind :: Expr k env a -> k env a
 bind (Expr x) = evalState x 0
 
-pointFree :: Lam k => Bound k env a -> Pf k env a
-pointFree expr = case expr of
-  BoundVar x -> PfVar x
-  BoundBind x body -> abstractVar x (pointFree body)
-  BoundLabel x -> PfLabel x
-  BoundBindLabel x body -> abstractLabel x (pointFree body)
-  BoundFactor f g -> PfFactor (pointFree f) (pointFree g)
-  BoundLambda f -> PfLambda (pointFree f)
-  BoundPure k -> PfPure k
-  BoundCompose f g -> PfCompose (pointFree f) (pointFree g)
-
 abstractVar :: Lam k => Var a -> Pf k env b -> Pf k (env * a) b
 abstractVar m expr = case expr of
   p@(PfVar n) -> case m `eqVar` n of
