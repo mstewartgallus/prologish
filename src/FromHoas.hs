@@ -15,7 +15,7 @@ import Lam
 import Type
 import Prelude hiding ((.), id)
 
-fromHoas :: Lam k => Expr k a b -> k a b
+fromHoas :: Lam k => Expr (Bound k) a b -> k a b
 fromHoas = emit . pointFree . bind
 
 data Var a = Var (ST a) Int
@@ -32,19 +32,19 @@ eqLabel (Label t m) (Label t' n)
   | m == n = eqT t t'
   | otherwise = Nothing
 
-newtype Expr k a b = Expr {unExpr :: State Int (Bound k a b)}
+newtype Expr k (a :: T) (b :: T) = Expr {unExpr :: State Int (k a b)}
 
-instance Lam k => Hoas (Expr k) where
+instance Bindable k => Hoas (Expr k) where
   var t f = Expr $ do
     n <- fresh
     let v = Var t n
-    body <- unExpr (f (Expr $ pure (BoundVar v)))
-    pure (BoundBind v body)
+    body <- unExpr (f (Expr $ pure (mkVar v)))
+    pure (bindVar v body)
   label t f = Expr $ do
     n <- fresh
     let v = Label t n
-    body <- unExpr (f (Expr $ pure (BoundLabel v)))
-    pure (BoundBindLabel v body)
+    body <- unExpr (f (Expr $ pure (mkLabel v)))
+    pure (bindLabel v body)
 
 fresh :: State Int Int
 fresh = do
@@ -53,23 +53,30 @@ fresh = do
   return n
 
 instance Category k => Category (Expr k) where
-  id = Expr $ pure $ BoundPure id
-  Expr f . Expr g = Expr $ liftM2 BoundCompose f g
+  id = Expr $ pure id
+  Expr f . Expr g = Expr $ liftM2 (.) f g
 
 instance Lam k => Lam (Expr k) where
-  Expr f # Expr g = Expr $ liftM2 BoundFactor f g
-  first = Expr $ pure (BoundPure first)
-  second = Expr $ pure (BoundPure second)
+  Expr f # Expr g = Expr $ liftM2 (#) f g
+  first = Expr $ pure first
+  second = Expr $ pure second
 
-  Expr f ! Expr g = Expr $ liftM2 BoundFactorSum f g
-  left = Expr $ pure (BoundPure left)
-  right = Expr $ pure (BoundPure right)
+  Expr f ! Expr g = Expr $ liftM2 (!) f g
+  left = Expr $ pure left
+  right = Expr $ pure right
 
-  lambda (Expr f) = Expr $ liftM BoundLambda f
-  eval = Expr $ pure (BoundPure eval)
+  lambda (Expr f) = Expr $ liftM lambda f
+  eval = Expr $ pure eval
 
-  u64 x = Expr $ pure (BoundPure (u64 x))
-  add = Expr $ pure (BoundPure add)
+  u64 x = Expr $ pure (u64 x)
+  add = Expr $ pure add
+
+class Lam k => Bindable k where
+  mkVar :: Var a -> k x a
+  mkLabel :: Label a -> k a x
+
+  bindVar :: Var a -> k env b -> k (env * a) b
+  bindLabel :: Label b -> k env a -> k env (a + b)
 
 data Bound k a b where
   BoundVar :: Var a -> Bound k x a
@@ -82,9 +89,30 @@ data Bound k a b where
   BoundLambda :: Bound k (env * a) b -> Bound k env (a ~> b)
   BoundPure :: k a b -> Bound k a b
 
+instance Lam k => Bindable (Bound k) where
+  mkVar = BoundVar
+  mkLabel = BoundLabel
+  bindVar = BoundBind
+  bindLabel = BoundBindLabel
+
 instance Category k => Category (Bound k) where
   id = BoundPure id
   (.) = BoundCompose
+
+instance Lam k => Lam (Bound k) where
+  f # g = BoundFactor f g
+  first = BoundPure first
+  second = BoundPure second
+
+  f ! g = BoundFactorSum f g
+  left = BoundPure left
+  right = BoundPure right
+
+  lambda f = BoundLambda f
+  eval = BoundPure eval
+
+  u64 x = BoundPure (u64 x)
+  add = BoundPure add
 
 data Pf k a b where
   PfVar :: Var a -> Pf k x a
@@ -99,7 +127,7 @@ instance Category k => Category (Pf k) where
   id = PfPure id
   (.) = PfCompose
 
-bind :: Category k => Expr k env a -> Bound k env a
+bind :: Expr k env a -> k env a
 bind (Expr x) = evalState x 0
 
 pointFree :: Lam k => Bound k env a -> Pf k env a
