@@ -15,8 +15,8 @@ import Lam
 import Type
 import Prelude hiding ((.), id)
 
-fromHoas :: Lam k => Expr (Pf k) a b -> k a b
-fromHoas = emit . bind
+fromHoas :: Lam k => Expr (Varless (Labeless k)) a b -> k a b
+fromHoas = removeLabels . removeVars . bind
 
 data Var a = Var (ST a) Int
 
@@ -34,7 +34,10 @@ eqLabel (Label t m) (Label t' n)
 
 newtype Expr k (a :: T) (b :: T) = Expr {unExpr :: State Int (k a b)}
 
-instance Bindable k => Hoas (Expr k) where
+bind :: Expr k env a -> k env a
+bind (Expr x) = evalState x 0
+
+instance Vars k => Hoas (Expr k) where
   var t f = Expr $ do
     n <- fresh
     let v = Var t n
@@ -71,86 +74,124 @@ instance Lam k => Lam (Expr k) where
   u64 x = Expr $ pure (u64 x)
   add = Expr $ pure add
 
-class Lam k => Bindable k where
-  mkVar :: Var a -> k x a
+class Lam k => Labels k where
   mkLabel :: Label a -> k a x
-
-  bindVar :: Var a -> k env b -> k (env * a) b
   bindLabel :: Label b -> k env a -> k env (a + b)
 
-data Pf k a b where
-  PfVar :: Var a -> Pf k x a
-  PfLabel :: Label a -> Pf k a x
-  PfCompose :: Pf k b c -> Pf k a b -> Pf k a c
-  PfFactor :: Pf k c a -> Pf k c b -> Pf k c (a * b)
-  PfFactorSum :: Pf k a c -> Pf k b c -> Pf k (a + b) c
-  PfLambda :: Pf k (env * a) b -> Pf k env (a ~> b)
-  PfPure :: k a b -> Pf k a b
+class Labels k => Vars k where
+  mkVar :: Var a -> k x a
+  bindVar :: Var a -> k env b -> k (env * a) b
 
-instance Category k => Category (Pf k) where
-  id = PfPure id
-  (.) = PfCompose
+data Varless k a b where
+  VarlessVar :: Var a -> Varless k x a
+  VarlessLabel :: Label a -> Varless k a x
+  VarlessCompose :: Varless k b c -> Varless k a b -> Varless k a c
+  VarlessFactor :: Varless k c a -> Varless k c b -> Varless k c (a * b)
+  VarlessFactorSum :: Varless k a c -> Varless k b c -> Varless k (a + b) c
+  VarlessLambda :: Varless k (env * a) b -> Varless k env (a ~> b)
+  VarlessPure :: k a b -> Varless k a b
 
-instance Lam k => Bindable (Pf k) where
-  mkVar = PfVar
-  mkLabel = PfLabel
+instance Category k => Category (Varless k) where
+  id = VarlessPure id
+  (.) = VarlessCompose
+
+instance Labels k => Labels (Varless k) where
+  mkLabel lbl = VarlessPure (mkLabel lbl)
+  bindLabel = undefined
+
+instance Labels k => Vars (Varless k) where
+  mkVar = VarlessVar
   bindVar = abstractVar
+
+instance Lam k => Lam (Varless k) where
+  f # g = VarlessFactor f g
+  first = VarlessPure first
+  second = VarlessPure second
+
+  f ! g = VarlessFactorSum f g
+  left = VarlessPure left
+  right = VarlessPure right
+
+  lambda f = VarlessLambda f
+  eval = VarlessPure eval
+
+  u64 x = VarlessPure (u64 x)
+  add = VarlessPure add
+
+removeVars :: Lam k => Varless k a b -> k a b
+removeVars expr = case expr of
+  VarlessPure k -> k
+  VarlessCompose f g -> removeVars f . removeVars g
+  VarlessFactor f g -> removeVars f # removeVars g
+  VarlessLambda f -> lambda (removeVars f)
+
+abstractVar :: Lam k => Var a -> Varless k env b -> Varless k (env * a) b
+abstractVar m expr = case expr of
+  p@(VarlessVar n) -> case m `eqVar` n of
+    Just Refl -> VarlessPure second
+    Nothing -> p . VarlessPure first
+  VarlessPure k -> VarlessPure k . VarlessPure first
+  VarlessCompose f g -> f' . VarlessFactor g' (VarlessPure second)
+    where
+      f' = abstractVar m f
+      g' = abstractVar m g
+  VarlessFactor f g -> VarlessFactor f' g'
+    where
+      f' = abstractVar m f
+      g' = abstractVar m g
+  VarlessLambda f -> VarlessLambda (f' . flp)
+    where
+      flp = VarlessFactor (VarlessFactor getenv geta) getb
+      geta = VarlessPure second
+      getb = VarlessPure second . VarlessPure first
+      getenv = VarlessPure first . VarlessPure first
+      f' = abstractVar m f
+
+data Labeless k a b where
+  LabelessLabel :: Label a -> Labeless k a x
+  LabelessCompose :: Labeless k b c -> Labeless k a b -> Labeless k a c
+  LabelessFactor :: Labeless k c a -> Labeless k c b -> Labeless k c (a * b)
+  LabelessFactorSum :: Labeless k a c -> Labeless k b c -> Labeless k (a + b) c
+  LabelessLambda :: Labeless k (env * a) b -> Labeless k env (a ~> b)
+  LabelessPure :: k a b -> Labeless k a b
+
+instance Category k => Category (Labeless k) where
+  id = LabelessPure id
+  (.) = LabelessCompose
+
+instance Lam k => Labels (Labeless k) where
+  mkLabel = LabelessLabel
   bindLabel = abstractLabel
 
-instance Lam k => Lam (Pf k) where
-  f # g = PfFactor f g
-  first = PfPure first
-  second = PfPure second
+instance Lam k => Lam (Labeless k) where
+  f # g = LabelessFactor f g
+  first = LabelessPure first
+  second = LabelessPure second
 
-  f ! g = PfFactorSum f g
-  left = PfPure left
-  right = PfPure right
+  f ! g = LabelessFactorSum f g
+  left = LabelessPure left
+  right = LabelessPure right
 
-  lambda f = PfLambda f
-  eval = PfPure eval
+  lambda f = LabelessLambda f
+  eval = LabelessPure eval
 
-  u64 x = PfPure (u64 x)
-  add = PfPure add
+  u64 x = LabelessPure (u64 x)
+  add = LabelessPure add
 
-bind :: Expr k env a -> k env a
-bind (Expr x) = evalState x 0
-
-abstractVar :: Lam k => Var a -> Pf k env b -> Pf k (env * a) b
-abstractVar m expr = case expr of
-  p@(PfVar n) -> case m `eqVar` n of
-    Just Refl -> PfPure second
-    Nothing -> p . PfPure first
-  PfPure k -> PfPure k . PfPure first
-  PfCompose f g -> f' . PfFactor g' (PfPure second)
-    where
-      f' = abstractVar m f
-      g' = abstractVar m g
-  PfFactor f g -> PfFactor f' g'
-    where
-      f' = abstractVar m f
-      g' = abstractVar m g
-  PfLambda f -> PfLambda (f' . flp)
-    where
-      flp = PfFactor (PfFactor getenv geta) getb
-      geta = PfPure second
-      getb = PfPure second . PfPure first
-      getenv = PfPure first . PfPure first
-      f' = abstractVar m f
-
-abstractLabel :: Lam k => Label a -> Pf k env b -> Pf k env (b + a)
+abstractLabel :: Lam k => Label a -> Labeless k env b -> Labeless k env (b + a)
 abstractLabel m expr = case expr of
-  p@(PfLabel n) -> case m `eqLabel` n of
-    Just Refl -> PfPure right
-    Nothing -> PfPure left . p
-  PfPure k -> PfPure left . PfPure k
-  PfCompose f g -> PfFactorSum f' (PfPure right) . g'
+  p@(LabelessLabel n) -> case m `eqLabel` n of
+    Just Refl -> LabelessPure right
+    Nothing -> LabelessPure left . p
+  LabelessPure k -> LabelessPure left . LabelessPure k
+  LabelessCompose f g -> LabelessFactorSum f' (LabelessPure right) . g'
     where
       f' = abstractLabel m f
       g' = abstractLabel m g
 
-emit :: Lam k => Pf k a b -> k a b
-emit expr = case expr of
-  PfPure k -> k
-  PfCompose f g -> emit f . emit g
-  PfFactor f g -> emit f # emit g
-  PfLambda f -> lambda (emit f)
+removeLabels :: Lam k => Labeless k a b -> k a b
+removeLabels expr = case expr of
+  LabelessPure k -> k
+  LabelessCompose f g -> removeLabels f . removeLabels g
+  LabelessFactor f g -> removeLabels f # removeLabels g
+  LabelessLambda f -> lambda (removeLabels f)
