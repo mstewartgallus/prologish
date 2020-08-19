@@ -23,6 +23,9 @@ instance Category View where
     pure (g' ++ "\n" ++ f')
 
 instance Lam View where
+  unit = View $ pure "unit"
+  absurd = View $ pure "absurd"
+
   View x `letBe` View f = View $ do
     x' <- x
     f' <- f

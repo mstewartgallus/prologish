@@ -17,6 +17,9 @@ type Object (hom :: T -> T -> Type) a = forall x. hom x a
 type Point (hom :: T -> T -> Type) a = forall x. hom a x
 
 class Category k => Lam k where
+  unit :: Object k Unit
+  absurd :: Point k Void
+
   (#) :: k env a -> k env b -> k env (a * b)
   first :: k (a * b) a
   second :: k (a * b) b
