@@ -1,9 +1,11 @@
 module Main where
 
+import AsBound
+import AsLabeless
+import AsVarless
 import Data.Word
 import Eval
 import Exp
-import FromHoas
 import Hoas
 import Lambda
 import Product
@@ -25,7 +27,7 @@ program = u64 42 `letBe` var inferT $ \x ->
       add <*> z <*> (add <*> x <*> y)
 
 compiled :: Lambda k => Value k U64
-compiled = fromHoas program
+compiled = (removeLabels . removeVariables . bindPoints) program
 
 result :: Word64
 result = execute compiled

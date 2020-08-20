@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 36027fa9237fb85981c69803d4d1a54eb6c8dcb50da0b9f3c4df7ede6aac1fee
+-- hash: c5fe462cf96a8413bae5daf8bd7fbe8dc80e8c34df21438d1821ef103e06db7a
 
 name:           hoas
 version:        0.1.0.0
@@ -27,15 +27,17 @@ source-repository head
 
 library
   exposed-modules:
+      AsBound
       Eval
       Exp
-      FromHoas
       Hoas
+      Labeless
       Labels
       Lambda
       Product
       Sum
       Type
+      Varless
       Vars
       View
   other-modules:
