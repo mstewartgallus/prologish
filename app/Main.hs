@@ -6,7 +6,7 @@ import AsLabeless
 import AsReified
 import AsVarless
 import AsView
-import Cbpv
+import Cbpv (Cbpv)
 import Data.Word
 import Exp
 import Hoas
