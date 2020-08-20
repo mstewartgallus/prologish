@@ -34,14 +34,14 @@ instance Lam View where
   View f # View x = View $ do
     f' <- f
     x' <- x
-    pure (f' ++ " Δ " ++ x')
+    pure ("(" ++ f' ++ " Δ " ++ x' ++ ")")
   first = View $ pure ".0"
   second = View $ pure ".1"
 
   View f ! View x = View $ do
     f' <- f
     x' <- x
-    pure (f' ++ " + " ++ x')
+    pure ("(" ++ f' ++ " + " ++ x' ++ ")")
   left = View $ pure "#l"
   right = View $ pure "#r"
 
@@ -51,7 +51,7 @@ instance Lam View where
   eval = View $ pure "!"
 
   u64 x = View $ pure (show x)
-  add = View $ pure "+"
+  add = View $ pure "add"
 
 instance Hoas View where
   var t f = View $ do

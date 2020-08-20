@@ -82,70 +82,51 @@ class Labels k => Vars k where
   mkVar :: Var a -> k x a
   bindVar :: Var a -> k env b -> k (env * a) b
 
-data Varless k a b where
-  VarlessVar :: Var a -> Varless k x a
-  VarlessLabel :: Label a -> Varless k a x
-  VarlessCompose :: Varless k b c -> Varless k a b -> Varless k a c
-  VarlessFactor :: Varless k c a -> Varless k c b -> Varless k c (a * b)
-  VarlessFactorSum :: Varless k a c -> Varless k b c -> Varless k (a + b) c
-  VarlessLambda :: Varless k (env * a) b -> Varless k env (a ~> b)
-  VarlessPure :: k a b -> Varless k a b
+newtype Varless k a (b :: T) = V (forall env. Env env -> k (env * a) b)
 
-instance Category k => Category (Varless k) where
-  id = VarlessPure id
-  (.) = VarlessCompose
+data Env a where
+  EmptyEnv :: Env Unit
+  VarEnv :: Var v -> Env a -> Env (a * v)
+
+instance Lam k => Category (Varless k) where
+  id = V $ const second
+  V f . V g = V $ \env -> f env . first # g env
 
 instance Labels k => Labels (Varless k) where
-  mkLabel lbl = VarlessPure (mkLabel lbl)
-  bindLabel = undefined
+  mkLabel lbl = V $ const (mkLabel lbl . second)
+  bindLabel lbl (V x) = V $ \env -> bindLabel lbl (x env)
 
 instance Labels k => Vars (Varless k) where
-  mkVar = VarlessVar
-  bindVar = abstractVar
+  mkVar v = V $ \env -> matchVar v env . first
+  bindVar v (V x) = V $ \env ->
+    let shuffle :: Labels k => k (a * (c * b)) ((a * b) * c)
+        shuffle = (first # (second . second)) # (first . second)
+     in x (VarEnv v env) . shuffle
+
+matchVar :: Lam k => Var a -> Env env -> k env a
+matchVar x (VarEnv y rest) = case x `eqVar` y of
+  Just Refl -> second
+  Nothing -> matchVar x rest . first
 
 instance Lam k => Lam (Varless k) where
-  f # g = VarlessFactor f g
-  first = VarlessPure first
-  second = VarlessPure second
+  V f # V g = V $ \env -> f env # g env
+  first = V $ const (first . second)
+  second = V $ const (second . second)
 
-  f ! g = VarlessFactorSum f g
-  left = VarlessPure left
-  right = VarlessPure right
+  left = V $ const (left . second)
+  right = V $ const (right . second)
 
-  lambda f = VarlessLambda f
-  eval = VarlessPure eval
+  lambda (V f) = V $ \env ->
+    let shuffle :: Lam k => k ((a * b) * c) (a * (b * c))
+        shuffle = (first . first) # ((second . first) # second)
+     in lambda (f env . shuffle)
+  eval = V $ const (eval . second)
 
-  u64 x = VarlessPure (u64 x)
-  add = VarlessPure add
+  u64 x = V $ const (u64 x)
+  add = V $ const add
 
 removeVars :: Lam k => Varless k a b -> k a b
-removeVars expr = case expr of
-  VarlessPure k -> k
-  VarlessCompose f g -> removeVars f . removeVars g
-  VarlessFactor f g -> removeVars f # removeVars g
-  VarlessLambda f -> lambda (removeVars f)
-
-abstractVar :: Lam k => Var a -> Varless k env b -> Varless k (env * a) b
-abstractVar m expr = case expr of
-  p@(VarlessVar n) -> case m `eqVar` n of
-    Just Refl -> VarlessPure second
-    Nothing -> p . VarlessPure first
-  VarlessPure k -> VarlessPure k . VarlessPure first
-  VarlessCompose f g -> f' . VarlessFactor g' (VarlessPure second)
-    where
-      f' = abstractVar m f
-      g' = abstractVar m g
-  VarlessFactor f g -> VarlessFactor f' g'
-    where
-      f' = abstractVar m f
-      g' = abstractVar m g
-  VarlessLambda f -> VarlessLambda (f' . flp)
-    where
-      flp = VarlessFactor (VarlessFactor getenv geta) getb
-      geta = VarlessPure second
-      getb = VarlessPure second . VarlessPure first
-      getenv = VarlessPure first . VarlessPure first
-      f' = abstractVar m f
+removeVars (V x) = x EmptyEnv . (unit # id)
 
 data Labeless k a b where
   LabelessLabel :: Label a -> Labeless k a x
@@ -164,6 +145,9 @@ instance Lam k => Labels (Labeless k) where
   bindLabel = abstractLabel
 
 instance Lam k => Lam (Labeless k) where
+  unit = LabelessPure unit
+  absurd = LabelessPure absurd
+
   f # g = LabelessFactor f g
   first = LabelessPure first
   second = LabelessPure second
