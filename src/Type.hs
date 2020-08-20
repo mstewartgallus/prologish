@@ -1,3 +1,4 @@
+{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
@@ -5,30 +6,32 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module Type (T, Void, Unit, type (~>), type (*), type (+), U64, ST (..), KnownT, inferT, eqT, Value, Continuation) where
+module Type (KnownT, inferT, eqT, ST (..), T, Void, Unit, type (~>), type (*), type (+), type U64, Value, Continuation, End) where
 
 import Data.Kind (Type)
 import Data.Typeable ((:~:) (..))
+import qualified Sort
+import Sort (KnownAlgebra (..), SAlgebra, eqAlgebra)
 
 type Value (hom :: T -> T -> Type) a = forall x. hom x a
 
 type Continuation (hom :: T -> T -> Type) a = forall x. hom a x
 
-type T = TypeImpl
+type End (hom :: T -> T -> Type) = forall x. hom x x
 
-type Void = 'Void
+type T = Sort.Algebra
 
-type Unit = 'Unit
+type Void = Sort.Void
 
-type (~>) = 'Exp
+type Unit = Sort.F Sort.Unit
 
-type (*) = 'Product
+type (~>) a = (Sort.~>) (Sort.U a)
 
-type (+) = 'Sum
+type a * b = Sort.F (Sort.U a Sort.* Sort.U b)
 
-type U64 = 'U64
+type (+) = (Sort.+)
 
-data TypeImpl = Void | Unit | Exp T T | Product T T | Sum T T | U64
+type U64 = Sort.F Sort.U64
 
 infixr 9 ~>
 
@@ -37,54 +40,45 @@ infixr 0 *
 infixr 0 +
 
 data ST a where
-  SUnit :: ST Unit
   SVoid :: ST Void
+  SUnit :: ST Unit
   SU64 :: ST U64
-  (:->) :: ST a -> ST b -> ST (a ~> b)
   (:*:) :: ST a -> ST b -> ST (a * b)
+  (:->) :: ST a -> ST b -> ST (a ~> b)
   (:+:) :: ST a -> ST b -> ST (a + b)
 
-class KnownT t where
-  inferT :: ST t
+type KnownT = KnownAlgebra
 
-instance KnownT 'Unit where
-  inferT = SUnit
-
-instance KnownT 'Void where
-  inferT = SVoid
-
-instance KnownT 'U64 where
-  inferT = SU64
-
-instance (KnownT a, KnownT b) => KnownT ('Exp a b) where
-  inferT = inferT :-> inferT
-
-instance (KnownT a, KnownT b) => KnownT ('Product a b) where
-  inferT = inferT :*: inferT
-
-instance (KnownT a, KnownT b) => KnownT ('Sum a b) where
-  inferT = inferT :+: inferT
+inferT :: KnownT t => ST t
+inferT = algebraToT inferAlgebra
 
 eqT :: ST a -> ST b -> Maybe (a :~: b)
-eqT x y = case (x, y) of
-  (SUnit, SUnit) -> Just Refl
-  (SU64, SU64) -> Just Refl
-  (a :-> b, a' :-> b') -> case (eqT a a', eqT b b') of
-    (Just Refl, Just Refl) -> Just Refl
-    _ -> Nothing
-  (a :*: b, a' :*: b') -> case (eqT a a', eqT b b') of
-    (Just Refl, Just Refl) -> Just Refl
-    _ -> Nothing
-  (a :+: b, a' :+: b') -> case (eqT a a', eqT b b') of
-    (Just Refl, Just Refl) -> Just Refl
-    _ -> Nothing
-  _ -> Nothing
+eqT x y = eqAlgebra (tToAlgebra x) (tToAlgebra y)
+
+tToAlgebra :: ST a -> SAlgebra a
+tToAlgebra t = case t of
+  SVoid -> Sort.SVoid
+  SUnit -> Sort.SF Sort.SUnit
+  SU64 -> Sort.SF Sort.SU64
+  x :*: y -> Sort.SF (Sort.SU (tToAlgebra x) Sort.:*: Sort.SU (tToAlgebra y))
+  x :+: y -> tToAlgebra x Sort.:+: tToAlgebra y
+  x :-> y -> Sort.SU (tToAlgebra x) Sort.:-> tToAlgebra y
+
+algebraToT :: SAlgebra a -> ST a
+algebraToT t = case t of
+  Sort.SVoid -> SVoid
+  Sort.SU a Sort.:-> b -> algebraToT a :-> algebraToT b
+  a Sort.:+: b -> algebraToT a :+: algebraToT b
+  Sort.SF x -> case x of
+    Sort.SUnit -> SUnit
+    Sort.SU64 -> SU64
+    Sort.SU a Sort.:*: Sort.SU b -> algebraToT a :*: algebraToT b
 
 instance Show (ST a) where
   show expr = case expr of
     SUnit -> "Unit"
-    SVoid -> "Void"
     SU64 -> "U64"
-    x :-> y -> "(" ++ show x ++ " ~> " ++ show y ++ ")"
     x :*: y -> "(" ++ show x ++ " * " ++ show y ++ ")"
+    SVoid -> "Void"
+    x :-> y -> "(" ++ show x ++ " ~> " ++ show y ++ ")"
     x :+: y -> "(" ++ show x ++ " + " ++ show y ++ ")"

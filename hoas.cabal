@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 8484aa3c877ef4e53cb0a1b3af742848c1c67d4126006d1873dd18b504376f3f
+-- hash: 57d599669c81117f2c58776e4c74f025eab7c5668d7f9a2c0c558add472e3046
 
 name:           hoas
 version:        0.1.0.0
@@ -37,6 +37,7 @@ library
       Labels
       Lambda
       Product
+      Sort
       Sum
       Type
       Vars
