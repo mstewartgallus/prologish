@@ -53,22 +53,29 @@ inferT :: KnownT t => ST t
 inferT = algebraToT inferAlgebra
 
 eqT :: ST a -> ST b -> Maybe (a :~: b)
-eqT x y = eqAlgebra (tToAlgebra x) (tToAlgebra y)
-
-tToAlgebra :: ST a -> SAlgebra a
-tToAlgebra t = case t of
-  SVoid -> Sort.SVoid
-  SUnit -> Sort.SF Sort.SUnit
-  SU64 -> Sort.SF Sort.SU64
-  x :*: y -> Sort.SF (Sort.SU (tToAlgebra x) Sort.:*: Sort.SU (tToAlgebra y))
-  x :+: y -> Sort.SF (Sort.SU (tToAlgebra x) Sort.:+: Sort.SU (tToAlgebra y))
-  x :-> y -> Sort.SU (tToAlgebra x) Sort.:-> tToAlgebra y
+eqT x y = case (x, y) of
+  (SVoid, SVoid) -> Just Refl
+  (SUnit, SUnit) -> Just Refl
+  (SU64, SU64) -> Just Refl
+  (x :*: y, x' :*: y') -> do
+    Refl <- eqT x x'
+    Refl <- eqT y y'
+    return Refl
+  (x :+: y, x' :+: y') -> do
+    Refl <- eqT x x'
+    Refl <- eqT y y'
+    return Refl
+  (x :-> y, x' :-> y') -> do
+    Refl <- eqT x x'
+    Refl <- eqT y y'
+    return Refl
+  _ -> Nothing
 
 algebraToT :: SAlgebra a -> ST a
 algebraToT t = case t of
   Sort.SVoid -> SVoid
   Sort.SU a Sort.:-> b -> algebraToT a :-> algebraToT b
-  Sort.SF x -> case x of
+  x Sort.:& Sort.SVoid -> case x of
     Sort.SUnit -> SUnit
     Sort.SU64 -> SU64
     Sort.SU a Sort.:+: Sort.SU b -> algebraToT a :+: algebraToT b
