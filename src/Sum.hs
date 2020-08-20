@@ -23,6 +23,6 @@ class Category k => Sum (k :: T -> T -> Type) where
   whereCase :: k env (a + b) -> k a b -> k env b
   whereCase f x = (x ! id) . f
 
-infixr 9 !
+infixl 9 !
 
 infixr 0 `letCase`

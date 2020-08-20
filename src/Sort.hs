@@ -56,9 +56,9 @@ data AlgebraImpl = F Set | Void | Exp Set Algebra
 
 infixr 9 ~>
 
-infixr 0 *
+infixl 0 *
 
-infixr 0 +
+infixl 0 +
 
 data SSet a where
   SU :: SAlgebra a -> SSet (U a)

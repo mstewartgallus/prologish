@@ -35,9 +35,9 @@ type U64 = Sort.F Sort.U64
 
 infixr 9 ~>
 
-infixr 0 *
+infixl 0 *
 
-infixr 0 +
+infixl 0 +
 
 data ST a where
   SU64 :: ST U64

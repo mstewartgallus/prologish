@@ -22,6 +22,6 @@ class Category k => Product (k :: T -> T -> Type) where
   whereIs :: k (env * a) b -> k env a -> k env b
   whereIs f x = f . (id # x)
 
-infixr 9 #
+infixl 9 #
 
 infixr 0 `letBe`
