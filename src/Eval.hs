@@ -40,7 +40,7 @@ instance Lam Eval where
   right = Eval Right
 
   lambda (Eval f) = Eval $ \env x -> f (env, x)
-  eval = Eval $ \(f, x) -> f x
+  unlambda (Eval f) = Eval $ \(env, x) -> f env x
 
   u64 x = Eval $ const $ x
   add = Eval $ const $ \x y -> x + y

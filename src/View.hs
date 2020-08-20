@@ -48,7 +48,9 @@ instance Lam View where
   lambda (View f) = View $ do
     f' <- f
     pure ("λ " ++ f')
-  eval = View $ pure "!"
+  unlambda (View f) = View $ do
+    f' <- f
+    pure ("ap " ++ f')
 
   u64 x = View $ pure (show x)
   add = View $ pure "add"

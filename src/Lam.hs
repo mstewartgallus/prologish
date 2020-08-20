@@ -41,7 +41,10 @@ class Category k => Lam k where
   whereCase f x = (x ! id) . f
 
   lambda :: k (env * a) b -> k env (a ~> b)
+  unlambda :: k env (a ~> b) -> k (env * a) b
+
   eval :: k ((a ~> b) * a) b
+  eval = unlambda id
 
   (<*>) :: k env (a ~> b) -> k env a -> k env b
   f <*> x = eval <<< (f # x)
