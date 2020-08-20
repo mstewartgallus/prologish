@@ -4,12 +4,10 @@
 
 module Hoas (Hoas (..)) where
 
-import Lam
+import Product
+import Sum
 import Type
 
-class Lam k => Hoas k where
-  var :: ST a -> (Object k a -> k env b) -> k (env * a) b
-  label :: ST a -> (Point k a -> k b env) -> k b (env + a)
-
-  fn :: ST a -> (Object k a -> k env b) -> k env (a ~> b)
-  fn t f = lambda (var t f)
+class (Sum k, Product k) => Hoas k where
+  var :: ST a -> (Value k a -> k env b) -> k (env * a) b
+  label :: ST a -> (Continuation k a -> k b env) -> k b (env + a)

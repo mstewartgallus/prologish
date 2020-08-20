@@ -1,46 +1,55 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module Eval (Eval (..), execute, Value (..)) where
+module Eval (Eval (..), execute, Reify (..)) where
 
 import Control.Category
+import qualified Data.Void as Void
 import Data.Word
-import Lam
+import Exp
+import Lambda
+import Product
+import Sum
 import Type
 import Prelude hiding ((.), id)
 
-execute :: Eval Unit a -> Value a
+execute :: Eval Unit a -> Reify a
 execute (Eval f) = f ()
 
-newtype Eval a b = Eval (Value a -> Value b)
+newtype Eval a b = Eval (Reify a -> Reify b)
 
-type family Value a where
-  Value Unit = ()
-  Value U64 = Word64
-  Value (a * b) = (Value a, Value b)
-  Value (a + b) = Either (Value a) (Value b)
-  Value (a ~> b) = Value a -> Value b
+type family Reify a where
+  Reify Unit = ()
+  Reify Void = Void.Void
+  Reify (a * b) = (Reify a, Reify b)
+  Reify (a + b) = Either (Reify a) (Reify b)
+  Reify (a ~> b) = Reify a -> Reify b
+  Reify U64 = Word64
 
 instance Category Eval where
   id = Eval id
   Eval f . Eval g = Eval (f . g)
 
-instance Lam Eval where
+instance Product Eval where
+  unit = Eval $ const ()
   Eval x # Eval y = Eval $ \env -> (x env, y env)
   first = Eval fst
   second = Eval snd
 
+instance Sum Eval where
+  absurd = Eval Void.absurd
   Eval f ! Eval x = Eval $ \env -> case env of
     Left env' -> f env'
     Right env' -> x env'
   left = Eval Left
   right = Eval Right
 
+instance Exp Eval where
   lambda (Eval f) = Eval $ \env x -> f (env, x)
   unlambda (Eval f) = Eval $ \(env, x) -> f env x
 
+instance Lambda Eval where
   u64 x = Eval $ const $ x
   add = Eval $ const $ \x y -> x + y

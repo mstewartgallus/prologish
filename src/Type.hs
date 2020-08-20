@@ -1,13 +1,20 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module Type (T, Void, Unit, type (~>), type (*), type (+), U64, ST (..), KnownT, inferT, eqT) where
+module Type (T, Void, Unit, type (~>), type (*), type (+), U64, ST (..), KnownT, inferT, eqT, Value, Continuation) where
 
+import Data.Kind (Type)
 import Data.Typeable ((:~:) (..))
 
-type T = Type
+type Value (hom :: T -> T -> Type) a = forall x. hom x a
+
+type Continuation (hom :: T -> T -> Type) a = forall x. hom a x
+
+type T = TypeImpl
 
 type Void = 'Void
 
@@ -21,7 +28,7 @@ type (+) = 'Sum
 
 type U64 = 'U64
 
-data Type = Void | Unit | Exp T T | Product T T | Sum T T | U64
+data TypeImpl = Void | Unit | Exp T T | Product T T | Sum T T | U64
 
 infixr 9 ~>
 

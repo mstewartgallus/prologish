@@ -10,12 +10,15 @@ module FromHoas (Expr, fromHoas) where
 import Control.Category
 import Control.Monad.State
 import Data.Typeable ((:~:) (..))
+import Exp
 import Hoas
-import Lam
+import Lambda
+import Product
+import Sum
 import Type
 import Prelude hiding ((.), (<*>), id)
 
-fromHoas :: Lam k => Expr (Varless (Labeless k)) a b -> k a b
+fromHoas :: Lambda k => Expr (Varless (Labeless k)) a b -> k a b
 fromHoas = removeLabels . removeVars . bind
 
 data Var a = Var (ST a) Int
@@ -59,22 +62,27 @@ instance Category k => Category (Expr k) where
   id = Expr $ pure id
   Expr f . Expr g = Expr $ liftM2 (.) f g
 
-instance Lam k => Lam (Expr k) where
+instance Lambda k => Product (Expr k) where
+  unit = Expr $ pure unit
   Expr f # Expr g = Expr $ liftM2 (#) f g
   first = Expr $ pure first
   second = Expr $ pure second
 
+instance Lambda k => Sum (Expr k) where
+  absurd = Expr $ pure absurd
   Expr f ! Expr g = Expr $ liftM2 (!) f g
   left = Expr $ pure left
   right = Expr $ pure right
 
+instance Lambda k => Exp (Expr k) where
   lambda (Expr f) = Expr $ liftM lambda f
   eval = Expr $ pure eval
 
+instance Lambda k => Lambda (Expr k) where
   u64 x = Expr $ pure (u64 x)
   add = Expr $ pure add
 
-class Lam k => Labels k where
+class Lambda k => Labels k where
   mkLabel :: Label a -> k a x
   bindLabel :: Label b -> k env a -> k env (a + b)
 
@@ -88,7 +96,7 @@ data Env a where
   EmptyEnv :: Env Unit
   VarEnv :: Var v -> Env a -> Env (a * v)
 
-instance Lam k => Category (Varless k) where
+instance Lambda k => Category (Varless k) where
   id = V $ const first
   V f . V g = V $ \env -> f env . (g env # second)
 
@@ -103,30 +111,34 @@ instance Labels k => Vars (Varless k) where
         shuffle = (first . first) # (second # (second . first))
      in x (VarEnv v env) . shuffle
 
-matchVar :: Lam k => Var a -> Env env -> k env a
+matchVar :: Lambda k => Var a -> Env env -> k env a
 matchVar x (VarEnv y rest) = case x `eqVar` y of
   Just Refl -> second
   Nothing -> matchVar x rest . first
 
-instance Lam k => Lam (Varless k) where
+instance Lambda k => Product (Varless k) where
+  unit = V $ const unit
   V f # V g = V $ \env -> f env # g env
   first = V $ const (first . first)
   second = V $ const (second . first)
 
+instance Lambda k => Sum (Varless k) where
   V f ! V g = V $ \env -> factor (f env) (g env)
   left = V $ const (left . first)
   right = V $ const (right . first)
 
+instance Lambda k => Exp (Varless k) where
   lambda (V f) = V $ \env ->
-    let shuffle :: Lam k => k ((a * b) * c) ((a * c) * b)
+    let shuffle :: Lambda k => k ((a * b) * c) ((a * c) * b)
         shuffle = ((first . first) # second) # (second . first)
      in lambda (f env . shuffle)
   eval = V $ const (eval . first)
 
+instance Lambda k => Lambda (Varless k) where
   u64 x = V $ const (u64 x)
   add = V $ const add
 
-removeVars :: Lam k => Varless k a b -> k a b
+removeVars :: Lambda k => Varless k a b -> k a b
 removeVars (V x) = x EmptyEnv . (id # unit)
 
 newtype Labeless k (a :: T) b = L (forall c. Case c -> k a (b + c))
@@ -135,50 +147,49 @@ data Case a where
   EmptyCase :: Case Void
   LabelCase :: Label l -> Case a -> Case (a + l)
 
-instance Lam k => Category (Labeless k) where
+instance Lambda k => Category (Labeless k) where
   id = L $ const left
   L f . L g = L $ \env -> (f env ! right) . g env
 
-instance Lam k => Labels (Labeless k) where
+instance Lambda k => Labels (Labeless k) where
   mkLabel v = L $ \env -> right . matchLabels v env
   bindLabel v (L x) = L $ \env ->
-    let shuffle :: Lam k => k (a + (c + b)) ((a + b) + c)
+    let shuffle :: Lambda k => k (a + (c + b)) ((a + b) + c)
         shuffle = undefined
      in shuffle . x (LabelCase v env)
 
-instance Lam k => Lam (Labeless k) where
+instance Lambda k => Product (Labeless k) where
   unit = L $ const (left . unit)
-  absurd = L $ const (left . absurd)
-
-  L f # L g = L $ \env -> cofactor (f env) (g env)
+  L f # L g = L $ \env -> distribute (f env) (g env)
   first = L $ const (left . first)
   second = L $ const (left . second)
 
+instance Lambda k => Sum (Labeless k) where
+  absurd = L $ const (left . absurd)
   L f ! L g = L $ \env -> f env ! g env
   left = L $ const (left . left)
   right = L $ const (left . right)
 
+instance Lambda k => Exp (Labeless k) where
   eval = L $ const (left . eval)
 
+instance Lambda k => Lambda (Labeless k) where
   u64 x = L $ const (left . u64 x)
   add = L $ const (left . add)
 
-factor :: Lam k => k (a * x) c -> k (b * x) c -> k ((a + b) * x) c
+factor :: Lambda k => k (a * x) c -> k (b * x) c -> k ((a + b) * x) c
 factor f g = unlambda (lambda f ! lambda g)
 
-cofactor :: Lam k => k c (a + x) -> k c (b + x) -> k c ((a * b) + x)
-cofactor f g = unlambda foo . (f # g)
+distribute :: Lambda k => k c (a + x) -> k c (b + x) -> k c ((a * b) + x)
+distribute f g = unlambda (lambda (unlambda bar . (second # first)) ! lambda (right . first)) . (f # g)
 
-foo :: Lam k => k (a + x) ((b + x) ~> ((a * b) + x))
-foo = lambda (unlambda bar . (second # first)) ! lambda (right . first)
-
-bar :: Lam k => k (b + x) (a ~> ((a * b) + x))
+bar :: Lambda k => k (b + x) (a ~> ((a * b) + x))
 bar = lambda (left . (second # first)) ! lambda (right . first)
 
-matchLabels :: Lam k => Label a -> Case c -> k a c
+matchLabels :: Lambda k => Label a -> Case c -> k a c
 matchLabels x (LabelCase y rest) = case x `eqLabel` y of
   Just Refl -> right
   Nothing -> left . matchLabels x rest
 
-removeLabels :: Lam k => Labeless k a b -> k a b
+removeLabels :: Lambda k => Labeless k a b -> k a b
 removeLabels (L x) = (id ! absurd) . x EmptyCase

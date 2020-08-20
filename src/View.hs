@@ -5,8 +5,11 @@ module View (View, view) where
 
 import Control.Category
 import Control.Monad.State
+import Exp
 import Hoas
-import Lam
+import Lambda
+import Product
+import Sum
 import Type
 import Prelude hiding ((.), id)
 
@@ -22,10 +25,8 @@ instance Category View where
     f' <- f
     pure (g' ++ "\n" ++ f')
 
-instance Lam View where
+instance Product View where
   unit = View $ pure "unit"
-  absurd = View $ pure "absurd"
-
   View x `letBe` View f = View $ do
     x' <- x
     f' <- f
@@ -38,6 +39,9 @@ instance Lam View where
   first = View $ pure ".0"
   second = View $ pure ".1"
 
+instance Sum View where
+  absurd = View $ pure "absurd"
+
   View f ! View x = View $ do
     f' <- f
     x' <- x
@@ -45,6 +49,7 @@ instance Lam View where
   left = View $ pure "#l"
   right = View $ pure "#r"
 
+instance Exp View where
   lambda (View f) = View $ do
     f' <- f
     pure ("λ " ++ f')
@@ -52,6 +57,7 @@ instance Lam View where
     f' <- f
     pure ("ap " ++ f')
 
+instance Lambda View where
   u64 x = View $ pure (show x)
   add = View $ pure "add"
 
