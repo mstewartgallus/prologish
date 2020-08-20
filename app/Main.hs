@@ -1,10 +1,12 @@
 module Main where
 
 import AsBound
+import AsCbpv
 import AsLabeless
 import AsReified
 import AsVarless
 import AsView
+import Cbpv
 import Data.Word
 import Exp
 import Hoas
@@ -30,3 +32,6 @@ compiled = (removeLabels . removeVariables . bindPoints) program
 
 result :: Word64
 result = reify compiled
+
+cbpv :: Cbpv c d => Value c U64
+cbpv = toCbpv compiled

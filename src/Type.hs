@@ -23,7 +23,7 @@ type T = Sort.Algebra
 
 type Void = Sort.Void
 
-type Unit = Sort.F Sort.Unit
+type Unit = Sort.Initial
 
 type (~>) a = (Sort.~>) (Sort.U a)
 
@@ -75,8 +75,8 @@ algebraToT :: SAlgebra a -> ST a
 algebraToT t = case t of
   Sort.SVoid -> SVoid
   Sort.SU a Sort.:-> b -> algebraToT a :-> algebraToT b
-  x Sort.:& Sort.SVoid -> case x of
-    Sort.SUnit -> SUnit
+  Sort.SInitial -> SUnit
+  x Sort.:& Sort.SInitial -> case x of
     Sort.SU64 -> SU64
     Sort.SU a Sort.:+: Sort.SU b -> algebraToT a :+: algebraToT b
     Sort.SU a Sort.:*: Sort.SU b -> algebraToT a :*: algebraToT b

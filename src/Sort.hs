@@ -19,6 +19,7 @@ module Sort
     Algebra,
     F,
     Void,
+    Initial,
     type (~>),
     type (&),
     SAlgebra (..),
@@ -47,6 +48,8 @@ type U64 = 'U64
 
 type Algebra = AlgebraImpl
 
+type Initial = 'Initial
+
 type Void = 'Void
 
 type (~>) = 'Exp
@@ -59,13 +62,13 @@ type (&) = 'Asym
 -- Not sure about this
 type U x = 'U x
 
-type F x = x & Void
+type F x = x & Initial
 
 infixl 0 &
 
 data SetImpl = U Algebra | Unit | Sum Set Set | Product Set Set | U64
 
-data AlgebraImpl = Void | Exp Set Algebra | Asym Set Algebra
+data AlgebraImpl = Initial | Void | Exp Set Algebra | Asym Set Algebra
 
 data SSet a where
   SU :: SAlgebra a -> SSet (U a)
@@ -76,6 +79,7 @@ data SSet a where
 
 data SAlgebra a where
   SVoid :: SAlgebra Void
+  SInitial :: SAlgebra Initial
   (:->) :: SSet a -> SAlgebra b -> SAlgebra (a ~> b)
   (:&) :: SSet a -> SAlgebra b -> SAlgebra (a & b)
 
@@ -103,6 +107,9 @@ instance KnownSet 'U64 where
 instance KnownAlgebra 'Void where
   inferAlgebra = SVoid
 
+instance KnownAlgebra 'Initial where
+  inferAlgebra = SInitial
+
 instance (KnownSet a, KnownAlgebra b) => KnownAlgebra ('Exp a b) where
   inferAlgebra = inferSet :-> inferAlgebra
 
@@ -111,6 +118,7 @@ instance (KnownSet a, KnownAlgebra b) => KnownAlgebra ('Asym a b) where
 
 eqAlgebra :: SAlgebra a -> SAlgebra b -> Maybe (a :~: b)
 eqAlgebra x y = case (x, y) of
+  (SInitial, SInitial) -> Just Refl
   (SVoid, SVoid) -> Just Refl
   (a :-> b, a' :-> b') -> do
     Refl <- eqSet a a'
@@ -149,6 +157,7 @@ instance Show (SSet a) where
 
 instance Show (SAlgebra a) where
   show expr = case expr of
+    SInitial -> "Initial"
     SVoid -> "Void"
     x :-> y -> "(" ++ show x ++ " → " ++ show y ++ ")"
     x :& y -> "(" ++ show x ++ " ⊗ " ++ show y ++ ")"
