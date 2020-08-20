@@ -9,7 +9,6 @@ module AsBound (Expr, bindPoints) where
 
 import Control.Category
 import Control.Monad.State
-import Data.Typeable ((:~:) (..))
 import Exp
 import Hoas
 import Labels
@@ -61,6 +60,7 @@ instance Sum k => Sum (Expr k) where
 
 instance Exp k => Exp (Expr k) where
   lambda (Expr f) = Expr $ liftM lambda f
+  unlambda (Expr f) = Expr $ liftM unlambda f
   eval = Expr $ pure eval
 
 instance Lambda k => Lambda (Expr k) where

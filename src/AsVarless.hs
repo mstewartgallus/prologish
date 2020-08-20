@@ -8,10 +8,8 @@
 module AsVarless (Varless, removeVariables) where
 
 import Control.Category
-import Control.Monad.State
 import Data.Typeable ((:~:) (..))
 import Exp
-import Hoas
 import Labels
 import Lambda
 import Product
@@ -24,9 +22,11 @@ removeVariables :: Product k => Varless k a b -> k a b
 removeVariables (V x) = x EmptyEnv . (id # unit)
 
 matchVar :: Product k => Var a -> Env env -> k env a
-matchVar x (VarEnv y rest) = case x `eqVar` y of
-  Just Refl -> second
-  Nothing -> matchVar x rest . first
+matchVar x env = case env of
+  VarEnv y rest -> case x `eqVar` y of
+    Just Refl -> second
+    Nothing -> matchVar x rest . first
+  _ -> undefined
 
 newtype Varless k a (b :: T) = V (forall env. Env env -> k (a * env) b)
 
@@ -56,6 +56,7 @@ instance Product k => Product (Varless k) where
   second = V $ const (second . first)
 
 instance (Sum k, Exp k) => Sum (Varless k) where
+  absurd = V $ const (absurd . first)
   V f ! V g = V $ \env -> factor (f env) (g env)
   left = V $ const (left . first)
   right = V $ const (right . first)
@@ -65,6 +66,10 @@ instance Exp k => Exp (Varless k) where
     let shuffle :: Product k => k ((a * b) * c) ((a * c) * b)
         shuffle = ((first . first) # second) # (second . first)
      in lambda (f env . shuffle)
+  unlambda (V f) = V $ \env ->
+    let shuffle :: Product k => k ((a * b) * c) ((a * c) * b)
+        shuffle = ((first . first) # second) # (second . first)
+     in unlambda (f env) . shuffle
   eval = V $ const (eval . first)
 
 instance Lambda k => Lambda (Varless k) where

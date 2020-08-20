@@ -2,16 +2,15 @@ module Main where
 
 import AsBound
 import AsLabeless
+import AsReified
 import AsVarless
+import AsView
 import Data.Word
-import Eval
 import Exp
 import Hoas
 import Lambda
 import Product
-import Sum
 import Type
-import View
 import Prelude hiding ((<*>))
 
 main :: IO ()
@@ -30,4 +29,4 @@ compiled :: Lambda k => Value k U64
 compiled = (removeLabels . removeVariables . bindPoints) program
 
 result :: Word64
-result = execute compiled
+result = reify compiled

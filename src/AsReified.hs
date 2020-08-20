@@ -3,7 +3,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module Eval (Eval (..), execute, Reify (..)) where
+module AsReified (Eval (..), reify, Reify) where
 
 import Control.Category
 import qualified Data.Void as Void
@@ -15,8 +15,8 @@ import Sum
 import Type
 import Prelude hiding ((.), id)
 
-execute :: Eval Unit a -> Reify a
-execute (Eval f) = f ()
+reify :: Eval Unit a -> Reify a
+reify (Eval f) = f ()
 
 newtype Eval a b = Eval (Reify a -> Reify b)
 

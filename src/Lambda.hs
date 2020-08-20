@@ -5,8 +5,6 @@
 
 module Lambda (Lambda (..)) where
 
-import Control.Category
-import Data.Kind (Type)
 import Data.Word (Word64)
 import Exp
 import Product

@@ -56,13 +56,13 @@ instance KnownT 'Void where
 instance KnownT 'U64 where
   inferT = SU64
 
-instance (KnownT a, KnownT b) => KnownT (Exp a b) where
+instance (KnownT a, KnownT b) => KnownT ('Exp a b) where
   inferT = inferT :-> inferT
 
-instance (KnownT a, KnownT b) => KnownT (Product a b) where
+instance (KnownT a, KnownT b) => KnownT ('Product a b) where
   inferT = inferT :*: inferT
 
-instance (KnownT a, KnownT b) => KnownT (Sum a b) where
+instance (KnownT a, KnownT b) => KnownT ('Sum a b) where
   inferT = inferT :+: inferT
 
 eqT :: ST a -> ST b -> Maybe (a :~: b)
@@ -78,6 +78,7 @@ eqT x y = case (x, y) of
   (a :+: b, a' :+: b') -> case (eqT a a', eqT b b') of
     (Just Refl, Just Refl) -> Just Refl
     _ -> Nothing
+  _ -> Nothing
 
 instance Show (ST a) where
   show expr = case expr of

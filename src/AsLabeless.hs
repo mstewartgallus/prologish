@@ -8,16 +8,13 @@
 module AsLabeless (Labeless, removeLabels) where
 
 import Control.Category
-import Control.Monad.State
 import Data.Typeable ((:~:) (..))
 import Exp
-import Hoas
 import Labels
 import Lambda
 import Product
 import Sum
 import Type
-import Vars
 import Prelude hiding ((.), (<*>), id)
 
 removeLabels :: Sum k => Labeless k a b -> k a b
@@ -53,6 +50,8 @@ instance Sum k => Sum (Labeless k) where
   right = L $ const (left . right)
 
 instance (Sum k, Exp k) => Exp (Labeless k) where
+  lambda = undefined
+  unlambda = undefined
   eval = L $ const (left . eval)
 
 instance Lambda k => Lambda (Labeless k) where
@@ -66,6 +65,8 @@ bar :: (Sum k, Exp k) => k (b + x) (a ~> ((a * b) + x))
 bar = lambda (left . (second # first)) ! lambda (right . first)
 
 matchLabels :: Sum k => Label a -> Case c -> k a c
-matchLabels x (LabelCase y rest) = case x `eqLabel` y of
-  Just Refl -> right
-  Nothing -> left . matchLabels x rest
+matchLabels x cases = case cases of
+  LabelCase y rest -> case x `eqLabel` y of
+    Just Refl -> right
+    Nothing -> left . matchLabels x rest
+  _ -> undefined

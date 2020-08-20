@@ -1,7 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE KindSignatures #-}
 
-module View (View, view) where
+module AsView (View, view) where
 
 import Control.Category
 import Control.Monad.State

@@ -4,7 +4,6 @@
 module Exp (Exp (..)) where
 
 import Control.Category
-import Data.Kind (Type)
 import Product
 import Type
 import Prelude hiding ((.), id)
