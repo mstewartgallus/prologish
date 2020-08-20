@@ -10,6 +10,7 @@ module Sort
     U,
     Unit,
     type (*),
+    type (+),
     U64,
     SSet (..),
     KnownSet,
@@ -18,7 +19,6 @@ module Sort
     Algebra,
     F,
     Void,
-    type (+),
     type (~>),
     SAlgebra (..),
     KnownAlgebra,
@@ -38,6 +38,8 @@ type Unit = 'Unit
 
 type (*) = 'Product
 
+type (+) = 'Sum
+
 type U64 = 'U64
 
 type Algebra = AlgebraImpl
@@ -46,13 +48,11 @@ type F = 'F
 
 type Void = 'Void
 
-type (+) = 'Sum
-
 type (~>) = 'Exp
 
-data SetImpl = U Algebra | Unit | Product Set Set | U64
+data SetImpl = U Algebra | Unit | Sum Set Set | Product Set Set | U64
 
-data AlgebraImpl = F Set | Void | Sum Algebra Algebra | Exp Set Algebra
+data AlgebraImpl = F Set | Void | Exp Set Algebra
 
 infixr 9 ~>
 
@@ -61,16 +61,16 @@ infixr 0 *
 infixr 0 +
 
 data SSet a where
-  SU :: SAlgebra a -> SSet ('U a)
-  SUnit :: SSet 'Unit
-  SU64 :: SSet 'U64
-  (:*:) :: SSet a -> SSet b -> SSet ('Product a b)
+  SU :: SAlgebra a -> SSet (U a)
+  SUnit :: SSet Unit
+  SU64 :: SSet U64
+  (:*:) :: SSet a -> SSet b -> SSet (a * b)
+  (:+:) :: SSet a -> SSet b -> SSet (a + b)
 
 data SAlgebra a where
-  SF :: SSet a -> SAlgebra ('F a)
-  SVoid :: SAlgebra 'Void
-  (:->) :: SSet a -> SAlgebra b -> SAlgebra ('Exp a b)
-  (:+:) :: SAlgebra a -> SAlgebra b -> SAlgebra (a + b)
+  SF :: SSet a -> SAlgebra (F a)
+  SVoid :: SAlgebra Void
+  (:->) :: SSet a -> SAlgebra b -> SAlgebra (a ~> b)
 
 class KnownSet t where
   inferSet :: SSet t
@@ -87,6 +87,9 @@ instance KnownSet 'Unit where
 instance (KnownSet a, KnownSet b) => KnownSet ('Product a b) where
   inferSet = inferSet :*: inferSet
 
+instance (KnownSet a, KnownSet b) => KnownSet ('Sum a b) where
+  inferSet = inferSet :+: inferSet
+
 instance KnownSet 'U64 where
   inferSet = SU64
 
@@ -95,9 +98,6 @@ instance KnownSet a => KnownAlgebra ('F a) where
 
 instance KnownAlgebra 'Void where
   inferAlgebra = SVoid
-
-instance (KnownAlgebra a, KnownAlgebra b) => KnownAlgebra ('Sum a b) where
-  inferAlgebra = inferAlgebra :+: inferAlgebra
 
 instance (KnownSet a, KnownAlgebra b) => KnownAlgebra ('Exp a b) where
   inferAlgebra = inferSet :-> inferAlgebra
@@ -108,9 +108,6 @@ eqAlgebra x y = case (x, y) of
     Just Refl -> Just Refl
     _ -> Nothing
   (SVoid, SVoid) -> Just Refl
-  (a :+: b, a' :+: b') -> case (eqAlgebra a a', eqAlgebra b b') of
-    (Just Refl, Just Refl) -> Just Refl
-    _ -> Nothing
   (a :-> b, a' :-> b') -> case (eqSet a a', eqAlgebra b b') of
     (Just Refl, Just Refl) -> Just Refl
     _ -> Nothing
@@ -125,6 +122,9 @@ eqSet x y = case (x, y) of
   (a :*: b, a' :*: b') -> case (eqSet a a', eqSet b b') of
     (Just Refl, Just Refl) -> Just Refl
     _ -> Nothing
+  (a :+: b, a' :+: b') -> case (eqSet a a', eqSet b b') of
+    (Just Refl, Just Refl) -> Just Refl
+    _ -> Nothing
   (SU64, SU64) -> Just Refl
   _ -> Nothing
 
@@ -134,10 +134,10 @@ instance Show (SSet a) where
     SUnit -> "Unit"
     SU64 -> "U64"
     x :*: y -> "(" ++ show x ++ " * " ++ show y ++ ")"
+    x :+: y -> "(" ++ show x ++ " + " ++ show y ++ ")"
 
 instance Show (SAlgebra a) where
   show expr = case expr of
     SF x -> "(F " ++ show x ++ ")"
     SVoid -> "Void"
     x :-> y -> "(" ++ show x ++ " ~> " ++ show y ++ ")"
-    x :+: y -> "(" ++ show x ++ " + " ++ show y ++ ")"

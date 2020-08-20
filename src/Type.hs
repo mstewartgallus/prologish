@@ -29,7 +29,7 @@ type (~>) a = (Sort.~>) (Sort.U a)
 
 type a * b = Sort.F (Sort.U a Sort.* Sort.U b)
 
-type (+) = (Sort.+)
+type a + b = Sort.F (Sort.U a Sort.+ Sort.U b)
 
 type U64 = Sort.F Sort.U64
 
@@ -40,12 +40,12 @@ infixr 0 *
 infixr 0 +
 
 data ST a where
+  SU64 :: ST U64
   SVoid :: ST Void
   SUnit :: ST Unit
-  SU64 :: ST U64
   (:*:) :: ST a -> ST b -> ST (a * b)
-  (:->) :: ST a -> ST b -> ST (a ~> b)
   (:+:) :: ST a -> ST b -> ST (a + b)
+  (:->) :: ST a -> ST b -> ST (a ~> b)
 
 type KnownT = KnownAlgebra
 
@@ -61,24 +61,24 @@ tToAlgebra t = case t of
   SUnit -> Sort.SF Sort.SUnit
   SU64 -> Sort.SF Sort.SU64
   x :*: y -> Sort.SF (Sort.SU (tToAlgebra x) Sort.:*: Sort.SU (tToAlgebra y))
-  x :+: y -> tToAlgebra x Sort.:+: tToAlgebra y
+  x :+: y -> Sort.SF (Sort.SU (tToAlgebra x) Sort.:+: Sort.SU (tToAlgebra y))
   x :-> y -> Sort.SU (tToAlgebra x) Sort.:-> tToAlgebra y
 
 algebraToT :: SAlgebra a -> ST a
 algebraToT t = case t of
   Sort.SVoid -> SVoid
   Sort.SU a Sort.:-> b -> algebraToT a :-> algebraToT b
-  a Sort.:+: b -> algebraToT a :+: algebraToT b
   Sort.SF x -> case x of
     Sort.SUnit -> SUnit
     Sort.SU64 -> SU64
+    Sort.SU a Sort.:+: Sort.SU b -> algebraToT a :+: algebraToT b
     Sort.SU a Sort.:*: Sort.SU b -> algebraToT a :*: algebraToT b
 
 instance Show (ST a) where
   show expr = case expr of
-    SUnit -> "Unit"
     SU64 -> "U64"
-    x :*: y -> "(" ++ show x ++ " * " ++ show y ++ ")"
     SVoid -> "Void"
+    SUnit -> "Unit"
+    x :*: y -> "(" ++ show x ++ " * " ++ show y ++ ")"
     x :-> y -> "(" ++ show x ++ " ~> " ++ show y ++ ")"
     x :+: y -> "(" ++ show x ++ " + " ++ show y ++ ")"
