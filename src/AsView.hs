@@ -6,12 +6,12 @@ module AsView (View, view) where
 import Control.Category
 import Control.Monad.State
 import Exp
-import LabelHoas
+import Labels
 import Lambda
 import Product
 import Sum
 import Type
-import VarHoas
+import Vars
 import Prelude hiding ((.), id)
 
 newtype View (a :: T) (b :: T) = View {unView :: State Int String}
@@ -60,22 +60,14 @@ instance Lambda View where
   u64 x = View $ pure (show x)
   add = View $ pure "add"
 
-instance VarHoas View where
-  mapVar t f = View $ do
-    n <- fresh
+instance Vars View where
+  bindMapVar n t f = View $ do
     let v = "v" ++ show n
     body <- unView (f (View $ pure v))
     pure (v ++ ": " ++ show t ++ ".\n" ++ body)
 
-instance LabelHoas View where
-  mapLabel t f = View $ do
-    n <- fresh
+instance Labels View where
+  bindMapLabel n t f = View $ do
     let v = "l" ++ show n
     body <- unView (f (View $ pure v))
     pure (v ++ ": " ++ show t ++ ".\n" ++ body)
-
-fresh :: State Int Int
-fresh = do
-  n <- get
-  put (n + 1)
-  return n

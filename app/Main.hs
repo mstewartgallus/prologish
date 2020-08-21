@@ -9,21 +9,21 @@ import AsView
 import Cbpv (Cbpv)
 import Data.Word
 import Exp
+import Hoas
 import qualified Id
-import LabelHoas
 import Labels
 import Lambda
 import Product
 import Type
-import VarHoas
+import Vars
 import Prelude hiding ((<*>))
 
 main :: IO ()
 main = do
-  putStrLn "The Program"
-  putStrLn (view program)
-
   Id.Stream _ x (Id.Stream _ y z) <- Id.stream
+
+  putStrLn "The Program"
+  putStrLn (view (bound x))
 
   putStrLn "Labeless Program"
   putStrLn (view (labeless y))
@@ -31,14 +31,17 @@ main = do
   putStrLn "Program Result"
   putStrLn (show (result z))
 
-program :: (Lambda k, VarHoas k, LabelHoas k) => k Unit U64
+program :: (Lambda k, Hoas k) => k Unit U64
 program = u64 42 `letBe` var inferT inferT $ \x ->
   u64 3 `letBe` var inferT inferT $ \y ->
     u64 3 `letBe` var inferT inferT $ \z ->
       add <*> z <*> (add <*> x <*> y)
 
+bound :: (Labels k, Vars k, Lambda k) => Id.Stream -> k Unit U64
+bound str = bindPoints str program
+
 varless :: (Labels k, Lambda k) => Id.Stream -> k Unit U64
-varless str = (removeVariables . bindPoints str) program
+varless str = removeVariables (bound str)
 
 labeless :: Lambda k => Id.Stream -> k Unit U64
 labeless str = removeLabels (varless str)
