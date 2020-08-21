@@ -73,6 +73,11 @@ instance Product k => Product (Varless k) where
   first = inV first
   second = inV second
 
+  letBe (V x) (V f) =
+    let shuffle :: Product k => k ((a * b) * c) ((a * c) * b)
+        shuffle = ((first . first) # second) # (second . first)
+     in V $ \env -> x env `letBe` (f env . shuffle)
+
 instance (Sum k, Exp k) => Sum (Varless k) where
   absurd = inV absurd
   V f ! V g = V $ \env -> factor (f env) (g env)
