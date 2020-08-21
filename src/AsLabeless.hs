@@ -51,7 +51,6 @@ instance Sum k => Sum (Labeless k) where
 
 instance (Sum k, Exp k) => Exp (Labeless k) where
   lambda = undefined
-  unlambda = undefined
   eval = L $ const (left . eval)
 
 instance Lambda k => Lambda (Labeless k) where

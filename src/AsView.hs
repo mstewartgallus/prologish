@@ -53,9 +53,7 @@ instance Exp View where
   lambda (View f) = View $ do
     f' <- f
     pure ("λ " ++ f')
-  unlambda (View f) = View $ do
-    f' <- f
-    pure ("ap " ++ f')
+  eval = View $ pure "!"
 
 instance Lambda View where
   u64 x = View $ pure (show x)

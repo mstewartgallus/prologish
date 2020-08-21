@@ -48,7 +48,7 @@ instance Sum Eval where
 
 instance Exp Eval where
   lambda (Eval f) = Eval $ \env x -> f (env, x)
-  unlambda (Eval f) = Eval $ \(env, x) -> f env x
+  eval = Eval $ \(f, x) -> f x
 
 instance Lambda Eval where
   u64 x = Eval $ const $ x

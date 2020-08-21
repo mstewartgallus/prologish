@@ -66,10 +66,6 @@ instance Exp k => Exp (Varless k) where
     let shuffle :: Product k => k ((a * b) * c) ((a * c) * b)
         shuffle = ((first . first) # second) # (second . first)
      in lambda (f env . shuffle)
-  unlambda (V f) = V $ \env ->
-    let shuffle :: Product k => k ((a * b) * c) ((a * c) * b)
-        shuffle = ((first . first) # second) # (second . first)
-     in unlambda (f env) . shuffle
   eval = V $ const (eval . first)
 
 instance Lambda k => Lambda (Varless k) where
