@@ -88,6 +88,16 @@ instance Product k => Product (Varless k) where
           { outV = outV f # outV g,
             pointFree = \v -> pointFree f v # pointFree g v
           }
+  x `letBe` f = me
+    where
+      me =
+        V
+          { outV = outV x `letBe` outV f,
+            pointFree = \v -> pointFree x v `letBe` (pointFree f v . shuffle)
+          }
+      shuffle :: Product k => k ((env * v) * a) ((env * a) * v)
+      shuffle = ((first . first) # second) # (second . first)
+
   first = inV first
   second = inV second
 
