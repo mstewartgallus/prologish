@@ -10,6 +10,7 @@ module AsVarless (Varless, removeVariables) where
 import Control.Category
 import Data.Typeable ((:~:) (..))
 import Exp
+import Id (Id)
 import Labels
 import Lambda
 import Product
@@ -30,6 +31,13 @@ matchVar x env = case env of
 
 newtype Varless k a (b :: T) = V (forall env. Env env -> k (a * env) b)
 
+data Var a = Var (ST a) Id
+
+eqVar :: Var a -> Var b -> Maybe (a :~: b)
+eqVar (Var t m) (Var t' n)
+  | m == n = eqT t t'
+  | otherwise = Nothing
+
 data Env a where
   EmptyEnv :: Env Unit
   VarEnv :: Var v -> Env a -> Env (a * v)
@@ -46,11 +54,14 @@ instance (Exp k, Labels k) => Labels (Varless k) where
   bindLabel lbl (V x) = V $ \env -> bindLabel lbl (x env)
 
 instance (Product k, Labels k) => Vars (Varless k) where
-  mkVar v = V $ \env -> matchVar v env . second
-  bindVar v (V x) = V $ \env ->
-    let shuffle :: Product k => k (c * b) (Unit * (b * c))
-        shuffle = unit # (second # first)
-     in x (VarEnv v env) . shuffle
+  bindMapVar n t f =
+    let v = Var t n
+        varExpr = V $ \env -> matchVar v env . second
+     in V $ \env -> case (f varExpr) of
+          V x ->
+            let shuffle :: Product k => k (c * b) (Unit * (b * c))
+                shuffle = unit # (second # first)
+             in x (VarEnv v env) . shuffle
 
 instance Product k => Product (Varless k) where
   unit = inV unit
