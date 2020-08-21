@@ -25,9 +25,15 @@ main = do
   putStrLn "The Program"
   putStrLn (view (bound x))
 
+  putStrLn ""
+  putStrLn "Varless Program"
+  putStrLn (view (varless y))
+
+  putStrLn ""
   putStrLn "Labeless Program"
   putStrLn (view (labeless y))
 
+  putStrLn ""
   putStrLn "Program Result"
   putStrLn (show (result z))
 
