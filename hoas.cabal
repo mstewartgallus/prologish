@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: b53d78bca97bb5bb0872d882dfce3d89de1faf6c3cfb52aa95b0e91400ececfb
+-- hash: 8c03c3296ecc7b8115c619b9ddb93f4d996305ec19bcd87392172bef44183fc0
 
 name:           hoas
 version:        0.1.0.0
@@ -36,14 +36,15 @@ library
       AsView
       Cbpv
       Exp
-      Hoas
       Id
+      LabelHoas
       Labels
       Lambda
       Product
       Sort
       Sum
       Type
+      VarHoas
       Vars
   other-modules:
       Paths_hoas

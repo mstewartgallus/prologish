@@ -6,13 +6,14 @@ module AsBound (Expr, bindPoints) where
 import Control.Category
 import Control.Monad.State
 import Exp
-import Hoas
 import Id (Stream (..))
+import LabelHoas
 import Labels
 import Lambda
 import Product
 import Sum
 import Type
+import VarHoas
 import Vars
 import Prelude hiding ((.), (<*>), id)
 
@@ -21,11 +22,12 @@ newtype Expr k (a :: T) (b :: T) = Expr {unExpr :: Stream -> k a b}
 bindPoints :: Stream -> Expr k env a -> k env a
 bindPoints str (Expr x) = x str
 
-instance (Labels k, Vars k) => Hoas (Expr k) where
+instance Vars k => VarHoas (Expr k) where
   mapVar t f = Expr $ \(Stream n bodys _) ->
     bindMapVar n t $ \v ->
       unExpr (f (Expr $ const v)) bodys
 
+instance Labels k => LabelHoas (Expr k) where
   mapLabel t f = Expr $ \(Stream n bodys _) ->
     bindMapLabel n t $ \v ->
       unExpr (f (Expr $ const v)) bodys
