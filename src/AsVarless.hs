@@ -34,12 +34,15 @@ data Env a where
   EmptyEnv :: Env Unit
   VarEnv :: Var v -> Env a -> Env (a * v)
 
+inV :: Product k => k a b -> Varless k a b
+inV f = V (const (f . first))
+
 instance Product k => Category (Varless k) where
-  id = V $ const first
+  id = inV id
   V f . V g = V $ \env -> f env . (g env # second)
 
 instance (Exp k, Labels k) => Labels (Varless k) where
-  mkLabel lbl = V $ const (mkLabel lbl . first)
+  mkLabel lbl = inV (mkLabel lbl)
   bindLabel lbl (V x) = V $ \env -> bindLabel lbl (x env)
 
 instance (Product k, Labels k) => Vars (Varless k) where
@@ -50,27 +53,27 @@ instance (Product k, Labels k) => Vars (Varless k) where
      in x (VarEnv v env) . shuffle
 
 instance Product k => Product (Varless k) where
-  unit = V $ const unit
+  unit = inV unit
   V f # V g = V $ \env -> f env # g env
-  first = V $ const (first . first)
-  second = V $ const (second . first)
+  first = inV first
+  second = inV second
 
 instance (Sum k, Exp k) => Sum (Varless k) where
-  absurd = V $ const (absurd . first)
+  absurd = inV absurd
   V f ! V g = V $ \env -> factor (f env) (g env)
-  left = V $ const (left . first)
-  right = V $ const (right . first)
+  left = inV left
+  right = inV right
 
 instance Exp k => Exp (Varless k) where
   lambda (V f) = V $ \env ->
     let shuffle :: Product k => k ((a * b) * c) ((a * c) * b)
         shuffle = ((first . first) # second) # (second . first)
      in lambda (f env . shuffle)
-  eval = V $ const (eval . first)
+  eval = inV eval
 
 instance Lambda k => Lambda (Varless k) where
-  u64 x = V $ const (u64 x)
-  add = V $ const add
+  u64 x = inV (u64 x)
+  add = inV add
 
 factor :: (Sum k, Exp k) => k (a * x) c -> k (b * x) c -> k ((a + b) * x) c
 factor f g = eval . (((lambda f ! lambda g) . first) # second)
