@@ -10,6 +10,7 @@ module AsLabeless (Labeless, removeLabels) where
 import Control.Category
 import Data.Typeable ((:~:) (..))
 import Exp
+import Id (Id)
 import Labels
 import Lambda
 import Product
@@ -25,6 +26,13 @@ newtype Labeless k (a :: T) b = L (forall c. Case c -> k a (b + c))
 inL :: Sum k => k a b -> Labeless k a b
 inL f = L (const (left . f))
 
+data Label a = Label (ST a) Id
+
+eqLabel :: Label a -> Label b -> Maybe (a :~: b)
+eqLabel (Label t m) (Label t' n)
+  | m == n = eqT t t'
+  | otherwise = Nothing
+
 data Case a where
   EmptyCase :: Case Void
   LabelCase :: Label l -> Case a -> Case (a + l)
@@ -34,11 +42,14 @@ instance Sum k => Category (Labeless k) where
   L f . L g = L $ \env -> (f env ! right) . g env
 
 instance (Sum k, Exp k) => Labels (Labeless k) where
-  mkLabel v = L $ \env -> right . matchLabels v env
-  bindLabel v (L x) = L $ \env ->
-    let shuffle :: Sum k => k (Void + (b + c)) (c + b)
-        shuffle = undefined
-     in shuffle . x (LabelCase v env)
+  bindMapLabel n t f =
+    let v = Label t n
+        varExpr = L $ \env -> right . matchLabels v env
+     in L $ \env -> case (f varExpr) of
+          L x ->
+            let shuffle :: Sum k => k (Void + (b + c)) (c + b)
+                shuffle = undefined
+             in shuffle . x (LabelCase v env)
 
 instance (Sum k, Exp k) => Product (Labeless k) where
   unit = inL unit

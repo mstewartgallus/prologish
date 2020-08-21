@@ -50,8 +50,9 @@ instance Product k => Category (Varless k) where
   V f . V g = V $ \env -> f env . (g env # second)
 
 instance (Exp k, Labels k) => Labels (Varless k) where
-  mkLabel lbl = inV (mkLabel lbl)
-  bindLabel lbl (V x) = V $ \env -> bindLabel lbl (x env)
+  bindMapLabel n t f = V $ \env -> bindMapLabel n t $ \v ->
+    case f (inV v) of
+      V x -> x env
 
 instance (Product k, Labels k) => Vars (Varless k) where
   bindMapVar n t f =
