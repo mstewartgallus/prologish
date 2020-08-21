@@ -47,9 +47,9 @@ instance (Exp k, Labels k) => Labels (Varless k) where
 
 instance (Product k, Labels k) => Vars (Varless k) where
   mkVar v = V $ \env -> matchVar v env . second
-  bindVar v (V x) = V $ \env ->
-    let shuffle :: Product k => k ((a * c) * b) (a * (b * c))
-        shuffle = (first . first) # (second # (second . first))
+  liftVar v (V x) = V $ \env ->
+    let shuffle :: Product k => k (c * b) (Unit * (b * c))
+        shuffle = unit # (second # first)
      in x (VarEnv v env) . shuffle
 
 instance Product k => Product (Varless k) where

@@ -11,11 +11,11 @@ module Type (KnownT, inferT, eqT, ST (..), T, Void, Unit, type (~>), type (*), t
 import Data.Kind (Type)
 import Data.Typeable ((:~:) (..))
 
-type Value (hom :: T -> T -> Type) a = forall x. hom x a
+type Value (hom :: T -> T -> Type) = hom Unit
 
-type Continuation (hom :: T -> T -> Type) a = forall x. hom a x
+type Continuation (hom :: T -> T -> Type) a = hom a Void
 
-type End (hom :: T -> T -> Type) = forall x. hom x x
+type End (hom :: T -> T -> Type) = hom Unit Void
 
 type T = TImpl
 

@@ -11,7 +11,8 @@ import Type
 import Prelude hiding ((.), id)
 
 class Category k => Product (k :: T -> T -> Type) where
-  unit :: Value k Unit
+  unit :: k x Unit
+
   (#) :: k env a -> k env b -> k env (a * b)
   first :: k (a * b) a
   second :: k (a * b) b

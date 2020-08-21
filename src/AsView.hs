@@ -60,7 +60,7 @@ instance Lambda View where
   add = View $ pure "add"
 
 instance Hoas View where
-  var t f = View $ do
+  lift t f = View $ do
     n <- fresh
     let v = "v" ++ show n
     body <- unView (f (View $ pure v))

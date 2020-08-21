@@ -25,11 +25,11 @@ bindPoints :: Expr k env a -> k env a
 bindPoints (Expr x) = evalState x 0
 
 instance (Labels k, Vars k) => Hoas (Expr k) where
-  var t f = Expr $ do
+  lift t f = Expr $ do
     n <- fresh
     let v = Var t n
     body <- unExpr (f (Expr $ pure (mkVar v)))
-    pure (bindVar v body)
+    pure (liftVar v body)
   label t f = Expr $ do
     n <- fresh
     let v = Label t n

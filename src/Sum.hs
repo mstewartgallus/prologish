@@ -11,7 +11,7 @@ import Type
 import Prelude hiding ((.), id)
 
 class Category k => Sum (k :: T -> T -> Type) where
-  absurd :: Continuation k Void
+  absurd :: k Void x
 
   (!) :: k a c -> k b c -> k (a + b) c
   left :: k a (a + b)

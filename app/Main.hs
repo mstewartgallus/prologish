@@ -21,13 +21,13 @@ main = do
   putStrLn (view compiled)
   putStrLn (show result)
 
-program :: (Lambda k, Hoas k) => Value k U64
-program = u64 42 `letBe` var inferT $ \x ->
-  u64 3 `letBe` var inferT $ \y ->
-    u64 3 `letBe` var inferT $ \z ->
+program :: (Lambda k, Hoas k) => k Unit U64
+program = u64 42 `letBe` var inferT inferT $ \x ->
+  u64 3 `letBe` var inferT inferT $ \y ->
+    u64 3 `letBe` var inferT inferT $ \z ->
       add <*> z <*> (add <*> x <*> y)
 
-compiled :: Lambda k => Value k U64
+compiled :: Lambda k => k Unit U64
 compiled = (removeLabels . removeVariables . bindPoints) program
 
 result :: Word64

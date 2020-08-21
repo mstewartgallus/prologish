@@ -1,3 +1,6 @@
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
@@ -10,7 +13,7 @@ import Prelude hiding ((.), id)
 
 class Product k => Vars k where
   mkVar :: Var a -> k x a
-  bindVar :: Var a -> k env b -> k (env * a) b
+  liftVar :: Var a -> k Unit b -> k a b
 
 data Var a = Var (ST a) Int
 
