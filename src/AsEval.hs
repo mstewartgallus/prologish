@@ -28,7 +28,7 @@ type family Constant a where
   Constant U64 = Word64
 
 type family Effect a where
-  Effect (F a) = Constant a
+  Effect (a & b) = (Constant a, Effect b)
   Effect Initial = ()
   Effect Void = Void.Void
   Effect (a ~> b) = Constant a -> Effect b
@@ -42,8 +42,8 @@ instance Category Code where
   Code f . Code g = Code (f . g)
 
 instance Cbpv Code Data where
-  thunk (Code f) = Data f
-  force (Data f) = Code f
+  thunk (Code f) = Data $ \x -> f (x, ())
+  force (Data f) = Code $ \(x, _) -> f x
 
   initial = Code $ const ()
 
@@ -62,4 +62,4 @@ instance Cbpv Code Data where
   second = Data snd
 
   u64 x = Data $ const x
-  add = Code $ const $ \x y -> x + y
+  add = Code $ const $ \x y -> (x + y, ())
