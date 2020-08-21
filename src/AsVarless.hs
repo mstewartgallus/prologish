@@ -8,6 +8,7 @@
 module AsVarless (Varless, removeVariables) where
 
 import Control.Category
+import Data.Kind
 import Data.Typeable ((:~:) (..))
 import Exp
 import Id (Id)
@@ -20,16 +21,9 @@ import Vars
 import Prelude hiding ((.), (<*>), id)
 
 removeVariables :: Product k => Varless k a b -> k a b
-removeVariables (V x) = x EmptyEnv . (id # unit)
+removeVariables (V x) = x emptyEnv . (id # unit)
 
-matchVar :: Product k => Var a -> Env env -> k env a
-matchVar x env = case env of
-  VarEnv y rest -> case x `eqVar` y of
-    Just Refl -> second
-    Nothing -> matchVar x rest . first
-  _ -> undefined
-
-newtype Varless k a (b :: T) = V (forall env. Env env -> k (a * env) b)
+newtype Varless k a (b :: T) = V (forall env. Env k env -> k (a * env) b)
 
 data Var a = Var (ST a) Id
 
@@ -38,9 +32,18 @@ eqVar (Var t m) (Var t' n)
   | m == n = eqT t t'
   | otherwise = Nothing
 
-data Env a where
-  EmptyEnv :: Env Unit
-  VarEnv :: Var v -> Env a -> Env (a * v)
+newtype Env (k :: T -> T -> Type) env = Env (forall a. Var a -> k env a)
+
+emptyEnv :: Env k Unit
+emptyEnv = Env (const undefined)
+
+addEnv :: Product k => Env k env -> Var a -> Env k (env * a)
+addEnv env v = Env $ \maybeV -> case maybeV `eqVar` v of
+  Just Refl -> second
+  Nothing -> findVar maybeV env . first
+
+findVar :: Var a -> Env k env -> k env a
+findVar x (Env f) = f x
 
 inV :: Product k => k a b -> Varless k a b
 inV f = V (const (f . first))
@@ -57,12 +60,12 @@ instance (Product k, Labels k) => Labels (Varless k) where
 instance Product k => Vars (Varless k) where
   bindMapVar n t f =
     let v = Var t n
-        varExpr = V $ \env -> matchVar v env . second
+        varExpr = V $ \env -> findVar v env . second
      in V $ \env -> case f varExpr of
           V x ->
             let shuffle :: Product k => k (c * b) (Unit * (b * c))
                 shuffle = unit # (second # first)
-             in x (VarEnv v env) . shuffle
+             in x (addEnv env v) . shuffle
 
 instance Product k => Product (Varless k) where
   unit = inV unit
