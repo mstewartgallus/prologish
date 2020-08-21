@@ -11,6 +11,7 @@ import Control.Category
 import Control.Monad.State
 import Exp
 import Hoas
+import Id (Id, Stream (..))
 import Labels
 import Lambda
 import Product
@@ -19,29 +20,21 @@ import Type
 import Vars
 import Prelude hiding ((.), (<*>), id)
 
-newtype Expr k (a :: T) (b :: T) = Expr {unExpr :: State Int (k a b)}
+newtype Expr k (a :: T) (b :: T) = Expr {unExpr :: Stream -> k a b}
 
-bindPoints :: Expr k env a -> k env a
-bindPoints (Expr x) = evalState x 0
+bindPoints :: Stream -> Expr k env a -> k env a
+bindPoints str (Expr x) = x str
 
 instance (Labels k, Vars k) => Hoas (Expr k) where
-  mapVar t f = Expr $ do
-    n <- fresh
+  mapVar t f = Expr $ \(Stream n bodys _) ->
     let v = Var t n
-    body <- unExpr (f (Expr $ pure (mkVar v)))
-    pure (bindVar v body)
+        body = unExpr (f (Expr $ const $ mkVar v)) bodys
+     in bindVar v body
 
-  mapLabel t f = Expr $ do
-    n <- fresh
+  mapLabel t f = Expr $ \(Stream n bodys _) ->
     let v = Label t n
-    body <- unExpr (f (Expr $ pure (mkLabel v)))
-    pure (bindLabel v body)
-
-fresh :: State Int Int
-fresh = do
-  n <- get
-  put (n + 1)
-  return n
+        body = unExpr (f (Expr $ const $ mkLabel v)) bodys
+     in bindLabel v body
 
 instance Category k => Category (Expr k) where
   id = Expr $ pure id

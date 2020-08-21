@@ -10,6 +10,7 @@ import Cbpv (Cbpv)
 import Data.Word
 import Exp
 import Hoas
+import qualified Id
 import Lambda
 import Product
 import Type
@@ -18,8 +19,9 @@ import Prelude hiding ((<*>))
 main :: IO ()
 main = do
   putStrLn (view program)
-  putStrLn (view compiled)
-  putStrLn (show result)
+  Id.Stream _ x y <- Id.stream
+  putStrLn (view (compiled x))
+  putStrLn (show (result y))
 
 program :: (Lambda k, Hoas k) => k Unit U64
 program = u64 42 `letBe` var inferT inferT $ \x ->
@@ -27,11 +29,11 @@ program = u64 42 `letBe` var inferT inferT $ \x ->
     u64 3 `letBe` var inferT inferT $ \z ->
       add <*> z <*> (add <*> x <*> y)
 
-compiled :: Lambda k => k Unit U64
-compiled = (removeLabels . removeVariables . bindPoints) program
+compiled :: Lambda k => Id.Stream -> k Unit U64
+compiled str = (removeLabels . removeVariables . bindPoints str) program
 
-result :: Word64
-result = reify compiled
+result :: Id.Stream -> Word64
+result str = reify (compiled str)
 
-cbpv :: Cbpv c d => c x (AsAlgebra U64)
-cbpv = toCbpv compiled
+cbpv :: Cbpv c d => Id.Stream -> c x (AsAlgebra U64)
+cbpv str = toCbpv (compiled str)
