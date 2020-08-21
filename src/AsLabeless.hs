@@ -58,7 +58,10 @@ instance Lambda k => Lambda (Labeless k) where
   add = L $ const (left . add)
 
 distribute :: (Sum k, Exp k) => k c (a + x) -> k c (b + x) -> k c ((a * b) + x)
-distribute f g = unlambda (lambda (unlambda bar . (second # first)) ! lambda (right . first)) . (f # g)
+distribute f g = eval . ((process . f) # g)
+
+process :: (Sum k, Exp k) => k (a + x) ((b + x) ~> ((a * b) + x))
+process = lambda (eval . ((bar . second) # first)) ! lambda (right . first)
 
 bar :: (Sum k, Exp k) => k (b + x) (a ~> ((a * b) + x))
 bar = lambda (left . (second # first)) ! lambda (right . first)

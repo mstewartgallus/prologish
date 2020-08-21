@@ -73,4 +73,4 @@ instance Lambda k => Lambda (Varless k) where
   add = V $ const add
 
 factor :: (Sum k, Exp k) => k (a * x) c -> k (b * x) c -> k ((a + b) * x) c
-factor f g = unlambda (lambda f ! lambda g)
+factor f g = eval . (((lambda f ! lambda g) . first) # second)
