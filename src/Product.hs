@@ -5,7 +5,6 @@
 module Product (Product (..)) where
 
 import Control.Category
-import Data.Kind (Type)
 import Type
 import Prelude hiding ((.), id)
 

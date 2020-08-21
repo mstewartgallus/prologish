@@ -4,7 +4,6 @@
 module AsView (View, view) where
 
 import Control.Category
-import Control.Monad.State
 import Exp
 import Labels
 import Lambda
@@ -14,60 +13,46 @@ import Type
 import Vars
 import Prelude hiding ((.), id)
 
-newtype View (a :: T) (b :: T) = View {unView :: State Int String}
+newtype View (a :: T) (b :: T) = View String
 
 view :: View a b -> String
-view (View v) = evalState v 0
+view (View v) = v
 
 instance Category View where
-  id = View $ pure "id"
-  View f . View g = View $ do
-    g' <- g
-    f' <- f
-    pure (g' ++ "\n" ++ f')
+  id = View "id"
+  View f . View g = View (g ++ "\n" ++ f)
 
 instance Product View where
-  unit = View $ pure "unit"
-  View x `letBe` View f = View $ do
-    x' <- x
-    f' <- f
-    pure (x' ++ " be " ++ f')
+  unit = View "unit"
+  View x `letBe` View f = View (x ++ " be " ++ f)
 
-  View f # View x = View $ do
-    f' <- f
-    x' <- x
-    pure ("(" ++ f' ++ " Δ " ++ x' ++ ")")
-  first = View $ pure ".0"
-  second = View $ pure ".1"
+  View f # View x = View ("(" ++ f ++ " Δ " ++ x ++ ")")
+  first = View ".0"
+  second = View ".1"
 
 instance Sum View where
-  absurd = View $ pure "absurd"
+  absurd = View "absurd"
 
-  View f ! View x = View $ do
-    f' <- f
-    x' <- x
-    pure ("(" ++ f' ++ " + " ++ x' ++ ")")
-  left = View $ pure "#l"
-  right = View $ pure "#r"
+  View f ! View x = View ("(" ++ f ++ " + " ++ x ++ ")")
+  left = View "#l"
+  right = View "#r"
 
 instance Exp View where
-  lambda (View f) = View $ do
-    f' <- f
-    pure ("λ " ++ f')
-  eval = View $ pure "!"
+  lambda (View f) = View ("λ " ++ f)
+  eval = View "!"
 
 instance Lambda View where
-  u64 x = View $ pure (show x)
-  add = View $ pure "add"
+  u64 x = View (show x)
+  add = View "add"
 
 instance Vars View where
-  bindMapVar n t f = View $ do
+  bindMapVar n t f =
     let v = "v" ++ show n
-    body <- unView (f (View $ pure v))
-    pure (v ++ ": " ++ show t ++ ".\n" ++ body)
+        View body = f (View v)
+     in View (v ++ ": " ++ show t ++ ".\n" ++ body)
 
 instance Labels View where
-  bindMapLabel n t f = View $ do
+  bindMapLabel n t f =
     let v = "l" ++ show n
-    body <- unView (f (View $ pure v))
-    pure (v ++ ": " ++ show t ++ ".\n" ++ body)
+        View body = f (View v)
+     in View (v ++ ": " ++ show t ++ ".\n" ++ body)
