@@ -36,7 +36,7 @@ instance Sum k => Category (Labeless k) where
 instance (Sum k, Exp k) => Labels (Labeless k) where
   mkLabel v = L $ \env -> right . matchLabels v env
   bindLabel v (L x) = L $ \env ->
-    let shuffle :: Sum k => k (a + (c + b)) ((a + b) + c)
+    let shuffle :: Sum k => k (Void + (b + c)) (c + b)
         shuffle = undefined
      in shuffle . x (LabelCase v env)
 

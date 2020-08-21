@@ -60,12 +60,12 @@ instance Lambda View where
   add = View $ pure "add"
 
 instance Hoas View where
-  lift t f = View $ do
+  mapVar t f = View $ do
     n <- fresh
     let v = "v" ++ show n
     body <- unView (f (View $ pure v))
     pure (v ++ ": " ++ show t ++ ".\n" ++ body)
-  label t f = View $ do
+  mapLabel t f = View $ do
     n <- fresh
     let v = "l" ++ show n
     body <- unView (f (View $ pure v))

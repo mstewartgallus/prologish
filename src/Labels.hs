@@ -10,7 +10,7 @@ import Prelude hiding ((.), id)
 
 class Sum k => Labels k where
   mkLabel :: Label a -> k a x
-  bindLabel :: Label b -> k env a -> k env (a + b)
+  bindLabel :: Label b -> k a Void -> k a b
 
 data Label a = Label (ST a) Int
 
