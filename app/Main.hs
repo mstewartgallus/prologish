@@ -33,5 +33,5 @@ compiled = (removeLabels . removeVariables . bindPoints) program
 result :: Word64
 result = reify compiled
 
-cbpv :: Cbpv c d => Value c U64
+cbpv :: Cbpv c d => c x (AsAlgebra U64)
 cbpv = toCbpv compiled

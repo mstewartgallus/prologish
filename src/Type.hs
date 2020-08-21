@@ -10,8 +10,6 @@ module Type (KnownT, inferT, eqT, ST (..), T, Void, Unit, type (~>), type (*), t
 
 import Data.Kind (Type)
 import Data.Typeable ((:~:) (..))
-import qualified Sort
-import Sort (KnownAlgebra (..), SAlgebra, eqAlgebra)
 
 type Value (hom :: T -> T -> Type) a = forall x. hom x a
 
@@ -19,25 +17,27 @@ type Continuation (hom :: T -> T -> Type) a = forall x. hom a x
 
 type End (hom :: T -> T -> Type) = forall x. hom x x
 
-type T = Sort.Algebra
+type T = TImpl
 
-type Void = Sort.Void
+type Void = 'Void
 
-type Unit = Sort.Initial
+type Unit = 'Unit
 
-type (~>) a = (Sort.~>) (Sort.U a)
+type (~>) = 'Exp
 
-type a * b = Sort.F (Sort.U a Sort.* Sort.U b)
+type (*) = 'Product
 
-type a + b = Sort.F (Sort.U a Sort.+ Sort.U b)
+type (+) = 'Sum
 
-type U64 = Sort.F Sort.U64
+type U64 = 'U64
 
 infixr 9 ~>
 
 infixl 0 *
 
 infixl 0 +
+
+data TImpl = U64 | Void | Unit | Sum T T | Product T T | Exp T T
 
 data ST a where
   SU64 :: ST U64
@@ -47,10 +47,26 @@ data ST a where
   (:+:) :: ST a -> ST b -> ST (a + b)
   (:->) :: ST a -> ST b -> ST (a ~> b)
 
-type KnownT = KnownAlgebra
+class KnownT t where
+  inferT :: ST t
 
-inferT :: KnownT t => ST t
-inferT = algebraToT inferAlgebra
+instance KnownT 'U64 where
+  inferT = SU64
+
+instance KnownT 'Unit where
+  inferT = SUnit
+
+instance KnownT 'Void where
+  inferT = SVoid
+
+instance (KnownT a, KnownT b) => KnownT ('Product a b) where
+  inferT = inferT :*: inferT
+
+instance (KnownT a, KnownT b) => KnownT ('Sum a b) where
+  inferT = inferT :+: inferT
+
+instance (KnownT a, KnownT b) => KnownT ('Exp a b) where
+  inferT = inferT :-> inferT
 
 eqT :: ST a -> ST b -> Maybe (a :~: b)
 eqT x y = case (x, y) of
@@ -70,16 +86,6 @@ eqT x y = case (x, y) of
     Refl <- eqT y y'
     return Refl
   _ -> Nothing
-
-algebraToT :: SAlgebra a -> ST a
-algebraToT t = case t of
-  Sort.SVoid -> SVoid
-  Sort.SU a Sort.:-> b -> algebraToT a :-> algebraToT b
-  Sort.SInitial -> SUnit
-  x Sort.:& Sort.SInitial -> case x of
-    Sort.SU64 -> SU64
-    Sort.SU a Sort.:+: Sort.SU b -> algebraToT a :+: algebraToT b
-    Sort.SU a Sort.:*: Sort.SU b -> algebraToT a :*: algebraToT b
 
 instance Show (ST a) where
   show expr = case expr of

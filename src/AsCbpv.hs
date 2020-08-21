@@ -1,13 +1,13 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
-{-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module AsCbpv (Expr, toCbpv) where
+module AsCbpv (Expr, toCbpv, AsAlgebra) where
 
 import Cbpv
 import Control.Category
@@ -20,10 +20,18 @@ import qualified Sum
 import qualified Type
 import Prelude hiding ((.), (<*>), id)
 
-newtype Expr c (a :: Type.T) (b :: Type.T) = Expr {unExpr :: c a b}
+newtype Expr c (a :: Type.T) (b :: Type.T) = Expr {unExpr :: c (AsAlgebra a) (AsAlgebra b)}
 
-toCbpv :: Expr k a b -> k a b
-toCbpv (Expr x) = x
+type family AsAlgebra a where
+  AsAlgebra Type.Unit = Initial
+  AsAlgebra Type.Void = Void
+  AsAlgebra (a Type.* b) = F (U (AsAlgebra a) * U (AsAlgebra b))
+  AsAlgebra (a Type.+ b) = F (U (AsAlgebra a) + U (AsAlgebra b))
+  AsAlgebra (a Type.~> b) = U (AsAlgebra a) ~> AsAlgebra b
+  AsAlgebra Type.U64 = F U64
+
+toCbpv :: Cbpv c d => Expr c Type.Unit a -> c x (AsAlgebra a)
+toCbpv (Expr x) = x . initial
 
 instance Cbpv c d => Category (Expr c) where
   id = Expr id
