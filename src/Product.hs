@@ -1,5 +1,4 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
@@ -10,7 +9,7 @@ import Data.Kind (Type)
 import Type
 import Prelude hiding ((.), id)
 
-class Category k => Product (k :: T -> T -> Type) where
+class Category k => Product k where
   unit :: k x Unit
 
   (#) :: k env a -> k env b -> k env (a * b)

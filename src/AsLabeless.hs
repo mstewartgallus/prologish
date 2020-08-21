@@ -41,11 +41,11 @@ instance Sum k => Category (Labeless k) where
   id = inL id
   L f . L g = L $ \env -> (f env ! right) . g env
 
-instance (Sum k, Exp k) => Labels (Labeless k) where
+instance Sum k => Labels (Labeless k) where
   bindMapLabel n t f =
     let v = Label t n
         varExpr = L $ \env -> right . matchLabels v env
-     in L $ \env -> case (f varExpr) of
+     in L $ \env -> case f varExpr of
           L x ->
             let shuffle :: Sum k => k (Void + (b + c)) (c + b)
                 shuffle = undefined

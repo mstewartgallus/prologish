@@ -49,16 +49,16 @@ instance Product k => Category (Varless k) where
   id = inV id
   V f . V g = V $ \env -> f env . (g env # second)
 
-instance (Exp k, Labels k) => Labels (Varless k) where
+instance (Product k, Labels k) => Labels (Varless k) where
   bindMapLabel n t f = V $ \env -> bindMapLabel n t $ \v ->
     case f (inV v) of
       V x -> x env
 
-instance (Product k, Labels k) => Vars (Varless k) where
+instance Product k => Vars (Varless k) where
   bindMapVar n t f =
     let v = Var t n
         varExpr = V $ \env -> matchVar v env . second
-     in V $ \env -> case (f varExpr) of
+     in V $ \env -> case f varExpr of
           V x ->
             let shuffle :: Product k => k (c * b) (Unit * (b * c))
                 shuffle = unit # (second # first)

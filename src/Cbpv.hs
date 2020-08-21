@@ -1,15 +1,12 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE PolyKinds #-}
-{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
 module Cbpv (Cbpv (..)) where
 
 import Control.Category
-import Data.Kind
 import Data.Word (Word64)
 import Sort
 import Prelude hiding ((.), id)

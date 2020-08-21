@@ -1,9 +1,5 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE NoStarIsType #-}
 
 module AsBound (Expr, bindPoints) where
 
@@ -11,7 +7,7 @@ import Control.Category
 import Control.Monad.State
 import Exp
 import Hoas
-import Id (Id, Stream (..))
+import Id (Stream (..))
 import Labels
 import Lambda
 import Product

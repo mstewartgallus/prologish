@@ -1,7 +1,5 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
-{-# LANGUAGE KindSignatures #-}
-{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
@@ -29,7 +27,6 @@ module Sort
   )
 where
 
-import Data.Kind (Type)
 import Data.Typeable ((:~:) (..))
 
 type Set = SetImpl
@@ -134,8 +131,8 @@ eqSet :: SSet a -> SSet b -> Maybe (a :~: b)
 eqSet x y = case (x, y) of
   (SU64, SU64) -> Just Refl
   (SUnit, SUnit) -> Just Refl
-  (SU x, SU x') -> do
-    Refl <- eqAlgebra x x'
+  (SU a, SU a') -> do
+    Refl <- eqAlgebra a a'
     return Refl
   (a :*: b, a' :*: b') -> do
     Refl <- eqSet a a'

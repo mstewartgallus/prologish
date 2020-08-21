@@ -1,7 +1,5 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
-{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -11,7 +9,6 @@ module AsCbpv (Expr, toCbpv, AsAlgebra) where
 
 import Cbpv
 import Control.Category
-import Data.Kind
 import qualified Exp
 import qualified Lambda
 import qualified Product
@@ -20,7 +17,7 @@ import qualified Sum
 import qualified Type
 import Prelude hiding ((.), (<*>), id)
 
-newtype Expr c (a :: Type.T) (b :: Type.T) = Expr {unExpr :: c (AsAlgebra a) (AsAlgebra b)}
+newtype Expr c a b = Expr (c (AsAlgebra a) (AsAlgebra b))
 
 type family AsAlgebra a where
   AsAlgebra Type.Unit = Initial
@@ -40,13 +37,21 @@ instance Cbpv c d => Category (Expr c) where
 instance Cbpv c d => Product.Product (Expr c) where
   unit = Expr initial
 
+  first = undefined
+  second = undefined
+  (#) = undefined
+
 instance Cbpv c d => Sum.Sum (Expr c) where
   absurd = Expr absurd
 
--- left = Expr (force left . unbox)
--- right = Expr (mapCodeR right thunk)
--- Expr f ! Expr g = Expr (mapCodeR (mapDataR f force ! mapDataR g force) thunk)
+  left = undefined
+  right = undefined
+  (!) = undefined
 
-instance Cbpv c d => Exp.Exp (Expr c)
+instance Cbpv c d => Exp.Exp (Expr c) where
+  lambda = undefined
+  eval = undefined
 
-instance Cbpv c d => Lambda.Lambda (Expr c)
+instance Cbpv c d => Lambda.Lambda (Expr c) where
+  u64 = undefined
+  add = undefined

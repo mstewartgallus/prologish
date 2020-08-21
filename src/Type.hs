@@ -1,8 +1,6 @@
-{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
-{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
@@ -69,7 +67,7 @@ instance (KnownT a, KnownT b) => KnownT ('Exp a b) where
   inferT = inferT :-> inferT
 
 eqT :: ST a -> ST b -> Maybe (a :~: b)
-eqT x y = case (x, y) of
+eqT l r = case (l, r) of
   (SVoid, SVoid) -> Just Refl
   (SUnit, SUnit) -> Just Refl
   (SU64, SU64) -> Just Refl
