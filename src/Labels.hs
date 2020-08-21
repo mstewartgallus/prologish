@@ -3,12 +3,12 @@
 
 module Labels (Labels (..), Label (..), eqLabel) where
 
+import Control.Category
 import Data.Typeable ((:~:) (..))
-import Sum
 import Type
 import Prelude hiding ((.), id)
 
-class Sum k => Labels k where
+class Category k => Labels k where
   mkLabel :: Label a -> k a x
   bindLabel :: Label b -> k a Void -> k a b
 

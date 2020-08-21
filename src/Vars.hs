@@ -1,17 +1,14 @@
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE KindSignatures #-}
-{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
 module Vars (Vars (..), Var (..), eqVar) where
 
+import Control.Category
 import Data.Typeable ((:~:) (..))
-import Product
 import Type
 import Prelude hiding ((.), id)
 
-class Product k => Vars k where
+class Vars k where
   mkVar :: Var a -> k x a
   bindVar :: Var a -> k Unit b -> k a b
 
