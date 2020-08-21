@@ -27,14 +27,12 @@ bindPoints str (Expr x) = x str
 
 instance (Labels k, Vars k) => Hoas (Expr k) where
   mapVar t f = Expr $ \(Stream n bodys _) ->
-    let v = Var t n
-        body = unExpr (f (Expr $ const $ mkVar v)) bodys
-     in bindVar v body
+    bindMapVar n t $ \v ->
+      unExpr (f (Expr $ const v)) bodys
 
   mapLabel t f = Expr $ \(Stream n bodys _) ->
-    let v = Label t n
-        body = unExpr (f (Expr $ const $ mkLabel v)) bodys
-     in bindLabel v body
+    bindMapLabel n t $ \v ->
+      unExpr (f (Expr $ const v)) bodys
 
 instance Category k => Category (Expr k) where
   id = Expr $ pure id
