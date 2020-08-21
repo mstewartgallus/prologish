@@ -20,10 +20,13 @@ import Type
 import Vars
 import Prelude hiding ((.), (<*>), id)
 
-removeVariables :: Product k => Varless k a b -> k a b
-removeVariables (V x) = x emptyEnv . (id # unit)
+removeVariables :: Varless k a b -> k a b
+removeVariables = outV
 
-newtype Varless k a (b :: T) = V (forall env. Env k env -> k (a * env) b)
+data Varless k a (b :: T) = V
+  { outV :: k a b,
+    pointFree :: forall v. Var v -> Varless k (a * v) b
+  }
 
 data Var a = Var (ST a) Id
 
@@ -32,63 +35,84 @@ eqVar (Var t m) (Var t' n)
   | m == n = eqT t t'
   | otherwise = Nothing
 
-newtype Env (k :: T -> T -> Type) env = Env (forall a. Var a -> k env a)
-
-emptyEnv :: Env k Unit
-emptyEnv = Env (const undefined)
-
-addEnv :: Product k => Env k env -> Var a -> Env k (env * a)
-addEnv env v = Env $ \maybeV -> case maybeV `eqVar` v of
-  Just Refl -> second
-  Nothing -> findVar maybeV env . first
-
-findVar :: Var a -> Env k env -> k env a
-findVar x (Env f) = f x
-
 inV :: Product k => k a b -> Varless k a b
-inV f = V (const (f . first))
+inV x = me
+  where
+    me =
+      V
+        { outV = x,
+          pointFree = const (me . first)
+        }
 
 instance Product k => Category (Varless k) where
   id = inV id
-  V f . V g = V $ \env -> f env . (g env # second)
+  f . g = me
+    where
+      me =
+        V
+          { outV = outV f . outV g,
+            pointFree = \v -> pointFree f v . (pointFree g v # second)
+          }
 
 instance (Product k, Labels k) => Labels (Varless k) where
-  bindMapLabel n t f = V $ \env -> bindMapLabel n t $ \v ->
-    case f (inV v) of
-      V x -> x env
+  bindMapLabel n t f = undefined
 
 instance Product k => Vars (Varless k) where
-  bindMapVar n t f =
-    let v = Var t n
-        varExpr = V $ \env -> findVar v env . second
-     in V $ \env -> case f varExpr of
-          V x ->
-            let shuffle :: Product k => k (c * b) (Unit * (b * c))
-                shuffle = unit # (second # first)
-             in x (addEnv env v) . shuffle
+  bindMapVar n t f = me
+    where
+      me =
+        V
+          { outV = outV body,
+            pointFree = pointFree body
+          }
+      v = Var t n
+      body = pointFree (f (mkVar v)) v . (unit # id)
+
+mkVar :: Product k => Var a -> Varless k Unit a
+mkVar v@(Var _ n) = me
+  where
+    me =
+      V
+        { outV = error ("free variable " ++ show n),
+          pointFree = \maybeV -> case eqVar v maybeV of
+            Nothing -> me . first
+            Just Refl -> inV second
+        }
 
 instance Product k => Product (Varless k) where
   unit = inV unit
-  V f # V g = V $ \env -> f env # g env
+  f # g = me
+    where
+      me =
+        V
+          { outV = outV f # outV g,
+            pointFree = \v -> pointFree f v # pointFree g v
+          }
   first = inV first
   second = inV second
 
-  letBe (V x) (V f) =
-    let shuffle :: Product k => k ((a * b) * c) ((a * c) * b)
-        shuffle = ((first . first) # second) # (second . first)
-     in V $ \env -> x env `letBe` (f env . shuffle)
-
 instance (Sum k, Exp k) => Sum (Varless k) where
   absurd = inV absurd
-  V f ! V g = V $ \env -> factor (f env) (g env)
+  f ! g = me
+    where
+      me =
+        V
+          { outV = outV f ! outV g,
+            pointFree = \v -> factor (pointFree f v) (pointFree g v)
+          }
   left = inV left
   right = inV right
 
 instance Exp k => Exp (Varless k) where
-  lambda (V f) = V $ \env ->
-    let shuffle :: Product k => k ((a * b) * c) ((a * c) * b)
-        shuffle = ((first . first) # second) # (second . first)
-     in lambda (f env . shuffle)
+  lambda f = me
+    where
+      me =
+        V
+          { outV = lambda (outV f),
+            pointFree = \v -> lambda (pointFree f v . shuffle)
+          }
+      shuffle :: Product k => k ((a * c) * b) ((a * b) * c)
+      shuffle = ((first . first) # second) # (second . first)
   eval = inV eval
 
 instance Lambda k => Lambda (Varless k) where
