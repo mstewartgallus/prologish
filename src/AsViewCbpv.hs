@@ -26,7 +26,7 @@ instance Category Data where
 
 instance Cbpv Code Data where
   to (Code f) = Data ("(to " ++ f ++ ")")
-  returns (Data f) = Code ("returns " ++ f ++ ")")
+  returns (Data f) = Code ("(returns " ++ f ++ ")")
 
   thunk (Code f) = Data ("(thunk " ++ f ++ ")")
   force (Data f) = Code ("(force " ++ f ++ ")")

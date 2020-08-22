@@ -54,4 +54,4 @@ instance Cbpv c d => Exp.Exp (Expr c) where
 
 instance Cbpv c d => Lambda.Lambda (Expr c) where
   u64 x = Expr (force (thunk id . u64 x) . returns unit)
-  add = Expr undefined
+  add = Expr add

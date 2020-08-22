@@ -59,8 +59,8 @@ instance Cbpv Code Data where
   first = Data fst
   second = Data snd
 
-  lambda = undefined
-  eval = undefined
+  lambda (Data f) = Code $ \env x -> f (env, x)
+  eval (Code f) = Data $ \(env, x) -> f env x
 
   u64 x = Data $ const x
   add = Code $ const $ \x y -> x + y
