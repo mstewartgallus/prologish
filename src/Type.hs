@@ -87,9 +87,9 @@ eqT l r = case (l, r) of
 
 instance Show (ST a) where
   show expr = case expr of
-    SU64 -> "U64"
-    SVoid -> "Void"
-    SUnit -> "Unit"
-    x :*: y -> "(" ++ show x ++ " * " ++ show y ++ ")"
-    x :-> y -> "(" ++ show x ++ " ~> " ++ show y ++ ")"
-    x :+: y -> "(" ++ show x ++ " + " ++ show y ++ ")"
+    SU64 -> "u64"
+    SVoid -> "∅"
+    SUnit -> "I"
+    x :*: y -> "(" ++ show x ++ " × " ++ show y ++ ")"
+    x :-> y -> "(" ++ show x ++ " → " ++ show y ++ ")"
+    x :+: y -> "(" ++ show x ++ " ∐ " ++ show y ++ ")"
