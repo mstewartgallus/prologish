@@ -34,7 +34,7 @@ class (Category cd, Category dta) => Cbpv cd dta | cd -> dta, dta -> cd where
   u64 :: Word64 -> dta x U64
 
   -- fixme.. have optimized version...
-  add :: cd x (U (F U64) ~> U (F U64) ~> F U64)
+  add :: cd (F Unit) (U (F U64) ~> U (F U64) ~> F U64)
 
 infixl 9 #
 
