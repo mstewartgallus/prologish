@@ -2,9 +2,8 @@ module Main where
 
 import AsBound
 import AsCbpv
-import AsLabeless
+import AsPointFree
 import AsReified
-import AsVarless
 import AsView
 import Cbpv (Cbpv)
 import Data.Word
@@ -26,12 +25,8 @@ main = do
   putStrLn (view (bound x))
 
   putStrLn ""
-  putStrLn "Varless Program"
-  putStrLn (view (varless y))
-
-  putStrLn ""
-  putStrLn "Labeless Program"
-  putStrLn (view (labeless y))
+  putStrLn "Point-Free Program"
+  putStrLn (view (compiled y))
 
   putStrLn ""
   putStrLn "Program Result"
@@ -46,14 +41,11 @@ program = u64 42 `letBe` var inferT inferT $ \x ->
 bound :: (Labels k, Vars k, Lambda k) => Id.Stream -> k Unit U64
 bound str = bindPoints str program
 
-varless :: (Labels k, Lambda k) => Id.Stream -> k Unit U64
-varless str = removeVariables (bound str)
-
-labeless :: Lambda k => Id.Stream -> k Unit U64
-labeless str = removeLabels (varless str)
+compiled :: Lambda k => Id.Stream -> k Unit U64
+compiled str = pointFree (bound str)
 
 result :: Id.Stream -> Word64
-result str = reify (labeless str)
+result str = reify (compiled str)
 
 cbpv :: Cbpv c d => Id.Stream -> c x (AsAlgebra U64)
-cbpv str = toCbpv (labeless str)
+cbpv str = toCbpv (compiled str)
