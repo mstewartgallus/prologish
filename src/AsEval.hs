@@ -13,7 +13,7 @@ import Data.Word
 import Sort
 import Prelude hiding ((.), id)
 
-reify :: Code Initial a -> Effect a
+reify :: Code (F Unit) a -> Effect a
 reify (Code f) = f ()
 
 newtype Data a b = Data (Constant a -> Constant b)
@@ -28,8 +28,7 @@ type family Constant a where
   Constant U64 = Word64
 
 type family Effect a where
-  Effect (a & b) = (Constant a, Effect b)
-  Effect Initial = ()
+  Effect (F a) = Constant a
   Effect Void = Void.Void
   Effect (a ~> b) = Constant a -> Effect b
 
@@ -42,13 +41,13 @@ instance Category Code where
   Code f . Code g = Code (f . g)
 
 instance Cbpv Code Data where
-  thunk (Code f) = Data $ \x -> f (x, ())
-  force (Data f) = Code $ \(x, _) -> f x
+  to (Code f) = Data $ \x -> f x
+  returns (Data f) = Code $ \x -> f x
 
-  initial = Code $ const ()
+  thunk (Code f) = Data $ \x -> f x
+  force (Data f) = Code $ \x -> f x
 
   absurd = Code Void.absurd
-
   Data x ! Data y = Data $ \env -> case env of
     Left l -> x l
     Right r -> y r
@@ -56,10 +55,12 @@ instance Cbpv Code Data where
   right = Data Right
 
   unit = Data $ const ()
-
   Data x # Data y = Data $ \env -> (x env, y env)
   first = Data fst
   second = Data snd
 
+  lambda = undefined
+  eval = undefined
+
   u64 x = Data $ const x
-  add = Code $ const $ \x y -> (x + y, ())
+  add = Code $ const $ \x y -> x + y

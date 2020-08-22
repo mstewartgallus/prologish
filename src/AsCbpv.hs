@@ -50,6 +50,7 @@ instance Cbpv c d => Sum.Sum (Expr c) where
 
 instance Cbpv c d => Exp.Exp (Expr c) where
   lambda (Expr f) = Expr $ lambda (thunk f) . returns id
+  eval (Expr f) = Expr $ force (eval (f . force id))
 
 instance Cbpv c d => Lambda.Lambda (Expr c) where
   u64 x = Expr (force (thunk id . u64 x) . returns unit)

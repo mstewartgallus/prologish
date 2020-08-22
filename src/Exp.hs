@@ -10,11 +10,7 @@ import Prelude hiding ((.), id)
 
 class Product k => Exp k where
   lambda :: k (env * a) b -> k env (a ~> b)
-  eval :: k ((a ~> b) * a) b
-
-  -- FIXME TODO, get rid of eval in favour of unlambda, more symmetrical
-  unlambda :: k env (a ~> b) -> k (env * a) b
-  unlambda f = eval <<< ((f . first) # second)
+  eval :: k env (a ~> b) -> k (env * a) b
 
   (<*>) :: k env (a ~> b) -> k env a -> k env b
-  f <*> x = eval <<< (f # x)
+  f <*> x = eval id <<< (f # x)

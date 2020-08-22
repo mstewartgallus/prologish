@@ -18,9 +18,6 @@ class (Category cd, Category dta) => Cbpv cd dta | cd -> dta, dta -> cd where
   thunk :: cd (F x) y -> dta x (U y)
   force :: dta x (U y) -> cd (F x) y
 
-  initial :: cd x Initial
-  intro :: cd Initial (F a)
-
   unit :: dta x Unit
   (#) :: dta env a -> dta env b -> dta env (a * b)
   first :: dta (a * b) a

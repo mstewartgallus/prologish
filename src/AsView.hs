@@ -39,7 +39,7 @@ instance Sum View where
 
 instance Exp View where
   lambda (View f) = View ("λ " ++ f)
-  eval = View "!"
+  eval (View f) = View ("! " ++ f)
 
 instance Lambda View where
   u64 x = View (show x)
