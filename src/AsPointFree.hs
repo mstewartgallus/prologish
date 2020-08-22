@@ -118,7 +118,11 @@ instance Product k => Product (PointFree k) where
         V
           { out = out f # out g,
             hasVar = \v -> hasVar f v || hasVar g v,
-            removeVar = \v -> removeVar f v # removeVar g v,
+            removeVar = \v -> case (hasVar f v, hasVar g v) of
+              (False, False) -> (f # g) . first
+              (False, _) -> ((f . first) # removeVar g v)
+              (_, False) -> removeVar f v # (g . first)
+              _ -> removeVar f v # removeVar g v,
             removeLabel = \v -> distribute (removeLabel f v) (removeLabel g v)
           }
 
