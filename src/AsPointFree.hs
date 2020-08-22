@@ -24,9 +24,8 @@ pointFree = out
 
 data PointFree k a b = V
   { out :: k a b,
-    hasVar :: forall v. Var v -> Bool,
-    removeVar :: forall v. (Exp k, Product k) => Var v -> PointFree k (a * v) b,
-    removeLabel :: forall v. (Exp k, Sum k) => Label v -> PointFree k a (b + v)
+    removeVar :: forall v. (Exp k, Product k) => Var v -> Maybe (PointFree k (a * v) b),
+    removeLabel :: forall v. (Exp k, Sum k) => Label v -> Maybe (PointFree k a (b + v))
   }
 
 data Label a = Label (ST a) Id
@@ -49,9 +48,8 @@ to x = me
     me =
       V
         { out = x,
-          hasVar = const False,
-          removeVar = const (me . first),
-          removeLabel = const (left . me)
+          removeVar = const Nothing,
+          removeLabel = const Nothing
         }
 
 instance Category k => Category (PointFree k) where
@@ -61,26 +59,35 @@ instance Category k => Category (PointFree k) where
       me =
         V
           { out = out f . out g,
-            hasVar = \v -> hasVar f v || hasVar g v,
-            removeVar = \v -> case (hasVar f v, hasVar g v) of
-              (False, False) -> f . g . first
-              (False, _) -> f . removeVar g v
-              (_, False) -> removeVar f v . ((g . first) # second)
-              _ -> removeVar f v . (removeVar g v # second),
-            removeLabel = \v -> (removeLabel f v ! right) . removeLabel g v
+            removeVar = \v -> case (removeVar f v, removeVar g v) of
+              (Just f', Just g') -> Just (f' . (g' # second))
+              (_, Just g') -> Just (f . g')
+              (Just f', _) -> Just (f' . ((g . first) # second))
+              _ -> Nothing,
+            removeLabel = \v -> case (removeLabel f v, removeLabel g v) of
+              (Just f', Just g') -> Just ((f' ! right) . g')
+              (_, Just g') -> Just (((left . f) ! right) . g')
+              (Just f', _) -> Just (f' . g)
+              _ -> Nothing
           }
 
 instance (Exp k, Sum k) => Labels (PointFree k) where
   bindMapLabel n t f = me
     where
       v = Label t n
-      me = (absurd ! id) . removeLabel (f (mkLabel v)) v
+      body = f (mkLabel v)
+      me = case removeLabel body v of
+        Nothing -> absurd . body
+        Just x -> (absurd ! id) . x
 
 instance Exp k => Vars (PointFree k) where
   bindMapVar n t f = me
     where
       v = Var t n
-      me = removeVar (f (mkVar v)) v . (unit # id)
+      body = f (mkVar v)
+      me = case removeVar body v of
+        Nothing -> body . unit
+        Just x -> x . (unit # id)
 
 mkVar :: Product k => Var a -> PointFree k Unit a
 mkVar v@(Var _ n) = me
@@ -88,11 +95,10 @@ mkVar v@(Var _ n) = me
     me =
       V
         { out = error ("free variable " ++ show n),
-          hasVar = \v' -> isJust (eqVar v v'),
           removeVar = \maybeV -> case eqVar v maybeV of
-            Nothing -> me . first
-            Just Refl -> to second,
-          removeLabel = const (left . me)
+            Nothing -> Nothing
+            Just Refl -> Just (to second),
+          removeLabel = const Nothing
         }
 
 mkLabel :: Sum k => Label a -> PointFree k a Void
@@ -101,11 +107,10 @@ mkLabel v@(Label _ n) = me
     me =
       V
         { out = error ("free label " ++ show n),
-          hasVar = const False,
           removeLabel = \maybeV -> case eqLabel v maybeV of
-            Nothing -> left . me
-            Just Refl -> to right,
-          removeVar = const (me . first)
+            Nothing -> Nothing
+            Just Refl -> Just (to right),
+          removeVar = const Nothing
         }
 
 instance Product k => Product (PointFree k) where
@@ -117,13 +122,16 @@ instance Product k => Product (PointFree k) where
       me =
         V
           { out = out f # out g,
-            hasVar = \v -> hasVar f v || hasVar g v,
-            removeVar = \v -> case (hasVar f v, hasVar g v) of
-              (False, False) -> (f # g) . first
-              (False, _) -> ((f . first) # removeVar g v)
-              (_, False) -> removeVar f v # (g . first)
-              _ -> removeVar f v # removeVar g v,
-            removeLabel = \v -> distribute (removeLabel f v) (removeLabel g v)
+            removeVar = \v -> case (removeVar f v, removeVar g v) of
+              (Just f', Just g') -> Just (f' # g')
+              (_, Just g') -> Just ((f . first) # g')
+              (Just f', _) -> Just (f' # (g . first))
+              _ -> Nothing,
+            removeLabel = \v -> case (removeLabel f v, removeLabel g v) of
+              (Just f', Just g') -> Just (distribute f' g')
+              (_, Just g') -> Just (distribute (left . f) g')
+              (Just f', _) -> Just (distribute f' (left . g))
+              _ -> Nothing
           }
 
 instance Sum k => Sum (PointFree k) where
@@ -135,9 +143,16 @@ instance Sum k => Sum (PointFree k) where
       me =
         V
           { out = out f ! out g,
-            hasVar = \v -> hasVar f v || hasVar g v,
-            removeVar = \v -> factor (removeVar f v) (removeVar g v),
-            removeLabel = \v -> removeLabel f v ! removeLabel g v
+            removeVar = \v -> case (removeVar f v, removeVar g v) of
+              (Just f', Just g') -> Just (factor f' g')
+              (_, Just g') -> Just (factor (f . first) g')
+              (Just f', _) -> Just (factor f' (g . first))
+              _ -> Nothing,
+            removeLabel = \v -> case (removeLabel f v, removeLabel g v) of
+              (Just f', Just g') -> Just (f' ! g')
+              (_, Just g') -> Just ((left . f) ! g')
+              (Just f', _) -> Just (f' ! (left . g))
+              _ -> Nothing
           }
 
 instance Exp k => Exp (PointFree k) where
@@ -147,9 +162,9 @@ instance Exp k => Exp (PointFree k) where
       me =
         V
           { out = lambda (out f),
-            hasVar = hasVar f,
-            removeVar = \v -> lambda (removeVar f v . shuffle),
-            removeLabel = undefined
+            removeVar = \v -> case removeVar f v of
+              Nothing -> Nothing
+              Just f' -> Just (lambda (f' . shuffle))
           }
       shuffle :: Product k => k ((a * c) * b) ((a * b) * c)
       shuffle = ((first . first) # second) # (second . first)
