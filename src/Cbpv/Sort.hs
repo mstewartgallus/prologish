@@ -3,7 +3,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module Sort
+module Cbpv.Sort
   ( Set,
     U,
     Unit,

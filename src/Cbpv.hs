@@ -6,9 +6,9 @@
 
 module Cbpv (Cbpv (..)) where
 
+import Cbpv.Sort
 import Control.Category
 import Data.Word (Word64)
-import Sort
 import Prelude hiding ((.), id)
 
 class (Category cd, Category dta) => Cbpv cd dta | cd -> dta, dta -> cd where

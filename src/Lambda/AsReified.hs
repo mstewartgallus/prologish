@@ -3,16 +3,16 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module AsReified (Eval (..), reify, Reify) where
+module Lambda.AsReified (Eval (..), reify, Reify) where
 
 import Control.Category
 import qualified Data.Void as Void
 import Data.Word
-import Exp
+import Lambda.Exp
 import Lambda
-import Product
-import Sum
-import Type
+import Lambda.Product
+import Lambda.Sum
+import Lambda.Type
 import Prelude hiding ((.), id)
 
 reify :: Eval Unit a -> Reify a

@@ -1,9 +1,9 @@
 {-# LANGUAGE TypeOperators #-}
 
-module Sum (Sum (..)) where
+module Lambda.Sum (Sum (..)) where
 
 import Control.Category
-import Type
+import Lambda.Type
 import Prelude hiding ((.), id)
 
 class Category k => Sum k where

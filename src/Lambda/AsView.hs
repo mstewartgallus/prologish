@@ -1,16 +1,16 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE KindSignatures #-}
 
-module AsView (View, view) where
+module Lambda.AsView (View, view) where
 
 import Control.Category
-import Exp
-import Labels
+import Lambda.Exp
+import Lambda.Labels
 import Lambda
-import Product
-import Sum
-import Type
-import Vars
+import Lambda.Product
+import Lambda.Sum
+import Lambda.Type
+import Lambda.Vars
 import Prelude hiding ((.), id)
 
 newtype View (a :: T) (b :: T) = View String

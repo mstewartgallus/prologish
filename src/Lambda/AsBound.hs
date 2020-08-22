@@ -1,19 +1,19 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE KindSignatures #-}
 
-module AsBound (Expr, bindPoints) where
+module Lambda.AsBound (Expr, bindPoints) where
 
 import Control.Category
 import Control.Monad.State
-import Exp
-import Hoas
+import Lambda.Exp
+import Lambda.Hoas
 import Id (Stream (..))
-import Labels
+import Lambda.Labels
 import Lambda
-import Product
-import Sum
-import Type
-import Vars
+import Lambda.Product
+import Lambda.Sum
+import Lambda.Type
+import Lambda.Vars
 import Prelude hiding ((.), (<*>), id)
 
 newtype Expr k (a :: T) (b :: T) = Expr {unExpr :: Stream -> k a b}

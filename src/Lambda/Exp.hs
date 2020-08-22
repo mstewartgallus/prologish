@@ -1,11 +1,11 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module Exp (Exp (..)) where
+module Lambda.Exp (Exp (..)) where
 
 import Control.Category
-import Product
-import Type
+import Lambda.Product
+import Lambda.Type
 import Prelude hiding ((.), id)
 
 class Product k => Exp k where

@@ -8,13 +8,13 @@
 module AsCbpv (Expr, toCbpv, AsAlgebra) where
 
 import Cbpv
+import Cbpv.Sort
 import Control.Category
-import qualified Exp
 import qualified Lambda
-import qualified Product
-import Sort
-import qualified Sum
-import qualified Type
+import qualified Lambda.Exp as Exp
+import qualified Lambda.Product as Product
+import qualified Lambda.Sum as Sum
+import qualified Lambda.Type as Type
 import Prelude hiding ((.), (<*>), id)
 
 newtype Expr c a b = Expr (c (AsAlgebra a) (AsAlgebra b))

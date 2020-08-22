@@ -2,10 +2,10 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module Product (Product (..)) where
+module Lambda.Product (Product (..)) where
 
 import Control.Category
-import Type
+import Lambda.Type
 import Prelude hiding ((.), id)
 
 class Category k => Product k where

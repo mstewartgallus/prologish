@@ -3,20 +3,20 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module AsPointFree (PointFree, pointFree) where
+module Lambda.AsPointFree (PointFree, pointFree) where
 
 import Control.Category
 import Data.Kind
 import Data.Maybe
 import Data.Typeable ((:~:) (..))
-import Exp
+import Lambda.Exp
 import Id (Id)
-import Labels
+import Lambda.Labels
 import Lambda
-import Product
-import Sum
-import Type
-import Vars
+import Lambda.Product
+import Lambda.Sum
+import Lambda.Type
+import Lambda.Vars
 import Prelude hiding ((.), (<*>), id)
 
 pointFree :: PointFree k a b -> k a b

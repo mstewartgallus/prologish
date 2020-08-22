@@ -4,7 +4,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module Type (KnownT, inferT, eqT, ST (..), T, Void, Unit, type (~>), type (*), type (+), type U64, Value, Continuation, End) where
+module Lambda.Type (KnownT, inferT, eqT, ST (..), T, Void, Unit, type (~>), type (*), type (+), type U64, Value, Continuation, End) where
 
 import Data.Kind (Type)
 import Data.Typeable ((:~:) (..))

@@ -3,10 +3,10 @@
 module Lambda (Lambda (..)) where
 
 import Data.Word (Word64)
-import Exp
-import Product
-import Sum
-import Type
+import Lambda.Exp
+import Lambda.Product
+import Lambda.Sum
+import Lambda.Type
 
 class (Sum k, Product k, Exp k) => Lambda k where
   u64 :: Word64 -> Value k U64

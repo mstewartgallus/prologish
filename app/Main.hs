@@ -1,22 +1,22 @@
 module Main where
 
-import AsBound
 import AsCbpv
-import qualified AsEval
-import AsPointFree
-import AsReified
-import AsView
-import qualified AsViewCbpv
 import Cbpv (Cbpv)
+import qualified Cbpv.AsEval as AsEval
+import qualified Cbpv.AsView as AsViewCbpv
 import Data.Word
-import Exp
-import Hoas
 import qualified Id
-import Labels
 import Lambda
-import Product
-import Type
-import Vars
+import Lambda.AsBound
+import Lambda.AsPointFree
+import Lambda.AsReified
+import Lambda.AsView
+import Lambda.Exp
+import Lambda.Hoas
+import Lambda.Labels
+import Lambda.Product
+import Lambda.Type
+import Lambda.Vars
 import Prelude hiding ((<*>))
 
 main :: IO ()

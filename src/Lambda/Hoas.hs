@@ -1,12 +1,12 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module Hoas (Hoas (..), label, var) where
+module Lambda.Hoas (Hoas (..), label, var) where
 
 import Control.Category
-import Product
-import Sum
-import Type
+import Lambda.Product
+import Lambda.Sum
+import Lambda.Type
 import Prelude hiding ((.), id)
 
 class Category k => Hoas k where

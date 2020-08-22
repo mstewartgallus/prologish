@@ -4,13 +4,13 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module AsEval (reify, Code, Data, Constant, Effect) where
+module Cbpv.AsEval (reify, Code, Data, Constant, Effect) where
 
 import Cbpv
 import Control.Category
 import qualified Data.Void as Void
 import Data.Word
-import Sort
+import Cbpv.Sort
 import Prelude hiding ((.), id)
 
 reify :: Code (F Unit) a -> Effect a

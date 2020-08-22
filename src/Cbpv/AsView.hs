@@ -2,11 +2,11 @@
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
-module AsViewCbpv (Code, view) where
+module Cbpv.AsView (Code, view) where
 
 import Cbpv
 import Control.Category
-import Sort
+import Cbpv.Sort
 import Prelude hiding ((.), id)
 
 newtype Code (a :: Algebra) (b :: Algebra) = Code String
