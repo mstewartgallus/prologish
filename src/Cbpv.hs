@@ -23,7 +23,7 @@ class (Category cd, Category dta) => Cbpv cd dta | cd -> dta, dta -> cd where
   first :: dta (a * b) a
   second :: dta (a * b) b
 
-  absurd :: cd Void x
+  absurd :: dta Void x
   (!) :: dta a c -> dta b c -> dta (a + b) c
   left :: dta a (a + b)
   right :: dta b (a + b)

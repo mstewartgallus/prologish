@@ -23,13 +23,13 @@ newtype Code a b = Code (Effect a -> Effect b)
 type family Constant a where
   Constant (U a) = Effect a
   Constant Unit = ()
+  Constant Void = Void.Void
   Constant (a * b) = (Constant a, Constant b)
   Constant (a + b) = Either (Constant a) (Constant b)
   Constant U64 = Word64
 
 type family Effect a where
   Effect (F a) = Constant a
-  Effect Void = Void.Void
   Effect (a ~> b) = Constant a -> Effect b
 
 instance Category Data where
@@ -47,7 +47,7 @@ instance Cbpv Code Data where
   thunk (Code f) = Data $ \x -> f x
   force (Data f) = Code $ \x -> f x
 
-  absurd = Code Void.absurd
+  absurd = Data Void.absurd
   Data x ! Data y = Data $ \env -> case env of
     Left l -> x l
     Right r -> y r

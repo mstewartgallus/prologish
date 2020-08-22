@@ -2,9 +2,11 @@ module Main where
 
 import AsBound
 import AsCbpv
+import qualified AsEval
 import AsPointFree
 import AsReified
 import AsView
+import qualified AsViewCbpv
 import Cbpv (Cbpv)
 import Data.Word
 import Exp
@@ -19,7 +21,7 @@ import Prelude hiding ((<*>))
 
 main :: IO ()
 main = do
-  Id.Stream _ x (Id.Stream _ y z) <- Id.stream
+  Id.Stream _ (Id.Stream _ x y) (Id.Stream _ z (Id.Stream _ w u)) <- Id.stream
 
   putStrLn "The Program"
   putStrLn (view (bound x))
@@ -31,6 +33,14 @@ main = do
   putStrLn ""
   putStrLn "Program Result"
   putStrLn (show (result z))
+
+  putStrLn ""
+  putStrLn "Cbpv Program"
+  putStrLn (AsViewCbpv.view (cbpv w))
+
+  putStrLn ""
+  putStrLn "Cbpv Result"
+  putStrLn (show (cbpvResult u))
 
 program :: (Lambda k, Hoas k) => k Unit U64
 program = u64 42 `letBe` var inferT inferT $ \x ->
@@ -49,3 +59,6 @@ result str = reify (compiled str)
 
 cbpv :: Cbpv c d => Id.Stream -> c x (AsAlgebra U64)
 cbpv str = toCbpv (compiled str)
+
+cbpvResult :: Id.Stream -> Word64
+cbpvResult str = AsEval.reify (cbpv str)

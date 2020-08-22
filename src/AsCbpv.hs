@@ -21,7 +21,7 @@ newtype Expr c a b = Expr (c (AsAlgebra a) (AsAlgebra b))
 
 type family AsAlgebra a where
   AsAlgebra Type.Unit = F Unit
-  AsAlgebra Type.Void = Void
+  AsAlgebra Type.Void = F Void
   AsAlgebra (a Type.* b) = F (U (AsAlgebra a) * U (AsAlgebra b))
   AsAlgebra (a Type.+ b) = F (U (AsAlgebra a) + U (AsAlgebra b))
   AsAlgebra (a Type.~> b) = U (AsAlgebra a) ~> AsAlgebra b
@@ -42,7 +42,7 @@ instance Cbpv c d => Product.Product (Expr c) where
   Expr f # Expr g = Expr $ returns (thunk (f . force id) # thunk (g . force id))
 
 instance Cbpv c d => Sum.Sum (Expr c) where
-  absurd = Expr absurd
+  absurd = Expr (force absurd)
 
   left = Expr (returns left)
   right = Expr (returns right)
