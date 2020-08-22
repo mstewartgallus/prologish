@@ -12,16 +12,14 @@ import Sort
 import Prelude hiding ((.), id)
 
 class (Category cd, Category dta) => Cbpv cd dta | cd -> dta, dta -> cd where
-  thunk :: cd (F x) b -> dta x (U b)
+  to :: cd env (F a) -> dta (U env) a
+  returns :: dta (U env) a -> cd env (F a)
+
+  thunk :: cd (F x) y -> dta x (U y)
   force :: dta x (U y) -> cd (F x) y
 
-  box :: dta x (U (F x))
-  box = thunk id
-
-  unbox :: cd (F (U x)) x
-  unbox = force id
-
   initial :: cd x Initial
+  intro :: cd Initial (F a)
 
   unit :: dta x Unit
   (#) :: dta env a -> dta env b -> dta env (a * b)
@@ -32,6 +30,9 @@ class (Category cd, Category dta) => Cbpv cd dta | cd -> dta, dta -> cd where
   (!) :: dta a c -> dta b c -> dta (a + b) c
   left :: dta a (a + b)
   right :: dta b (a + b)
+
+  lambda :: dta (a * b) (U c) -> cd (F a) (b ~> c)
+  eval :: cd (F a) (b ~> c) -> dta (a * b) (U c)
 
   u64 :: Word64 -> dta x U64
   add :: cd x (U64 ~> U64 ~> F U64)

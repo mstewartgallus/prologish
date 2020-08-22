@@ -20,7 +20,7 @@ import Prelude hiding ((.), (<*>), id)
 newtype Expr c a b = Expr (c (AsAlgebra a) (AsAlgebra b))
 
 type family AsAlgebra a where
-  AsAlgebra Type.Unit = Initial
+  AsAlgebra Type.Unit = F Unit
   AsAlgebra Type.Void = Void
   AsAlgebra (a Type.* b) = F (U (AsAlgebra a) * U (AsAlgebra b))
   AsAlgebra (a Type.+ b) = F (U (AsAlgebra a) + U (AsAlgebra b))
@@ -28,30 +28,28 @@ type family AsAlgebra a where
   AsAlgebra Type.U64 = F U64
 
 toCbpv :: Cbpv c d => Expr c Type.Unit a -> c x (AsAlgebra a)
-toCbpv (Expr x) = x . initial
+toCbpv (Expr x) = x . returns unit
 
 instance Cbpv c d => Category (Expr c) where
   id = Expr id
   Expr f . Expr g = Expr (f . g)
 
 instance Cbpv c d => Product.Product (Expr c) where
-  unit = Expr initial
+  unit = Expr (returns unit)
 
-  first = undefined
-  second = undefined
-  (#) = undefined
+  first = Expr (force first)
+  second = Expr (force second)
+  Expr f # Expr g = Expr $ returns (thunk (f . force id) # thunk (g . force id))
 
 instance Cbpv c d => Sum.Sum (Expr c) where
   absurd = Expr absurd
 
-  left = undefined
-  right = undefined
-  (!) = undefined
+  left = Expr (returns left)
+  right = Expr (returns right)
+  Expr f ! Expr g = Expr $ force (to (returns id . f) ! to (returns id . g))
 
 instance Cbpv c d => Exp.Exp (Expr c) where
-  lambda = undefined
-  eval = undefined
+  lambda (Expr f) = Expr $ lambda (thunk f) . returns id
 
 instance Cbpv c d => Lambda.Lambda (Expr c) where
-  u64 = undefined
-  add = undefined
+  u64 x = Expr (force (thunk id . u64 x) . returns unit)
