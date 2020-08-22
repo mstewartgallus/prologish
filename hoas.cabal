@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 5610cdeab1ed7157cda8af00b04315c6565031dd779bf8636c903ac2e854c86f
+-- hash: eca23ed487532f13c644299200e0b2ba1606c142beff66ba05cb8bec561acc20
 
 name:           hoas
 version:        0.1.0.0
@@ -30,7 +30,6 @@ library
       AsBound
       AsCbpv
       AsEval
-      AsLabeless
       AsPointFree
       AsReified
       AsView

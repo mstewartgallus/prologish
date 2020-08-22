@@ -7,6 +7,7 @@ module AsPointFree (PointFree, pointFree) where
 
 import Control.Category
 import Data.Kind
+import Data.Maybe
 import Data.Typeable ((:~:) (..))
 import Exp
 import Id (Id)
@@ -23,6 +24,7 @@ pointFree = out
 
 data PointFree k a b = V
   { out :: k a b,
+    hasVar :: forall v. Var v -> Bool,
     removeVar :: forall v. (Exp k, Product k) => Var v -> PointFree k (a * v) b,
     removeLabel :: forall v. (Exp k, Sum k) => Label v -> PointFree k a (b + v)
   }
@@ -47,6 +49,7 @@ to x = me
     me =
       V
         { out = x,
+          hasVar = const False,
           removeVar = const (me . first),
           removeLabel = const (left . me)
         }
@@ -58,7 +61,12 @@ instance Category k => Category (PointFree k) where
       me =
         V
           { out = out f . out g,
-            removeVar = \v -> removeVar f v . (removeVar g v # second),
+            hasVar = \v -> hasVar f v || hasVar g v,
+            removeVar = \v -> case (hasVar f v, hasVar g v) of
+              (False, False) -> f . g . first
+              (False, _) -> f . removeVar g v
+              (_, False) -> removeVar f v . ((g . first) # second)
+              _ -> removeVar f v . (removeVar g v # second),
             removeLabel = \v -> (removeLabel f v ! right) . removeLabel g v
           }
 
@@ -80,6 +88,7 @@ mkVar v@(Var _ n) = me
     me =
       V
         { out = error ("free variable " ++ show n),
+          hasVar = \v' -> isJust (eqVar v v'),
           removeVar = \maybeV -> case eqVar v maybeV of
             Nothing -> me . first
             Just Refl -> to second,
@@ -92,6 +101,7 @@ mkLabel v@(Label _ n) = me
     me =
       V
         { out = error ("free label " ++ show n),
+          hasVar = const False,
           removeLabel = \maybeV -> case eqLabel v maybeV of
             Nothing -> left . me
             Just Refl -> to right,
@@ -107,6 +117,7 @@ instance Product k => Product (PointFree k) where
       me =
         V
           { out = out f # out g,
+            hasVar = \v -> hasVar f v || hasVar g v,
             removeVar = \v -> removeVar f v # removeVar g v,
             removeLabel = \v -> distribute (removeLabel f v) (removeLabel g v)
           }
@@ -120,6 +131,7 @@ instance Sum k => Sum (PointFree k) where
       me =
         V
           { out = out f ! out g,
+            hasVar = \v -> hasVar f v || hasVar g v,
             removeVar = \v -> factor (removeVar f v) (removeVar g v),
             removeLabel = \v -> removeLabel f v ! removeLabel g v
           }
@@ -131,6 +143,7 @@ instance Exp k => Exp (PointFree k) where
       me =
         V
           { out = lambda (out f),
+            hasVar = hasVar f,
             removeVar = \v -> lambda (removeVar f v . shuffle),
             removeLabel = undefined
           }
