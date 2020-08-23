@@ -13,8 +13,8 @@ newtype Stack (a :: Algebra) (b :: Algebra) = Stack String
 
 newtype Code (a :: Set) (b :: Set) = Code String
 
-view :: Stack a b -> String
-view (Stack v) = v
+view :: Code a b -> String
+view (Code v) = v
 
 instance Category Stack where
   id = Stack "id"
@@ -26,7 +26,7 @@ instance Category Code where
 
 instance Cbpv Stack Code where
   to (Stack f) (Stack x) = Stack ("(to " ++ f ++ " " ++ x ++ ")")
-  returns (Code f) = Stack ("(returns " ++ f ++ ")")
+  returns (Code f) = Stack ("(return " ++ f ++ ")")
 
   thunk (Stack f) = Code ("(thunk " ++ f ++ ")")
   force (Code f) = Stack ("(force " ++ f ++ ")")
@@ -46,3 +46,4 @@ instance Cbpv Stack Code where
 
   u64 x = Code (show x)
   add = Code "add"
+  addLazy = Stack "add"

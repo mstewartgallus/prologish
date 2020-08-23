@@ -44,6 +44,7 @@ class (Category stk, Category dta) => Cbpv stk dta | stk -> dta, dta -> stk wher
 
   -- fixme.. have optimized version...
   add :: dta Unit (U (U64 ~> F (U (U64 ~> F U64))))
+  addLazy :: stk (F Unit) (U (F U64) ~> U (F U64) ~> F U64)
 
 infixl 9 #
 

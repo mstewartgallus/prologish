@@ -13,9 +13,10 @@ import Data.Word
 import Cbpv.Sort
 import Prelude hiding ((.), id)
 
-reify :: Stack (F Unit) (F U64) -> Word64
-reify (C f) = case f (Unit :& Effect 0) of
-  (U64 y :& _) -> y
+reify :: DataM (U (F Unit)) (U (F U64)) -> Word64
+reify (D f) = case f (Thunk $ \w -> Unit :& Effect w) of
+  Thunk t -> case t 0 of
+    (U64 y :& _) -> y
 
 newtype DataM a b = D (Data a -> Data b)
 
@@ -76,3 +77,8 @@ instance Cbpv Stack DataM where
     (:& Effect w0) $ Thunk $ \w1 ->
     Lam $ \(U64 y) ->
     U64 (x + y) :& Effect w1
+
+  addLazy = C $ \(Unit :& Effect w0) ->
+    Lam $ \(Thunk x) -> Lam $ \(Thunk y) -> case x w0 of
+       U64 x' :& Effect w1 -> case y w1 of
+         U64 y' :& Effect w2 -> U64 (x' + y') :& Effect w2

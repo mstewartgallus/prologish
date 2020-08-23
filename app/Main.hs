@@ -1,6 +1,6 @@
 module Main where
 
-import AsCbpv
+import AsCallByName
 import Cbpv (Cbpv)
 import qualified Cbpv.AsEval as AsEval
 import qualified Cbpv.AsView as AsViewCbpv
@@ -58,7 +58,7 @@ compiled str = pointFree (bound str)
 result :: Id.Stream -> Word64
 result str = reify (compiled str)
 
-cbpv :: Cbpv c d => Id.Stream -> c (Cbpv.Sort.F Cbpv.Sort.Unit) (Cbpv.Sort.F (AsSet U64))
+cbpv :: Cbpv c d => Id.Stream -> d (Cbpv.Sort.U (Cbpv.Sort.F Cbpv.Sort.Unit)) (Cbpv.Sort.U (AsAlgebra U64))
 cbpv str = toCbpv (compiled str)
 
 cbpvResult :: Id.Stream -> Word64

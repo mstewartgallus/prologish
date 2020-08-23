@@ -6,7 +6,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module AsCbpv (Expr, toCbpv, AsSet) where
+module AsCallByValue (Expr, toCbpv, AsSet, bar) where
 
 import Cbpv
 import Cbpv.Sort
@@ -50,9 +50,11 @@ instance Cbpv c d => Sum.Sum (Expr c) where
   Expr f ! Expr g = Expr (force (thunk f ! thunk g))
 
 instance Cbpv c d => Exp.Exp (Expr c) where
-  -- lambda (Expr f) = Expr $ lambda (thunk f) . returns id
-  Expr f <*> Expr x = Expr (x `to` ((f . returns first) `to` ((force second) <*> (second . first))))
+  lambda (Expr f) = Expr $ returns (thunk (lambda f))
+  Expr f <*> Expr x = Expr $ f `to` ((x . returns first) `to` ((force (second . first)) <*> second))
 
 instance Cbpv c d => Lambda.Lambda (Expr c) where
   u64 x = Expr (returns (u64 x))
   add = Expr (returns add)
+
+bar f x = f `to` ((x . returns first) `to` ((force (second . first)) <*> second))
