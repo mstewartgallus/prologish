@@ -156,17 +156,17 @@ instance Sum k => Sum (PointFree k) where
           }
 
 instance Exp k => Exp (PointFree k) where
-  eval f = me
+  f <*> x = me
     where
       me =
         V
-          { out = eval (out f),
-            removeVar = \v -> case removeVar f v of
-              Nothing -> Nothing
-              Just f' -> Just (eval f' . shuffle)
+          { out = out f <*> out x,
+            removeVar = \v -> case (removeVar f v, removeVar x v) of
+              (Just f', Just x') -> Just (f' <*> x')
+              (_, Just x') -> Just ((f . first) <*> x')
+              (Just f', _) -> Just (f' <*> (x . first))
+              _ -> Nothing
           }
-      shuffle :: Product k => k ((a * c) * b) ((a * b) * c)
-      shuffle = ((first . first) # second) # (second . first)
 
   lambda f = me
     where
@@ -188,10 +188,10 @@ factor :: (Sum k, Exp k) => k (a * x) c -> k (b * x) c -> k ((a + b) * x) c
 factor f g = eval (lambda f ! lambda g)
 
 distribute :: (Sum k, Exp k) => k c (a + x) -> k c (b + x) -> k c ((a * b) + x)
-distribute f g = eval id . ((process . f) # g)
+distribute f g = (process . f) <*> g
 
 process :: (Sum k, Exp k) => k (a + x) ((b + x) ~> ((a * b) + x))
-process = lambda (eval id . ((bar . second) # first)) ! lambda (right . first)
+process = undefined
 
 bar :: (Sum k, Exp k) => k (b + x) (a ~> ((a * b) + x))
 bar = lambda (left . (second # first)) ! lambda (right . first)

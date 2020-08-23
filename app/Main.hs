@@ -2,9 +2,9 @@ module Main where
 
 import AsCbpv
 import Cbpv (Cbpv)
-import qualified Cbpv.Sort
 import qualified Cbpv.AsEval as AsEval
 import qualified Cbpv.AsView as AsViewCbpv
+import qualified Cbpv.Sort
 import Data.Word
 import qualified Id
 import Lambda
@@ -58,7 +58,7 @@ compiled str = pointFree (bound str)
 result :: Id.Stream -> Word64
 result str = reify (compiled str)
 
-cbpv :: Cbpv c d => Id.Stream -> d Cbpv.Sort.Unit (AsSet U64)
+cbpv :: Cbpv c d => Id.Stream -> c (Cbpv.Sort.F Cbpv.Sort.Unit) (Cbpv.Sort.F (AsSet U64))
 cbpv str = toCbpv (compiled str)
 
 cbpvResult :: Id.Stream -> Word64

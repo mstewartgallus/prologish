@@ -53,7 +53,7 @@ instance Sum k => Sum (Expr k) where
 
 instance Exp k => Exp (Expr k) where
   lambda (Expr f) = Expr $ liftM lambda f
-  eval (Expr f) = Expr $ liftM eval f
+  Expr f <*> Expr x = Expr $ liftM2 (<*>) f x
 
 instance Lambda k => Lambda (Expr k) where
   u64 x = Expr $ pure (u64 x)

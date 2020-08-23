@@ -1,12 +1,12 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE TypeFamilyDependencies #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeFamilyDependencies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module AsCbpv (Expr, toCbpv, AsSet) where
+module AsCbpv (Expr, toCbpv, AsSet, foo) where
 
 import Cbpv
 import Cbpv.Sort
@@ -18,7 +18,7 @@ import qualified Lambda.Sum as Sum
 import qualified Lambda.Type as Type
 import Prelude hiding ((.), (<*>), id)
 
-newtype Expr c a b = Expr (c (AsSet a) (AsSet b))
+newtype Expr c a b = Expr (c (F (AsSet a)) (F (AsSet b)))
 
 type family AsSet a = r | r -> a where
   AsSet Type.Unit = Unit
@@ -28,31 +28,35 @@ type family AsSet a = r | r -> a where
   AsSet (a Type.~> b) = U (AsSet a ~> F (AsSet b))
   AsSet Type.U64 = U64
 
-toCbpv :: Cbpv c d => Expr d Type.Unit a -> d Unit (AsSet a)
+toCbpv :: Cbpv c d => Expr c Type.Unit a -> c (F Unit) (F (AsSet a))
 toCbpv (Expr x) = x
 
-instance Cbpv c d => Category (Expr d) where
+instance Cbpv c d => Category (Expr c) where
   id = Expr id
   Expr f . Expr g = Expr (f . g)
 
-instance Cbpv c d => Product.Product (Expr d) where
-  unit = Expr unit
+instance Cbpv c d => Product.Product (Expr c) where
+  unit = Expr (returns unit)
 
-  first = Expr first
-  second = Expr second
-  Expr f # Expr g = Expr (f # g)
+  first = Expr (returns first)
+  second = Expr (returns second)
+  Expr f # Expr g = Expr (f `to` ((g . returns first) `to` returns ((second . first) # second)))
 
-instance Cbpv c d => Sum.Sum (Expr d) where
-  absurd = Expr absurd
+instance Cbpv c d => Sum.Sum (Expr c) where
+  absurd = Expr (returns absurd)
 
-  left = Expr left
-  right = Expr right
-  Expr f ! Expr g = Expr (f ! g)
+  left = Expr (returns left)
+  right = Expr (returns right)
+  Expr f ! Expr g = Expr (force (thunk f ! thunk g))
 
-instance Cbpv c d => Exp.Exp (Expr d) where
-  -- lambda (Expr f) = Expr $ lambda (thunk f) . returns id
-  -- eval (Expr f) = Expr $ (thunk (eval (force f) id))
+instance Cbpv c d => Exp.Exp (Expr c)
 
-instance Cbpv c d => Lambda.Lambda (Expr d) where
-  u64 x = Expr (u64 x)
-  add = Expr add
+-- lambda (Expr f) = Expr $ lambda (thunk f) . returns id
+-- Expr f <*> Expr x = Expr (x `to` ((f . returns first) <*> second))
+
+instance Cbpv c d => Lambda.Lambda (Expr c) where
+  u64 x = Expr (returns (u64 x))
+  add = Expr (returns add)
+
+-- foo f x = thunk (force f <*> x)
+foo f g = force (thunk f ! thunk g)

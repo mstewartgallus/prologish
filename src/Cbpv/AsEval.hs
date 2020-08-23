@@ -13,9 +13,9 @@ import Data.Word
 import Cbpv.Sort
 import Prelude hiding ((.), id)
 
-reify :: DataM Unit U64 -> Word64
-reify (D f) = case f Unit of
-  U64 y -> y
+reify :: Stack (F Unit) (F U64) -> Word64
+reify (C f) = case f (Unit :& Effect 0) of
+  (U64 y :& _) -> y
 
 newtype DataM a b = D (Data a -> Data b)
 
@@ -66,7 +66,7 @@ instance Cbpv Stack DataM where
   second = D secondOf
 
   lambda (C f) = C $ \(env :& w) -> Lam $ \x -> f ((Pair env x) :& w)
-  eval (C f) (D x) = C $ \(env :& w) -> case f (env :& w) of
+  C f <*> D x = C $ \(env :& w) -> case f (env :& w) of
      Lam y -> y (x env)
 
   u64 x = D $ const (U64 x)

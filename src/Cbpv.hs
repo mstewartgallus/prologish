@@ -9,7 +9,7 @@ module Cbpv (Cbpv (..)) where
 import Cbpv.Sort
 import Control.Category
 import Data.Word (Word64)
-import Prelude hiding ((.), id)
+import Prelude hiding ((.), (<*>), id)
 
 class (Category stk, Category dta) => Cbpv stk dta | stk -> dta, dta -> stk where
   thunk ::
@@ -41,7 +41,7 @@ class (Category stk, Category dta) => Cbpv stk dta | stk -> dta, dta -> stk wher
   right :: dta b (a + b)
 
   lambda :: stk (F (env * a)) b -> stk (F env) (a ~> b)
-  eval :: stk (F env) (a ~> b) -> dta env a -> stk (F env) b
+  (<*>) :: stk (F env) (a ~> b) -> dta env a -> stk (F env) b
 
   u64 :: Word64 -> dta x U64
 
