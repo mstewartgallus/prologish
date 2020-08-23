@@ -11,12 +11,24 @@ import Control.Category
 import Data.Word (Word64)
 import Prelude hiding ((.), id)
 
-class (Category cd, Category dta) => Cbpv cd dta | cd -> dta, dta -> cd where
-  to :: cd env (F a) -> dta (U env) a
-  returns :: dta (U env) a -> cd env (F a)
+class (Category stk, Category dta) => Cbpv stk dta | stk -> dta, dta -> stk where
+  thunk ::
+    stk (F x) y ->
+    dta x (U y)
+  force ::
+    dta x (U y) ->
+    stk (F x) y
 
-  thunk :: cd (F x) y -> dta x (U y)
-  force :: dta x (U y) -> cd (F x) y
+  returns ::
+    dta env a ->
+    stk (F env) (F a)
+  to ::
+    stk (env & k) (F a) ->
+    stk (F (env * a)) b ->
+    stk (env & k) b
+
+  -- fixme, do the empty stoup and tensor stuff...
+  initial :: stk x I
 
   unit :: dta x Unit
   (#) :: dta env a -> dta env b -> dta env (a * b)
@@ -28,13 +40,13 @@ class (Category cd, Category dta) => Cbpv cd dta | cd -> dta, dta -> cd where
   left :: dta a (a + b)
   right :: dta b (a + b)
 
-  lambda :: dta (a * b) (U c) -> cd (F a) (b ~> c)
-  eval :: cd (F a) (b ~> c) -> dta (a * b) (U c)
+  lambda :: dta (a * b) (U c) -> stk (F a) (b ~> c)
+  eval :: stk (F a) (b ~> c) -> dta (a * b) (U c)
 
   u64 :: Word64 -> dta x U64
 
   -- fixme.. have optimized version...
-  add :: cd (F Unit) (U (F U64) ~> U (F U64) ~> F U64)
+  add :: stk (F Unit) (U (F U64) ~> U (F U64) ~> F U64)
 
 infixl 9 #
 

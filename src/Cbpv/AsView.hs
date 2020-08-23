@@ -2,47 +2,47 @@
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
-module Cbpv.AsView (Code, view) where
+module Cbpv.AsView (Stack, view) where
 
 import Cbpv
 import Control.Category
 import Cbpv.Sort
 import Prelude hiding ((.), id)
 
-newtype Code (a :: Algebra) (b :: Algebra) = Code String
+newtype Stack (a :: Algebra) (b :: Algebra) = Stack String
 
-newtype Data (a :: Set) (b :: Set) = Data String
+newtype Code (a :: Set) (b :: Set) = Code String
 
-view :: Code a b -> String
-view (Code v) = v
+view :: Stack a b -> String
+view (Stack v) = v
+
+instance Category Stack where
+  id = Stack "id"
+  Stack f . Stack g = Stack (g ++ " ∘ " ++ f)
 
 instance Category Code where
   id = Code "id"
   Code f . Code g = Code (g ++ " ∘ " ++ f)
 
-instance Category Data where
-  id = Data "id"
-  Data f . Data g = Data (g ++ " ∘ " ++ f)
+instance Cbpv Stack Code where
+  to (Stack f) (Stack x) = Stack ("(to " ++ f ++ " " ++ x ++ ")")
+  returns (Code f) = Stack ("(returns " ++ f ++ ")")
 
-instance Cbpv Code Data where
-  to (Code f) = Data ("(to " ++ f ++ ")")
-  returns (Data f) = Code ("(returns " ++ f ++ ")")
+  thunk (Stack f) = Code ("(thunk " ++ f ++ ")")
+  force (Code f) = Stack ("(force " ++ f ++ ")")
 
-  thunk (Code f) = Data ("(thunk " ++ f ++ ")")
-  force (Data f) = Code ("(force " ++ f ++ ")")
+  unit = Code "unit"
+  Code f # Code x = Code ("⟨" ++ f ++ " , " ++ x ++ "⟩")
+  first = Code "π₁"
+  second = Code "π₂"
 
-  unit = Data "unit"
-  Data f # Data x = Data ("⟨" ++ f ++ " , " ++ x ++ "⟩")
-  first = Data "π₁"
-  second = Data "π₂"
+  absurd = Code "absurd"
+  Code f ! Code x = Code ("[" ++ f ++ " , " ++ x ++ "]")
+  left = Code "i₁"
+  right = Code "i₂"
 
-  absurd = Data "absurd"
-  Data f ! Data x = Data ("[" ++ f ++ " , " ++ x ++ "]")
-  left = Data "i₁"
-  right = Data "i₂"
+  lambda (Code f) = Stack ("(λ " ++ f ++ ")")
+  eval (Stack f) = Code ("(! " ++ f ++ ")")
 
-  lambda (Data f) = Code ("(λ " ++ f ++ ")")
-  eval (Code f) = Data ("(! " ++ f ++ ")")
-
-  u64 x = Data (show x)
-  add = Code "add"
+  u64 x = Code (show x)
+  add = Stack "add"
