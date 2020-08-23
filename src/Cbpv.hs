@@ -9,7 +9,7 @@ module Cbpv (Cbpv (..)) where
 import Cbpv.Sort
 import Control.Category
 import Data.Word (Word64)
-import Prelude hiding ((.), (<*>), id)
+import Prelude hiding (id, (.), (<*>))
 
 class (Category stk, Category dta) => Cbpv stk dta | stk -> dta, dta -> stk where
   thunk ::

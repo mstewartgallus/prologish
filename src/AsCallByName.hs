@@ -17,7 +17,7 @@ import qualified Lambda.Exp as Exp
 import qualified Lambda.Product as Product
 import qualified Lambda.Sum as Sum
 import qualified Lambda.Type as Type
-import Prelude hiding ((.), (<*>), id)
+import Prelude hiding (id, (.), (<*>))
 
 newtype Expr c a b = Expr (c (U (AsAlgebra a)) (U (AsAlgebra b)))
 
