@@ -70,11 +70,9 @@ instance Cbpv Stack DataM where
      Lam y -> y (x env)
 
   u64 x = D $ const (U64 x)
-  -- add = C $ \(Effect w0 Unit) ->
-  --   Lam $ \(Thunk x) ->
-  --   Lam $ \(Thunk y) ->
-  --   case x w0 of
-  --     Effect w1 (U64 x') ->
-  --       case y w1 of
-  --         Effect w2 (U64 y') ->
-  --             Effect w2 (U64 (x' + y'))
+  add = D $ \Unit ->
+    Thunk $ \w0 ->
+    Lam $ \(U64 x) ->
+    (:& Effect w0) $ Thunk $ \w1 ->
+    Lam $ \(U64 y) ->
+    U64 (x + y) :& Effect w1

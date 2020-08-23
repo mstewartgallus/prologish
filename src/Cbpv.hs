@@ -27,9 +27,6 @@ class (Category stk, Category dta) => Cbpv stk dta | stk -> dta, dta -> stk wher
     stk (F (env * a)) b ->
     stk (env & k) b
 
-  expand :: stk Initial (F Unit)
-  contract :: stk (F Unit) Initial
-
   unit :: dta x Unit
   (#) :: dta env a -> dta env b -> dta env (a * b)
   first :: dta (a * b) a
