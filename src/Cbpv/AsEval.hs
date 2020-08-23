@@ -13,9 +13,9 @@ import Data.Word
 import Cbpv.Sort
 import Prelude hiding ((.), id)
 
-reify :: Stack I (F U64) -> Word64
-reify (C f) = case f (Effect 0) of
-  (U64 v :& _) -> v
+reify :: DataM Unit U64 -> Word64
+reify (D f) = case f Unit of
+  U64 y -> y
 
 newtype DataM a b = D (Data a -> Data b)
 
@@ -32,7 +32,7 @@ data instance Data (a + b) = L !(Data a) | R !(Data b)
 newtype instance Data U64 = U64 Word64
 
 data family Code (a :: Algebra)
-data instance Code I = Effect Int
+data instance Code Initial = Effect Int
 data instance Code (a & b) = Data a :& Code b
 newtype instance Code (a ~> b) = Lam (Data a -> Code b)
 
@@ -65,10 +65,9 @@ instance Cbpv Stack DataM where
   first = D firstOf
   second = D secondOf
 
-  lambda (D f) = C $ \(env :& Effect w) -> Lam $ \x -> case f (Pair env x) of
-    Thunk t -> t w
-  eval (C f) = D $ \(Pair env x) -> Thunk $ \w -> case f (env :& Effect w) of
-     Lam y -> y x
+  lambda (C f) = C $ \(env :& w) -> Lam $ \x -> f ((Pair env x) :& w)
+  eval (C f) (D x) = C $ \(env :& w) -> case f (env :& w) of
+     Lam y -> y (x env)
 
   u64 x = D $ const (U64 x)
   -- add = C $ \(Effect w0 Unit) ->

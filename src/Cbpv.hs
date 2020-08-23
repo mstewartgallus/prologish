@@ -27,8 +27,8 @@ class (Category stk, Category dta) => Cbpv stk dta | stk -> dta, dta -> stk wher
     stk (F (env * a)) b ->
     stk (env & k) b
 
-  -- fixme, do the empty stoup and tensor stuff...
-  initial :: stk x I
+  expand :: stk Initial (F Unit)
+  contract :: stk (F Unit) Initial
 
   unit :: dta x Unit
   (#) :: dta env a -> dta env b -> dta env (a * b)
@@ -40,13 +40,13 @@ class (Category stk, Category dta) => Cbpv stk dta | stk -> dta, dta -> stk wher
   left :: dta a (a + b)
   right :: dta b (a + b)
 
-  lambda :: dta (a * b) (U c) -> stk (F a) (b ~> c)
-  eval :: stk (F a) (b ~> c) -> dta (a * b) (U c)
+  lambda :: stk (F (env * a)) b -> stk (F env) (a ~> b)
+  eval :: stk (F env) (a ~> b) -> dta env a -> stk (F env) b
 
   u64 :: Word64 -> dta x U64
 
   -- fixme.. have optimized version...
-  add :: stk (F Unit) (U (F U64) ~> U (F U64) ~> F U64)
+  add :: dta Unit (U (U64 ~> F (U (U64 ~> F U64))))
 
 infixl 9 #
 

@@ -13,8 +13,8 @@ newtype Stack (a :: Algebra) (b :: Algebra) = Stack String
 
 newtype Code (a :: Set) (b :: Set) = Code String
 
-view :: Stack a b -> String
-view (Stack v) = v
+view :: Code a b -> String
+view (Code v) = v
 
 instance Category Stack where
   id = Stack "id"
@@ -41,8 +41,8 @@ instance Cbpv Stack Code where
   left = Code "i₁"
   right = Code "i₂"
 
-  lambda (Code f) = Stack ("(λ " ++ f ++ ")")
-  eval (Stack f) = Code ("(! " ++ f ++ ")")
+  lambda (Stack f) = Stack ("(λ " ++ f ++ ")")
+  eval (Stack f) (Code x) = Stack ("(! " ++ f ++ " " ++ x ++ ")")
 
   u64 x = Code (show x)
-  add = Stack "add"
+  add = Code "add"
