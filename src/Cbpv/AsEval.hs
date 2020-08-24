@@ -1,4 +1,6 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE Strict #-}
+{-# LANGUAGE StrictData #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE EmptyCase #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -28,8 +30,8 @@ data instance Data (U a) = Thunk (Int -> Code a)
 
 data instance Data Unit = Unit
 data instance Data Void
-data instance Data (a * b) = Pair { firstOf :: !(Data a), secondOf :: !(Data b) }
-data instance Data (a + b) = L !(Data a) | R !(Data b)
+data instance Data (a * b) = Pair { firstOf :: (Data a), secondOf :: (Data b) }
+data instance Data (a + b) = L (Data a) | R (Data b)
 newtype instance Data U64 = U64 Word64
 
 data family Code (a :: Algebra)
