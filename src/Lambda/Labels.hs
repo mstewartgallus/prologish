@@ -5,4 +5,4 @@ import Id (Id)
 import Lambda.Type
 
 class Category k => Labels k where
-  bindMapLabel :: Id -> ST b -> (k b Void -> k a Void) -> k a b
+  bindImplicitLabel :: Id -> ST b -> (k b Void -> k a Void) -> k b env -> k a env

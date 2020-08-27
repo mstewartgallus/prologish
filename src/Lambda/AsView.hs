@@ -24,7 +24,6 @@ instance Category View where
 
 instance Product View where
   unit = View "unit"
-  View x `letBe` View f = View (x ++ " be " ++ f)
 
   View f # View x = View ("⟨" ++ f ++ " , " ++ x ++ "⟩")
   first = View "π₁"
@@ -46,13 +45,13 @@ instance Lambda View where
   add = View "add"
 
 instance Vars View where
-  bindMapVar n t f =
+  bindImplicitEnv n t f (View x) =
     let v = "v" ++ show n
         View body = f (View v)
-     in View (v ++ ": " ++ show t ++ ".\n" ++ body)
+     in View (x ++ " be " ++ v ++ ": " ++ show t ++ ".\n" ++ body)
 
 instance Labels View where
-  bindMapLabel n t f =
+  bindImplicitLabel n t f (View x) =
     let v = "l" ++ show n
         View body = f (View v)
-     in View (v ++ ": " ++ show t ++ ".\n" ++ body)
+     in View (x ++ " be " ++ v ++ ": " ++ show t ++ ".\n" ++ body)

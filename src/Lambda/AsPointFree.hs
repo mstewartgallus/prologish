@@ -72,22 +72,21 @@ instance Category k => Category (PointFree k) where
           }
 
 instance (Exp k, Sum k) => Labels (PointFree k) where
-  bindMapLabel n t f = me
+  bindImplicitLabel n t f x = me
     where
       v = Label t n
       body = f (mkLabel v)
       me = case removeLabel body v of
         Nothing -> absurd . body
-        Just x -> (absurd ! id) . x
+        Just y -> (absurd ! x) . y
 
 instance Exp k => Vars (PointFree k) where
-  bindMapVar n t f = me
-    where
+  bindImplicitEnv n t f x = me where
       v = Var t n
       body = f (mkVar v)
       me = case removeVar body v of
         Nothing -> body . unit
-        Just x -> x . (unit # id)
+        Just y -> y . (unit # x)
 
 mkVar :: Product k => Var a -> PointFree k Unit a
 mkVar v@(Var _ n) = me

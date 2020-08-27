@@ -22,12 +22,11 @@ bindPoints :: Stream -> Expr k env a -> k env a
 bindPoints str (Expr x) = x str
 
 instance (Labels k, Vars k) => Hoas (Expr k) where
-  mapVar t f = Expr $ \(Stream n bodys _) ->
-    bindMapVar n t $ \v ->
-      unExpr (f (Expr $ const v)) bodys
-  mapLabel t f = Expr $ \(Stream n bodys _) ->
-    bindMapLabel n t $ \v ->
-      unExpr (f (Expr $ const v)) bodys
+  implicitEnv t f (Expr x) = Expr $ \(Stream n bodys xs) ->
+    bindImplicitEnv n t (\v -> unExpr (f (Expr $ const v)) bodys) (x xs)
+
+  implicitLabel t f (Expr x) = Expr $ \(Stream n bodys xs) ->
+    bindImplicitLabel n t (\v -> unExpr (f (Expr $ const v)) bodys) (x xs)
 
 instance Category k => Category (Expr k) where
   id = Expr $ pure id
@@ -39,17 +38,11 @@ instance Product k => Product (Expr k) where
   first = Expr $ pure first
   second = Expr $ pure second
 
-  letBe (Expr x) (Expr f) = Expr $ liftM2 letBe x f
-  whereIs (Expr f) (Expr x) = Expr $ liftM2 whereIs f x
-
 instance Sum k => Sum (Expr k) where
   absurd = Expr $ pure absurd
   Expr f ! Expr g = Expr $ liftM2 (!) f g
   left = Expr $ pure left
   right = Expr $ pure right
-
-  letCase (Expr x) (Expr f) = Expr $ liftM2 letCase x f
-  whereCase (Expr f) (Expr x) = Expr $ liftM2 whereCase f x
 
 instance Exp k => Exp (Expr k) where
   lambda (Expr f) = Expr $ liftM lambda f

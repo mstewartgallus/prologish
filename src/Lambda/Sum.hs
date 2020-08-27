@@ -13,12 +13,4 @@ class Category k => Sum k where
   left :: k a (a + b)
   right :: k b (a + b)
 
-  letCase :: k a b -> k env (a + b) -> k env b
-  letCase = flip whereCase
-
-  whereCase :: k env (a + b) -> k a b -> k env b
-  whereCase f x = (x ! id) . f
-
 infixl 9 !
-
-infixr 0 `letCase`

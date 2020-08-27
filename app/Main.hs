@@ -44,10 +44,11 @@ main = do
   putStrLn (show (cbpvResult u))
 
 program :: (Lambda k, Hoas k) => k Unit U64
-program = u64 42 `letBe` var inferT inferT $ \x ->
-  u64 3 `letBe` var inferT inferT $ \y ->
-    u64 3 `letBe` var inferT inferT $ \z ->
-      add <*> z <*> (add <*> x <*> y)
+program =
+  u64 42 `letBe` \x ->
+    u64 3 `letBe` \y ->
+      u64 3 `letBe` \z ->
+        add <*> z <*> (add <*> x <*> y)
 
 bound :: (Labels k, Vars k, Lambda k) => Id.Stream -> k Unit U64
 bound str = bindPoints str program

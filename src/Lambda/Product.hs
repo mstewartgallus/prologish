@@ -15,12 +15,4 @@ class Category k => Product k where
   first :: k (a * b) a
   second :: k (a * b) b
 
-  letBe :: k env a -> k (env * a) b -> k env b
-  letBe = flip whereIs
-
-  whereIs :: k (env * a) b -> k env a -> k env b
-  whereIs f x = f . (id # x)
-
 infixl 9 #
-
-infixr 0 `letBe`

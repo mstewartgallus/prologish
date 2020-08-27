@@ -5,4 +5,4 @@ import Id (Id)
 import Lambda.Type
 
 class Category k => Vars k where
-  bindMapVar :: Id -> ST a -> (k Unit a -> k Unit b) -> k a b
+  bindImplicitEnv :: Id -> ST a -> (k Unit a -> k Unit b) -> k env a -> k env b
