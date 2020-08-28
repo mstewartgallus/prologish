@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: aad680befe2c5d1871e747b2a2d9b568b2a2da878057a3ed205b4918b62dc6c6
+-- hash: a3b82e4dea071fdab75cf13b53769102bb6268e3e7944a9cca140decc08247ee
 
 name:           hoas
 version:        0.1.0.0
@@ -35,11 +35,13 @@ library
       Id
       Lambda
       Lambda.AsBound
+      Lambda.AsConcrete
       Lambda.AsPointFree
       Lambda.AsView
       Lambda.Exp
       Lambda.Hoas
       Lambda.Labels
+      Lambda.Optimize
       Lambda.Product
       Lambda.Sum
       Lambda.Type

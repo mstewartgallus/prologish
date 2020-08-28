@@ -9,11 +9,13 @@ import Data.Word
 import qualified Id
 import Lambda
 import Lambda.AsBound
+import qualified Lambda.AsConcrete as AsConcrete
 import Lambda.AsPointFree
 import Lambda.AsView
 import Lambda.Exp
 import Lambda.Hoas
 import Lambda.Labels
+import Lambda.Optimize
 import Lambda.Product
 import Lambda.Type
 import Lambda.Vars
@@ -38,7 +40,7 @@ main = do
   putStrLn "Result"
   putStrLn (show (result u))
 
-program :: (Lambda k, Hoas k) => k Unit U64
+program :: (Lambda k, Hoas k) => AsConcrete.Expr k Unit U64
 program =
   u64 42 `letBe` \x ->
     u64 3 `letBe` \y ->
@@ -46,7 +48,7 @@ program =
         add <*> z <*> (add <*> x <*> y)
 
 bound :: (Labels k, Vars k, Lambda k) => Id.Stream -> k Unit U64
-bound str = bindPoints str program
+bound str = bindPoints str (AsConcrete.abstract program)
 
 compiled :: Lambda k => Id.Stream -> k Unit U64
 compiled str = pointFree (bound str)
