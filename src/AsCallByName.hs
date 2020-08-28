@@ -51,17 +51,8 @@ instance Cbpv c d => Sum.Sum (Expr d) where
   Expr f ||| Expr g = Expr (thunk (force id . force (thunk (return f) ||| thunk (return g)) . force id))
 
 instance Cbpv c d => Exp.Exp (Expr d) where
-  curry (Expr f) = Expr (thunk (lambda (force f . return (thunk id))))
-  uncurry (Expr f) = Expr (thunk (eval (force f) . force id))
-    where
-      shuffle :: Cbpv c d => d (b * a) (a * b)
-      shuffle = second &&& first
-
-eval :: Cbpv stk d => stk (F env) (a ~> b) -> stk (F (a * env)) b
-eval f = uncurry f . assocIn
-
-lambda :: Cbpv stk d => stk (F (a * env)) b -> stk (F env) (a ~> b)
-lambda f = curry (f . assocOut)
+  curry (Expr f) = Expr (thunk (curry (force f . return (thunk id) . assocOut)))
+  uncurry (Expr f) = Expr (thunk (uncurry (force f) . assocIn . force id))
 
 instance Cbpv c d => Lambda.Lambda (Expr d) where
   u64 x = Expr (thunk (return (u64 x)))
