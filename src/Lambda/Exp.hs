@@ -6,12 +6,12 @@ module Lambda.Exp (Exp (..)) where
 import Control.Category
 import Lambda.Product
 import Lambda.Type
-import Prelude hiding ((.), id, (<*>))
+import Prelude hiding ((.), id, (<*>), uncurry)
 
+-- | The categorical definition of an exponential (function type.)
 class Product k => Exp k where
-  lambda :: k (env * a) b -> k env (a ~> b)
   (<*>) :: k env (a ~> b) -> k env a -> k env b
+  f <*> x = uncurry f . (id &&& x)
 
-  -- | Deprecated.. not as close to the source lang and also not easily translatable to cbpv
-  eval :: k env (a ~> b) -> k (env * a) b
-  eval f = (f  . first) <*> second
+  curry :: k (env * a) b -> k env (a ~> b)
+  uncurry :: k env (a ~> b) -> k (env * a) b

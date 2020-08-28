@@ -4,18 +4,10 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module Lambda.Type (KnownT, inferT, eqT, ST (..), T, Void, Unit, type (~>), type (*), type (+), type U64, Value, Continuation, End) where
+module Lambda.Type (KnownT, inferT, eqT, ST (..), T, Void, Unit, type (~>), type (*), type (+), type U64) where
 
 import Data.Kind (Type)
 import Data.Typeable ((:~:) (..))
-
-type Value (hom :: T -> T -> Type) = hom Unit
-
-type Continuation (hom :: T -> T -> Type) a = hom a Void
-
-type End (hom :: T -> T -> Type) = hom Unit Void
-
-type T = TImpl
 
 type Void = 'Void
 
@@ -35,7 +27,7 @@ infixl 0 *
 
 infixl 0 +
 
-data TImpl = U64 | Void | Unit | Sum T T | Product T T | Exp T T
+data T = U64 | Void | Unit | Sum T T | Product T T | Exp T T
 
 data ST a where
   SU64 :: ST U64

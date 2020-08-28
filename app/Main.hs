@@ -10,7 +10,6 @@ import qualified Id
 import Lambda
 import Lambda.AsBound
 import Lambda.AsPointFree
-import Lambda.AsReified
 import Lambda.AsView
 import Lambda.Exp
 import Lambda.Hoas
@@ -32,16 +31,12 @@ main = do
   putStrLn (view (compiled y))
 
   putStrLn ""
-  putStrLn "Program Result"
-  putStrLn (show (result z))
-
-  putStrLn ""
   putStrLn "Cbpv Program"
   putStrLn (AsViewCbpv.view (cbpv w))
 
   putStrLn ""
-  putStrLn "Cbpv Result"
-  putStrLn (show (cbpvResult u))
+  putStrLn "Result"
+  putStrLn (show (result u))
 
 program :: (Lambda k, Hoas k) => k Unit U64
 program =
@@ -56,11 +51,8 @@ bound str = bindPoints str program
 compiled :: Lambda k => Id.Stream -> k Unit U64
 compiled str = pointFree (bound str)
 
-result :: Id.Stream -> Word64
-result str = reify (compiled str)
-
 cbpv :: Cbpv c d => Id.Stream -> d (Cbpv.Sort.U (Cbpv.Sort.F Cbpv.Sort.Unit)) (Cbpv.Sort.U (AsAlgebra U64))
 cbpv str = toCbpv (compiled str)
 
-cbpvResult :: Id.Stream -> Word64
-cbpvResult str = AsEval.reify (cbpv str)
+result :: Id.Stream -> Word64
+result str = AsEval.reify (cbpv str)

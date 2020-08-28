@@ -11,7 +11,6 @@ import Lambda.Product
 import Lambda.Sum
 import Lambda.Type
 import Lambda.Vars
-import Prelude hiding ((.), id)
 
 newtype View (a :: T) (b :: T) = View String
 
@@ -25,20 +24,20 @@ instance Category View where
 instance Product View where
   unit = View "unit"
 
-  View f # View x = View ("⟨" ++ f ++ " , " ++ x ++ "⟩")
+  View f &&& View x = View ("⟨" ++ f ++ " , " ++ x ++ "⟩")
   first = View "π₁"
   second = View "π₂"
 
 instance Sum View where
   absurd = View "absurd"
 
-  View f ! View x = View ("[" ++ f ++ " , " ++ x ++ "]")
+  View f ||| View x = View ("[" ++ f ++ " , " ++ x ++ "]")
   left = View "i₁"
   right = View "i₂"
 
 instance Exp View where
-  lambda (View f) = View ("(λ " ++ f ++ ")")
-  View f <*> View x = View ("(" ++ f ++ " " ++ x ++ ")")
+  curry (View f) = View ("(λ " ++ f ++ ")")
+  uncurry (View f) = View ("(! " ++ f ++ ")")
 
 instance Lambda View where
   u64 x = View (show x)

@@ -1,3 +1,8 @@
+-- |
+--
+-- Use the trick from functional pearl "On generating unique names by
+-- Lennart Augustsson, Mikael Rittri and Dan Synek" to generate a unique
+-- stream of ids.
 module Id (Id, stream, Stream (..)) where
 
 import Data.Atomics.Counter

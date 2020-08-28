@@ -14,7 +14,7 @@ import Lambda.Product
 import Lambda.Sum
 import Lambda.Type
 import Lambda.Vars
-import Prelude hiding ((.), (<*>), id)
+import Prelude hiding ((.), id, (&&&), (|||), curry, uncurry)
 
 newtype Expr k (a :: T) (b :: T) = Expr {unExpr :: Stream -> k a b}
 
@@ -34,19 +34,19 @@ instance Category k => Category (Expr k) where
 
 instance Product k => Product (Expr k) where
   unit = Expr $ pure unit
-  Expr f # Expr g = Expr $ liftM2 (#) f g
+  Expr f &&& Expr g = Expr $ liftM2 (&&&) f g
   first = Expr $ pure first
   second = Expr $ pure second
 
 instance Sum k => Sum (Expr k) where
   absurd = Expr $ pure absurd
-  Expr f ! Expr g = Expr $ liftM2 (!) f g
+  Expr f ||| Expr g = Expr $ liftM2 (|||) f g
   left = Expr $ pure left
   right = Expr $ pure right
 
 instance Exp k => Exp (Expr k) where
-  lambda (Expr f) = Expr $ liftM lambda f
-  Expr f <*> Expr x = Expr $ liftM2 (<*>) f x
+  curry (Expr f) = Expr $ liftM curry f
+  uncurry (Expr f) = Expr $ liftM uncurry f
 
 instance Lambda k => Lambda (Expr k) where
   u64 x = Expr $ pure (u64 x)

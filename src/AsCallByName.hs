@@ -17,7 +17,7 @@ import qualified Lambda.Exp as Exp
 import qualified Lambda.Product as Product
 import qualified Lambda.Sum as Sum
 import qualified Lambda.Type as Type
-import Prelude hiding (id, (.), (<*>))
+import Prelude hiding (curry, id, return, uncurry, (.), (<*>))
 
 newtype Expr c a b = Expr (c (U (AsAlgebra a)) (U (AsAlgebra b)))
 
@@ -37,23 +37,34 @@ instance Cbpv c d => Category (Expr d) where
   Expr f . Expr g = Expr (f . g)
 
 instance Cbpv c d => Product.Product (Expr d) where
-  unit = Expr (thunk (returns unit))
+  unit = Expr (thunk (return unit))
 
   first = Expr (thunk (force first . force id))
   second = Expr (thunk (force second . force id))
-  Expr f # Expr g = Expr (thunk (returns f `to` ((returns g . returns first) `to` returns ((second . first) # second))))
+  Expr f &&& Expr g = Expr (thunk (return f `to` ((return g . return first) `to` return ((second . first) &&& second))))
 
 instance Cbpv c d => Sum.Sum (Expr d) where
   absurd = Expr (thunk (force absurd . force id))
 
-  left = Expr (thunk (returns left))
-  right = Expr (thunk (returns right))
-  Expr f ! Expr g = Expr (thunk (force id . force (thunk (returns f) ! thunk (returns g)) . force id))
+  left = Expr (thunk (return left))
+  right = Expr (thunk (return right))
+  Expr f ||| Expr g = Expr (thunk (force id . force (thunk (return f) ||| thunk (return g)) . force id))
 
 instance Cbpv c d => Exp.Exp (Expr d) where
-  lambda (Expr f) = Expr (thunk (lambda (force f . returns (thunk id))))
-  Expr f <*> Expr x = Expr (thunk (force f <*> x))
+  curry (Expr f) = Expr (thunk (lambda (force f . return (thunk id))))
+  uncurry (Expr f) = Expr (thunk (eval (force f) . return shuffle . force id))
+    where
+      shuffle :: Cbpv c d => d (b * a) (a * b)
+      shuffle = second &&& first
+
+eval :: Cbpv stk d => stk (F env) (a ~> b) -> stk (F (a * env)) b
+eval f = uncurry f . assocIn
+
+lambda :: Cbpv stk d => stk (F (env * a)) b -> stk (F env) (a ~> b)
+lambda f = curry (f . return shuffle . assocOut)
+  where
+    shuffle = second &&& first
 
 instance Cbpv c d => Lambda.Lambda (Expr d) where
-  u64 x = Expr (thunk (returns (u64 x)))
+  u64 x = Expr (thunk (return (u64 x)))
   add = Expr (thunk (addLazy . force id))

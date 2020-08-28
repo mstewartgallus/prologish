@@ -1,5 +1,10 @@
 {-# LANGUAGE TypeOperators #-}
 
+-- |
+--
+-- Export the final type class of the simple lambda calculus language.
+-- Here we finish the Lambda type class off with some basic operations on
+-- integers.
 module Lambda (Lambda (..)) where
 
 import Data.Word (Word64)
@@ -9,5 +14,5 @@ import Lambda.Sum
 import Lambda.Type
 
 class (Sum k, Product k, Exp k) => Lambda k where
-  u64 :: Word64 -> Value k U64
-  add :: Value k (U64 ~> U64 ~> U64)
+  u64 :: Word64 -> k Unit U64
+  add :: k Unit (U64 ~> U64 ~> U64)

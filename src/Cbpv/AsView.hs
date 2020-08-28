@@ -26,23 +26,26 @@ instance Category Code where
 
 instance Cbpv Stack Code where
   to (Stack f) (Stack x) = Stack ("(to " ++ f ++ " " ++ x ++ ")")
-  returns (Code f) = Stack ("(return " ++ f ++ ")")
+  return (Code f) = Stack ("(return " ++ f ++ ")")
 
   thunk (Stack f) = Code ("(thunk " ++ f ++ ")")
   force (Code f) = Stack ("(force " ++ f ++ ")")
 
   unit = Code "unit"
-  Code f # Code x = Code ("⟨" ++ f ++ " , " ++ x ++ "⟩")
+  Code f &&& Code x = Code ("⟨" ++ f ++ " , " ++ x ++ "⟩")
   first = Code "π₁"
   second = Code "π₂"
 
   absurd = Code "absurd"
-  Code f ! Code x = Code ("[" ++ f ++ " , " ++ x ++ "]")
+  Code f ||| Code x = Code ("[" ++ f ++ " , " ++ x ++ "]")
   left = Code "i₁"
   right = Code "i₂"
 
-  lambda (Stack f) = Stack ("(λ " ++ f ++ ")")
-  Stack f <*> Code x = Stack ("(" ++ f ++ " " ++ x ++ ")")
+  assocOut = Stack "out"
+  assocIn = Stack "in"
+
+  curry (Stack f) = Stack ("(λ " ++ f ++ ")")
+  uncurry (Stack f) = Stack ("(! " ++ f ++ ")")
 
   u64 x = Code (show x)
   add = Code "add"

@@ -1,5 +1,4 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE GADTs #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
@@ -18,8 +17,6 @@ module Cbpv.Sort
     type (~>)
   )
 where
-
-import Data.Typeable ((:~:) (..))
 
 type Set = SetImpl
 
