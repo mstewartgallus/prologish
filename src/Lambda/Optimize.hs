@@ -1,4 +1,6 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE EmptyCase #-}
 {-# LANGUAGE NoStarIsType #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE GADTs #-}
@@ -20,107 +22,68 @@ import Lambda.Vars
 import Lambda.AsConcrete
 import Prelude hiding ((.), id, (&&&), (|||), curry, uncurry, Either (..))
 import Data.Word
+import Data.Typeable
 
-optimize :: Expr k a b -> Expr k a b
-optimize = w 50 where
-  w n expr | n > 0 = w (n - 1) (opt expr)
-           | otherwise = expr
 
-opt :: Expr k a b -> Expr k a b
-opt = inline . dead . simp . canon
+data Value k env a where
+  StuckValue :: Category k => Expr k a b -> Value k env a -> Value k env b
+  EnvValue :: Category k => Value k env env
 
-simp :: Expr k a b -> Expr k a b
-simp expr = case expr of
-  Id :.: f -> f
-  f :.: Id -> f
+  FnValue :: Exp k => Expr k (b * a) c -> Value k env a -> Value k env (b ~> c)
 
-  Fanout First Second -> Id
-  Fanin Left Right -> Id
+  CoinValue :: Product k => Value k env Unit
+  PairValue :: Product k => Value k env a -> Value k env b -> Value k env (a * b)
 
-  Fanout Coin x :.: f -> simp $ Fanout Coin (x :.: f)
-  Fanout x Coin :.: f -> simp $ Fanout (x :.: f) Coin
+  LeftValue :: Sum k => Value k env a -> Value k env (a + b)
+  RightValue :: Sum k => Value k env b -> Value k env (a + b)
 
-  Fanout (a :.: First) (b :.: Second) :.: Fanout x y -> simp $ Fanout (a :.: x) (b :.: y)
-  Fanin x y :.: Fanin (Left :.: a) (Right :.: b) -> simp $ Fanin (x :.: a) (y :.: b)
+apply :: Category k => Expr k a b -> Value k env a -> Value k env b
+apply hom x = let
+  stuck = StuckValue hom x
+  in case hom of
+  Id -> x
+  f :.: g -> apply f (apply g x)
 
-  Curry (Uncurry f) -> simp f
-  Uncurry (Curry f) -> simp f
+  Coin -> CoinValue
 
-  f :.: g -> simp f :.: simp g
+  Fanout f g -> PairValue (apply f x) (apply g x)
+  First -> case x of
+    PairValue l _ -> l
+    _ -> stuck
+  Second -> case x of
+    PairValue _ r -> r
+    _ -> stuck
 
-  Fanout f g -> Fanout (simp f) (simp g)
-  Fanin f g -> Fanin (simp f) (simp g)
+  Fanin f g -> case x of
+    LeftValue l -> apply f l
+    RightValue r -> apply g r
+    _ -> stuck
+  Left -> LeftValue x
+  Right -> RightValue x
 
-  Curry f -> Curry (simp f)
-  Uncurry f -> Uncurry (simp f)
+  Curry f -> FnValue f x
+  Uncurry f -> case x of
+    PairValue a b -> case apply f b of
+      FnValue hom env -> apply hom (PairValue a env)
+      _ -> stuck
 
-  _ -> expr
+  _ -> stuck
 
-cost :: Expr k a b -> Int
-cost expr = case expr of
-  f :.: g -> cost f + cost g
+compile :: Category k => (forall env. Value k env a -> Value k env b) -> Expr k a b
+compile f = toExpr (f EnvValue)
 
-  Fanout f g -> 1 + cost f + cost g
-  Fanin f g -> 1 + cost f + cost g
+toExpr :: Value k env result -> Expr k env result
+toExpr expr = case expr of
+  StuckValue hom x -> hom :.: toExpr x
+  EnvValue -> Id
 
-  Curry f -> 1 + cost f
-  Uncurry f -> 1 + cost f
+  CoinValue -> Coin
+  PairValue f g -> Fanout (toExpr f) (toExpr g)
 
-  _ -> 1
+  LeftValue x -> Left :.: toExpr x
+  RightValue x -> Right :.: toExpr x
 
-inline :: Expr k a b -> Expr k a b
-inline expr = case expr of
-  Fanout x y :.: f | cost f <= 20 -> inline (Fanout (x :.: f) (y :.: f))
-  f :.: Fanin x y | cost f <= 20 -> inline (Fanin (f :.: x) (f :.: y))
+  FnValue f x -> curry f :.: toExpr x
 
-  f :.: g -> inline f :.: inline g
-
-  Fanout f g -> Fanout (inline f) (inline g)
-  Fanin f g -> Fanin (inline f) (inline g)
-
-  Curry f -> Curry (inline f)
-  Uncurry f -> Uncurry (inline f)
-
-  _ -> expr
-
-canon :: Expr k a b -> Expr k a b
-canon expr = case expr of
-  (f :.: g) :.: h -> canon (f :.: (g :.: h))
-  Fanout (Fanin x y) (Fanin a b) -> canon (Fanin (Fanout x a) (Fanout y b))
-
-  f :.: g -> canon f :.: canon g
-
-  Fanout f g -> Fanout (canon f) (canon g)
-  Fanin f g -> Fanin (canon f) (canon g)
-
-  Curry f -> Curry (canon f)
-  Uncurry f -> Uncurry (canon f)
-
-  _ -> expr
-
-dead :: Expr k a b -> Expr k a b
-dead expr = case expr of
-  _ :.: Absurd -> Absurd
-  Coin :.: _ -> Coin
-
-  First :.: Fanout x _ -> dead x
-  Second :.: Fanout _ x -> dead x
-
-  Fanin x _ :.: Left -> dead x
-  Fanin _ x :.: Right -> dead x
-
-  Fanout _ Absurd -> Fanout Absurd Absurd
-  Fanout Absurd _ -> Fanout Absurd Absurd
-
-  Fanin _ Coin -> Fanin Coin Coin
-  Fanin Coin _ -> Fanin Coin Coin
-
-  f :.: g -> dead f :.: dead g
-
-  Fanout f g -> Fanout (dead f) (dead g)
-  Fanin f g -> Fanin (dead f) (dead g)
-
-  Curry f -> Curry (dead f)
-  Uncurry f -> Uncurry (dead f)
-
-  _ -> expr
+optimize :: Category k => Expr k a b -> Expr k a b
+optimize expr = compile (apply expr)
