@@ -22,7 +22,6 @@ import Data.Word
 
 abstract :: Expr k a b -> k a b
 abstract expr = case expr of
-  Var x -> x
   Id -> id
   f :.: g -> abstract f . abstract g
 
@@ -39,15 +38,10 @@ abstract expr = case expr of
   Curry f -> curry (abstract f)
   Uncurry f -> uncurry (abstract f)
 
-  ImplicitEnv t f x -> implicitEnv t (\x' -> abstract (f (Var x'))) (abstract x)
-  ImplicitLabel t f x -> implicitLabel t (\x' -> abstract (f (Var x'))) (abstract x)
-
   Add -> add
   LitU64 x -> u64 x
 
 data Expr k a b where
-  Var :: k a b -> Expr k a b
-
   Id :: Category k => Expr k a a
   (:.:) :: Category k => Expr k b c -> Expr k a b -> Expr k a c
 
@@ -66,9 +60,6 @@ data Expr k a b where
 
   Add :: Lambda k => Expr k Unit (U64 ~> U64 ~> U64)
   LitU64 :: Lambda k =>  Word64 -> Expr k Unit U64
-
-  ImplicitEnv :: Hoas k => ST a -> (Expr k Unit a  -> Expr k Unit b) -> Expr k env a -> Expr k env b
-  ImplicitLabel :: Hoas k => ST a -> (Expr k a Void  -> Expr k b Void) -> Expr k a env -> Expr k b env
 
 instance Category k => Category (Expr k) where
   id = Id
@@ -93,7 +84,3 @@ instance Exp k => Exp (Expr k) where
 instance Lambda k => Lambda (Expr k) where
   u64 x = LitU64 x
   add = Add
-
-instance (Hoas k) => Hoas (Expr k) where
-  implicitEnv = ImplicitEnv
-  implicitLabel = ImplicitLabel
