@@ -11,7 +11,7 @@ import Prelude hiding ((.), id, (<*>), uncurry)
 -- | The categorical definition of an exponential (function type.)
 class Product k => Exp k where
   (<*>) :: k env (a ~> b) -> k env a -> k env b
-  f <*> x = uncurry f . (id &&& x)
+  f <*> x = uncurry f . (x &&& id)
 
-  curry :: k (env * a) b -> k env (a ~> b)
-  uncurry :: k env (a ~> b) -> k (env * a) b
+  curry :: k (a * env) b -> k env (a ~> b)
+  uncurry :: k env (a ~> b) -> k (a * env) b

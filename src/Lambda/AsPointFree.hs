@@ -24,8 +24,8 @@ pointFree = out
 
 data PointFree k a b = V
   { out :: k a b,
-    removeVar :: forall v. (Exp k, Product k) => Var v -> Maybe (PointFree k (a * v) b),
-    removeLabel :: forall v. (Exp k, Sum k) => Label v -> Maybe (PointFree k a (b + v))
+    removeVar :: forall v. (Exp k, Product k) => Var v -> Maybe (PointFree k (v * a) b),
+    removeLabel :: forall v. (Exp k, Sum k) => Label v -> Maybe (PointFree k a (v + b))
   }
 
 data Label a = Label (ST a) Id
@@ -60,13 +60,13 @@ instance Category k => Category (PointFree k) where
         V
           { out = out f . out g,
             removeVar = \v -> case (removeVar f v, removeVar g v) of
-              (Just f', Just g') -> Just (f' . (g' &&& second))
+              (Just f', Just g') -> Just (f' . (first &&& g'))
               (_, Just g') -> Just (f . g')
-              (Just f', _) -> Just (f' . ((g . first) &&& second))
+              (Just f', _) -> Just (f' . (first &&& (g . second)))
               _ -> Nothing,
             removeLabel = \v -> case (removeLabel f v, removeLabel g v) of
-              (Just f', Just g') -> Just ((f' ||| right) . g')
-              (_, Just g') -> Just (((left . f) ||| right) . g')
+              (Just f', Just g') -> Just ((left ||| f') . g')
+              (_, Just g') -> Just ((left ||| (right . f)) . g')
               (Just f', _) -> Just (f' . g)
               _ -> Nothing
           }
@@ -78,7 +78,7 @@ instance (Exp k, Sum k) => Labels (PointFree k) where
       body = f (mkLabel v)
       me = case removeLabel body v of
         Nothing -> absurd . body
-        Just y -> (absurd ||| x) . y
+        Just y -> (x ||| absurd) . y
 
 instance Exp k => Vars (PointFree k) where
   bindImplicitEnv n t f x = me where
@@ -86,7 +86,7 @@ instance Exp k => Vars (PointFree k) where
       body = f (mkVar v)
       me = case removeVar body v of
         Nothing -> body . unit
-        Just y -> y . (unit &&& x)
+        Just y -> y . (x &&& unit)
 
 mkVar :: Product k => Var a -> PointFree k Unit a
 mkVar v@(Var _ n) = me
@@ -96,7 +96,7 @@ mkVar v@(Var _ n) = me
         { out = error ("free variable " ++ show n),
           removeVar = \maybeV -> case eqVar v maybeV of
             Nothing -> Nothing
-            Just Refl -> Just (to second),
+            Just Refl -> Just (to first),
           removeLabel = const Nothing
         }
 
@@ -108,7 +108,7 @@ mkLabel v@(Label _ n) = me
         { out = error ("free label " ++ show n),
           removeLabel = \maybeV -> case eqLabel v maybeV of
             Nothing -> Nothing
-            Just Refl -> Just (to right),
+            Just Refl -> Just (to left),
           removeVar = const Nothing
         }
 
@@ -123,13 +123,13 @@ instance Product k => Product (PointFree k) where
           { out = out f &&& out g,
             removeVar = \v -> case (removeVar f v, removeVar g v) of
               (Just f', Just g') -> Just (f' &&& g')
-              (_, Just g') -> Just ((f . first) &&& g')
-              (Just f', _) -> Just (f' &&& (g . first))
+              (_, Just g') -> Just ((f . second) &&& g')
+              (Just f', _) -> Just (f' &&& (g . second))
               _ -> Nothing,
             removeLabel = \v -> case (removeLabel f v, removeLabel g v) of
               (Just f', Just g') -> Just (distribute f' g')
-              (_, Just g') -> Just (distribute (left . f) g')
-              (Just f', _) -> Just (distribute f' (left . g))
+              (_, Just g') -> Just (distribute (right . f) g')
+              (Just f', _) -> Just (distribute f' (right . g))
               _ -> Nothing
           }
 
@@ -144,13 +144,13 @@ instance Sum k => Sum (PointFree k) where
           { out = out f ||| out g,
             removeVar = \v -> case (removeVar f v, removeVar g v) of
               (Just f', Just g') -> Just (factor f' g')
-              (_, Just g') -> Just (factor (f . first) g')
-              (Just f', _) -> Just (factor f' (g . first))
+              (_, Just g') -> Just (factor (f . second) g')
+              (Just f', _) -> Just (factor f' (g . second))
               _ -> Nothing,
             removeLabel = \v -> case (removeLabel f v, removeLabel g v) of
               (Just f', Just g') -> Just (f' ||| g')
-              (_, Just g') -> Just ((left . f) ||| g')
-              (Just f', _) -> Just (f' ||| (left . g))
+              (_, Just g') -> Just ((right . f) ||| g')
+              (Just f', _) -> Just (f' ||| (right . g))
               _ -> Nothing
           }
 
@@ -162,8 +162,8 @@ instance Exp k => Exp (PointFree k) where
           { out = out f <*> out x,
             removeVar = \v -> case (removeVar f v, removeVar x v) of
               (Just f', Just x') -> Just (f' <*> x')
-              (_, Just x') -> Just ((f . first) <*> x')
-              (Just f', _) -> Just (f' <*> (x . first))
+              (_, Just x') -> Just ((f . second) <*> x')
+              (Just f', _) -> Just (f' <*> (x . second))
               _ -> Nothing
           }
 
@@ -176,8 +176,8 @@ instance Exp k => Exp (PointFree k) where
               Nothing -> Nothing
               Just f' -> Just (curry (f' . shuffle))
           }
-      shuffle :: Product k => k ((a * c) * b) ((a * b) * c)
-      shuffle = ((first . first) &&& second) &&& (second . first)
+      shuffle :: Product k => k (a * (b * c)) (b * (a * c))
+      shuffle = (first . second) &&& (first &&& (second . second))
   uncurry f = me
     where
       me =
@@ -187,21 +187,15 @@ instance Exp k => Exp (PointFree k) where
               Nothing -> Nothing
               Just f' -> Just (uncurry f' . shuffle)
           }
-      shuffle :: Product k => k ((a * c) * b) ((a * b) * c)
-      shuffle = ((first . first) &&& second) &&& (second . first)
+      shuffle :: Product k => k (a * (b * c)) (b * (a * c))
+      shuffle = (first . second) &&& (first &&& (second . second))
 
 instance Lambda k => Lambda (PointFree k) where
   u64 x = to (u64 x)
   add = to add
 
-factor :: (Sum k, Exp k) => k (a * x) c -> k (b * x) c -> k ((a + b) * x) c
+factor :: (Sum k, Exp k) => k (x * a) c -> k (x * b) c -> k (x * (a + b)) c
 factor f g = uncurry (curry f ||| curry g)
 
-distribute :: (Sum k, Exp k) => k c (a + x) -> k c (b + x) -> k c ((a * b) + x)
-distribute f g = (process . f) <*> g
-
-process :: (Sum k, Exp k) => k (a + x) ((b + x) ~> ((a * b) + x))
-process = undefined
-
-bar :: (Sum k, Exp k) => k (b + x) (a ~> ((a * b) + x))
-bar = curry (left . (second &&& first)) ||| curry (right . first)
+distribute :: (Sum k, Exp k) => k c (x + a) -> k c (x + b) -> k c (x + (a * b))
+distribute f g = undefined
