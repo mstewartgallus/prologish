@@ -60,7 +60,7 @@ compiled str = pointFree (bound str)
 optimized :: Lambda k => Id.Stream -> k Unit U64
 optimized str = AsConcrete.abstract (optimize (compiled str))
 
-cbpv :: Cbpv c d => Id.Stream -> d (Cbpv.Sort.U (Cbpv.Sort.F Cbpv.Sort.Unit)) (Cbpv.Sort.U (AsAlgebra U64))
+cbpv :: Cbpv c d => Id.Stream -> d (Cbpv.Sort.U (Cbpv.Sort.F Cbpv.Sort.Unit)) -> d (Cbpv.Sort.U (AsAlgebra U64))
 cbpv str = toCbpv (optimized str)
 
 result :: Id.Stream -> Word64

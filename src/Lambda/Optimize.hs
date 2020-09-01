@@ -43,7 +43,7 @@ data Kont k a env where
   StuckKont :: Category k => Expr k a b -> Kont k b env -> Kont k a env
   EnvKont :: Category k => Kont k env env
 
-  FnKont :: Exp k => Kont k a env -> (forall x. Kont k x b -> Kont k x c) -> Kont k (b ~> c) env
+  FnKont :: Exp k => Value k env b -> Kont k c env -> Kont k (b ~> c) env
 
   AbsurdKont :: Sum k => Kont k Void env
   EitherKont :: Sum k => Kont k a env -> Kont k b env -> Kont k (a + b) env
@@ -148,6 +148,8 @@ toExprK :: Kont k arg env -> Expr k arg env
 toExprK expr = case expr of
   StuckKont hom x -> toExprK x :.: hom
   EnvKont -> Id
+
+  -- FnKont x f -> toExprK f :.: toExpr x
 
   AbsurdKont -> Absurd
   EitherKont f g -> Fanin (toExprK f) (toExprK g)
