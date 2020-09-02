@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 197e4661c2bf9ff32149de1d064ef431f42b8a9ddbdfeaed83199847c35c8a82
+-- hash: adb151291548650435aeccb98988990fadf56cf944d1a4c51a115afa3dd30d75
 
 name:           hoas
 version:        0.1.0.0
@@ -34,7 +34,6 @@ library
       Cbpv.Sort
       Id
       Lambda
-      Lambda.AsBound
       Lambda.AsBoundTerm
       Lambda.AsConcrete
       Lambda.AsPointFree
