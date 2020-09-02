@@ -7,18 +7,16 @@ import qualified Cbpv.AsView as AsViewCbpv
 import qualified Cbpv.Sort
 import Data.Word
 import qualified Id
-import Lambda
-import Lambda.AsBound
+import Lambda (Lambda)
+import Lambda.AsBoundTerm
 import qualified Lambda.AsConcrete as AsConcrete
 import Lambda.AsPointFree
 import Lambda.AsView
-import Lambda.Exp
-import Lambda.Hoas
+import Lambda.Bound (Bound)
 import Lambda.Labels
 import Lambda.Optimize
-import Lambda.Product
+import Lambda.Term
 import Lambda.Type
-import Lambda.Vars
 import Prelude hiding ((<*>))
 
 main :: IO ()
@@ -44,14 +42,14 @@ main = do
   putStrLn "Result"
   putStrLn (show (result v))
 
-program :: (Lambda k, Hoas k) => k Unit U64
+program :: Term t => t U64
 program =
   u64 42 `letBe` \x ->
     u64 3 `letBe` \y ->
       u64 3 `letBe` \z ->
         add <*> z <*> (add <*> x <*> y)
 
-bound :: (Labels k, Vars k, Lambda k) => Id.Stream -> k Unit U64
+bound :: Bound t => Id.Stream -> t U64
 bound str = bindPoints str program
 
 compiled :: Lambda k => Id.Stream -> k Unit U64

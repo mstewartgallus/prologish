@@ -1,7 +1,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module Lambda.Term (Term (..)) where
+module Lambda.Term (Term (..), letBe) where
 
 import Control.Category
 import Lambda.Type
@@ -14,3 +14,6 @@ class Term t where
 
   u64 :: Word64 -> t U64
   add :: t (U64 ~> U64 ~> U64)
+
+letBe :: (KnownT a, Term t) => t a -> (t a -> t b) -> t b
+letBe x f = lam inferT f <*> x
