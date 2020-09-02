@@ -27,11 +27,6 @@ type family AsObject a = r | r -> a where
   AsObject (a Type.~> b) = AsObject a ~> AsObject b
   AsObject Type.U64 = U64
 
-toObject :: Type.ST a -> ST (AsObject a)
-toObject x = case x of
-  Type.SU64 -> SU64
-  (x Type.:-> y) -> toObject x :-> toObject y
-
 newtype PointFree k a = PointFree (Pf k Unit (AsObject a))
 
 instance Lambda k => Bound.Bound (PointFree k) where
@@ -49,7 +44,7 @@ instance Lambda k => Bound.Bound (PointFree k) where
 
   lam id t f = PointFree (curry me)
     where
-      v = Var (toObject t) id
+      v = Var t id
       PointFree body = f (PointFree (mkVar v))
       me = case removeVar body v of
         Nothing -> body . second
@@ -60,14 +55,14 @@ instance Lambda k => Bound.Bound (PointFree k) where
 
 data Pf k a b = V
   { out :: k a b,
-    removeVar :: forall v. Exp k => Var v -> Maybe (Pf k (v * a) b)
+    removeVar :: forall v. Exp k => Var v -> Maybe (Pf k ((AsObject v) * a) b)
   }
 
-data Var a = Var (ST a) Id
+data Var a = Var (Type.ST a) Id
 
 eqVar :: Var a -> Var b -> Maybe (a :~: b)
 eqVar (Var t m) (Var t' n)
-  | m == n = eqT t t'
+  | m == n = Type.eqT t t'
   | otherwise = Nothing
 
 to :: k a b -> Pf k a b
@@ -93,7 +88,7 @@ instance Category k => Category (Pf k) where
               _ -> Nothing
           }
 
-mkVar :: Product k => Var a -> Pf k Unit a
+mkVar :: Product k => Var a -> Pf k Unit (AsObject a)
 mkVar v@(Var _ n) = me
   where
     me =
