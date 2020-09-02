@@ -2,65 +2,51 @@
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
-module Cbpv.AsView (Action, Data, view) where
+module Cbpv.AsView (Stack, view) where
 
 import Cbpv
 import Control.Category
 import Cbpv.Sort
 import Prelude hiding ((.), id)
 
-newtype Action (a :: Algebra) = Action { getAction :: String }
+newtype Stack (a :: Algebra) (b :: Algebra) = Stack String
 
-newtype Data (a :: Set) = Data { getData :: String }
+newtype Code (a :: Set) (b :: Set) = Code String
 
-view :: (Data a -> Data b) -> String
-view f = dta f ""
+view :: Code a b -> String
+view (Code v) = v
 
-str :: String -> String -> String
-str str x = str ++ x
+instance Category Stack where
+  id = Stack "id"
+  Stack f . Stack g = Stack (g ++ " ∘ " ++ f)
 
-toDta :: (String -> String) -> Data a -> Data b
-toDta f (Data x) = Data (f (" ∘ " ++  x))
+instance Category Code where
+  id = Code "id"
+  Code f . Code g = Code (g ++ " ∘ " ++ f)
 
-toAct :: (String -> String) -> Action a -> Action b
-toAct f (Action x) = Action (f (" ∘ " ++  x))
+instance Cbpv Stack Code where
+  to (Stack f) (Stack x) = Stack ("(to " ++ f ++ " " ++ x ++ ")")
+  return (Code f) = Stack ("(return " ++ f ++ ")")
 
-act :: (Action a -> Action b) -> String -> String
-act f x = case f (Action "id") of
-  Action y -> y ++ x
+  thunk (Stack f) = Code ("(thunk " ++ f ++ ")")
+  force (Code f) = Stack ("(force " ++ f ++ ")")
 
-dta :: (Data a -> Data b) -> String -> String
-dta f x = case f (Data "id") of
-  Data y -> y ++ x
+  unit = Code "unit"
+  Code f &&& Code x = Code ("⟨" ++ f ++ " , " ++ x ++ "⟩")
+  first = Code "π₁"
+  second = Code "π₂"
 
-instance Cbpv Action Data where
-  to f x = toAct $
-    str "(to " . act f . str " " . act x . str ")"
+  absurd = Code "absurd"
+  Code f ||| Code x = Code ("[" ++ f ++ " , " ++ x ++ "]")
+  left = Code "i₁"
+  right = Code "i₂"
 
-  return f = toAct $
-    str "(return " .  dta f . str ")"
+  assocOut = Stack "out"
+  assocIn = Stack "in"
 
-  thunk f = toDta $
-    str "(thunk " . act f . str ")"
-  force f = toAct $
-    str "(force " . dta f . str ")"
+  curry (Stack f) = Stack ("(λ " ++ f ++ ")")
+  uncurry (Stack f) = Stack ("(! " ++ f ++ ")")
 
-  unit = toDta $ str "unit"
-  f &&& x = toDta $ str "⟨" . dta f . str " , " . dta x . str "⟩"
-  first = toDta $ str "π₁"
-  second = toDta $  str "π₂"
-
-  absurd = toDta $ str "absurd"
-  f ||| x = toDta $ str "[" . dta f . str " , " . dta x . str "]"
-  left = toDta $ str "i₁"
-  right = toDta $ str "i₂"
-
-  assocOut = toAct $ str "out"
-  assocIn = toAct $ str "in"
-
-  curry f = toAct $ str "(λ " . act f . str ")"
-  uncurry f = toAct $ str ("(! ") . act f . str ")"
-
-  u64 x = toDta $ str (show x)
-  add = toDta $ str "add"
-  addLazy = toAct $ str "add"
+  u64 x = Code (show x)
+  add = Code "add"
+  addLazy = Stack "add"

@@ -19,7 +19,7 @@ import qualified Lambda.Sum as Sum
 import qualified Lambda.Type as Type
 import Prelude hiding (curry, id, return, uncurry, (.), (<*>))
 
-newtype Expr dta a b = Expr (dta (U (AsAlgebra a)) -> dta (U (AsAlgebra b)))
+newtype Expr c a b = Expr (c (U (AsAlgebra a)) (U (AsAlgebra b)))
 
 type family AsAlgebra a = r where
   AsAlgebra Type.Unit = F Unit
@@ -29,7 +29,7 @@ type family AsAlgebra a = r where
   AsAlgebra (a Type.~> b) = U (AsAlgebra a) ~> AsAlgebra b
   AsAlgebra Type.U64 = F U64
 
-toCbpv :: Cbpv c d => Expr d Type.Unit a -> d (U (F Unit)) -> d (U (AsAlgebra a))
+toCbpv :: Cbpv c d => Expr d Type.Unit a -> d (U (F Unit)) (U (AsAlgebra a))
 toCbpv (Expr x) = x
 
 instance Cbpv c d => Category (Expr d) where
