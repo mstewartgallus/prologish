@@ -1,16 +1,18 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeFamilyDependencies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module AsPointFree (PointFree, pointFree) where
+module AsPointFree (PointFree, pointFree, AsObject) where
 
 import Control.Category
 import Data.Kind
 import Data.Maybe
 import Data.Typeable ((:~:) (..))
 import Id (Id)
+import Lambda
 import Lambda.Exp
 import Lambda.Product
 import Lambda.Type
@@ -18,10 +20,19 @@ import qualified Term.Bound as Bound
 import qualified Term.Type as Type
 import Prelude hiding (curry, id, uncurry, (&&&), (.), (<*>))
 
-pointFree :: PointFree k a -> k Unit a
+pointFree :: PointFree k a -> k Unit (AsObject a)
 pointFree (PointFree x) = out x
 
-newtype PointFree k a = PointFree (Pf k Unit a)
+type family AsObject a = r | r -> a where
+  AsObject (a Type.~> b) = AsObject a ~> AsObject b
+  AsObject Type.U64 = U64
+
+toObject :: Type.ST a -> ST (AsObject a)
+toObject x = case x of
+  Type.SU64 -> SU64
+  (x Type.:-> y) -> toObject x :-> toObject y
+
+newtype PointFree k a = PointFree (Pf k Unit (AsObject a))
 
 instance Lambda k => Bound.Bound (PointFree k) where
   PointFree f <*> PointFree x = PointFree me
@@ -38,7 +49,7 @@ instance Lambda k => Bound.Bound (PointFree k) where
 
   lam id t f = PointFree (curry me)
     where
-      v = Var t id
+      v = Var (toObject t) id
       PointFree body = f (PointFree (mkVar v))
       me = case removeVar body v of
         Nothing -> body . second
@@ -52,11 +63,11 @@ data Pf k a b = V
     removeVar :: forall v. Exp k => Var v -> Maybe (Pf k (v * a) b)
   }
 
-data Var a = Var (Type.ST a) Id
+data Var a = Var (ST a) Id
 
 eqVar :: Var a -> Var b -> Maybe (a :~: b)
 eqVar (Var t m) (Var t' n)
-  | m == n = Type.eqT t t'
+  | m == n = eqT t t'
   | otherwise = Nothing
 
 to :: k a b -> Pf k a b
@@ -144,6 +155,3 @@ instance Exp k => Exp (Pf k) where
           }
       shuffle :: Product k => k (a * (b * c)) (b * (a * c))
       shuffle = (first . second) &&& (first &&& (second . second))
-
-factor :: (Sum k, Exp k) => k (x * a) c -> k (x * b) c -> k (x * (a + b)) c
-factor f g = uncurry (curry f ||| curry g)
