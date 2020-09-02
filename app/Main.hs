@@ -12,11 +12,12 @@ import Lambda (Lambda)
 import qualified Lambda.AsConcrete as AsConcrete
 import Lambda.AsView
 import Lambda.Optimize
-import Lambda.Type
+import qualified Lambda.Type
 import Term
 import Term.AsBoundTerm
 import qualified Term.AsView as AsTermView
 import Term.Bound (Bound)
+import Term.Type
 import Prelude hiding ((<*>))
 
 main :: IO ()
@@ -52,10 +53,10 @@ program =
 bound :: Bound t => Id.Stream -> t U64
 bound str = bindPoints str program
 
-compiled :: Lambda k => Id.Stream -> k Unit U64
+compiled :: Lambda k => Id.Stream -> k Lambda.Type.Unit Lambda.Type.U64
 compiled str = pointFree (bound str)
 
-optimized :: Lambda k => Id.Stream -> k Unit U64
+optimized :: Lambda k => Id.Stream -> k Lambda.Type.Unit Lambda.Type.U64
 optimized str = AsConcrete.abstract (optimize (compiled str))
 
 cbpv :: Cbpv c d => Id.Stream -> d (Cbpv.Sort.U (Cbpv.Sort.F Cbpv.Sort.Unit)) (Cbpv.Sort.U (AsAlgebra U64))

@@ -4,7 +4,7 @@
 module Term.Bound (Bound (..)) where
 
 import Control.Category
-import Lambda.Type
+import Term.Type
 import Prelude hiding ((.), id, (<*>), uncurry)
 import Id (Id)
 import Data.Word (Word64)

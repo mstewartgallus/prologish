@@ -4,7 +4,7 @@
 module Term.AsView (View, view) where
 
 import Term.Bound
-import Lambda.Type
+import Term.Type
 
 newtype View (a :: T) = View String
 

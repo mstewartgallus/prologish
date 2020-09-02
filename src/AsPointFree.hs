@@ -1,5 +1,6 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
@@ -16,6 +17,7 @@ import Lambda.Product
 import Lambda.Sum
 import Lambda.Type
 import qualified Term.Bound as Bound
+import qualified Term.Type as Type
 import Prelude hiding (curry, id, uncurry, (&&&), (.), (<*>))
 
 pointFree :: PointFree k a b -> k a b
@@ -23,22 +25,14 @@ pointFree = out
 
 data PointFree k a b = V
   { out :: k a b,
-    removeVar :: forall v. (Exp k, Product k) => Var v -> Maybe (PointFree k (v * a) b),
-    removeLabel :: forall v. (Exp k, Sum k) => Label v -> Maybe (PointFree k a (v + b))
+    removeVar :: forall v. Exp k => Var v -> Maybe (PointFree k (v * a) b)
   }
 
-data Label a = Label (ST a) Id
-
-eqLabel :: Label a -> Label b -> Maybe (a :~: b)
-eqLabel (Label t m) (Label t' n)
-  | m == n = eqT t t'
-  | otherwise = Nothing
-
-data Var a = Var (ST a) Id
+data Var a = Var (Type.ST a) Id
 
 eqVar :: Var a -> Var b -> Maybe (a :~: b)
 eqVar (Var t m) (Var t' n)
-  | m == n = eqT t t'
+  | m == n = Type.eqT t t'
   | otherwise = Nothing
 
 to :: k a b -> PointFree k a b
@@ -47,8 +41,7 @@ to x = me
     me =
       V
         { out = x,
-          removeVar = const Nothing,
-          removeLabel = const Nothing
+          removeVar = const Nothing
         }
 
 instance Lambda k => Bound.Bound (PointFree k a) where
@@ -72,8 +65,8 @@ instance Lambda k => Bound.Bound (PointFree k a) where
         Nothing -> body . second
         Just y -> y
 
-  u64 x = to (u64 x) . unit
-  add = to add . unit
+  u64 x = to (u64 x . unit)
+  add = to (add . unit)
 
 instance Category k => Category (PointFree k) where
   id = to id
@@ -86,11 +79,6 @@ instance Category k => Category (PointFree k) where
               (Just f', Just g') -> Just (f' . (first &&& g'))
               (_, Just g') -> Just (f . g')
               (Just f', _) -> Just (f' . (first &&& (g . second)))
-              _ -> Nothing,
-            removeLabel = \v -> case (removeLabel f v, removeLabel g v) of
-              (Just f', Just g') -> Just ((left ||| f') . g')
-              (_, Just g') -> Just ((left ||| (right . f)) . g')
-              (Just f', _) -> Just (f' . g)
               _ -> Nothing
           }
 
@@ -102,20 +90,7 @@ mkVar v@(Var _ n) = me
         { out = error ("free variable " ++ show n),
           removeVar = \maybeV -> case eqVar v maybeV of
             Nothing -> Nothing
-            Just Refl -> Just (to first),
-          removeLabel = const Nothing
-        }
-
-mkLabel :: Sum k => Label a -> PointFree k a Void
-mkLabel v@(Label _ n) = me
-  where
-    me =
-      V
-        { out = error ("free label " ++ show n),
-          removeLabel = \maybeV -> case eqLabel v maybeV of
-            Nothing -> Nothing
-            Just Refl -> Just (to left),
-          removeVar = const Nothing
+            Just Refl -> Just (to first)
         }
 
 instance Product k => Product (PointFree k) where
@@ -131,11 +106,6 @@ instance Product k => Product (PointFree k) where
               (Just f', Just g') -> Just (f' &&& g')
               (_, Just g') -> Just ((f . second) &&& g')
               (Just f', _) -> Just (f' &&& (g . second))
-              _ -> Nothing,
-            removeLabel = \v -> case (removeLabel f v, removeLabel g v) of
-              (Just f', Just g') -> Just (distribute f' g')
-              (_, Just g') -> Just (distribute (right . f) g')
-              (Just f', _) -> Just (distribute f' (right . g))
               _ -> Nothing
           }
 
@@ -152,11 +122,6 @@ instance Sum k => Sum (PointFree k) where
               (Just f', Just g') -> Just (factor f' g')
               (_, Just g') -> Just (factor (f . second) g')
               (Just f', _) -> Just (factor f' (g . second))
-              _ -> Nothing,
-            removeLabel = \v -> case (removeLabel f v, removeLabel g v) of
-              (Just f', Just g') -> Just (f' ||| g')
-              (_, Just g') -> Just ((right . f) ||| g')
-              (Just f', _) -> Just (f' ||| (right . g))
               _ -> Nothing
           }
 
@@ -198,6 +163,3 @@ instance Exp k => Exp (PointFree k) where
 
 factor :: (Sum k, Exp k) => k (x * a) c -> k (x * b) c -> k (x * (a + b)) c
 factor f g = uncurry (curry f ||| curry g)
-
-distribute :: (Sum k, Exp k) => k c (x + a) -> k c (x + b) -> k c (x + (a * b))
-distribute f g = undefined

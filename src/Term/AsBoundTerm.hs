@@ -8,7 +8,7 @@ import Control.Monad.State
 import Id (Stream (..))
 import Term.Bound
 import qualified Term
-import Lambda.Type
+import Term.Type
 import Prelude hiding ((.), id, (&&&), (|||), curry, uncurry, (<*>))
 
 newtype Expr t (a :: T) = Expr {unExpr :: Stream -> t a}

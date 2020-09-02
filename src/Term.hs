@@ -5,7 +5,7 @@ module Term (Term (..), letBe) where
 
 import Control.Category
 import Data.Word (Word64)
-import Lambda.Type
+import Term.Type
 import Prelude hiding (id, uncurry, (.), (<*>))
 
 class Term t where
