@@ -6,7 +6,7 @@ module Lambda.AsView (View, view) where
 import Control.Category
 import Lambda.Exp
 import Lambda
-import Lambda.Bound
+import Term.Bound
 import Lambda.Product
 import Lambda.Sum
 import Lambda.Type

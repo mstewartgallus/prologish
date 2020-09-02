@@ -3,20 +3,20 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module Lambda.AsPointFree (PointFree, pointFree) where
+module AsPointFree (PointFree, pointFree) where
 
 import Control.Category
 import Data.Kind
 import Data.Maybe
 import Data.Typeable ((:~:) (..))
-import Lambda.Exp
 import Id (Id)
-import qualified Lambda.Bound as Bound
 import Lambda
+import Lambda.Exp
 import Lambda.Product
 import Lambda.Sum
 import Lambda.Type
-import Prelude hiding ((.), (<*>), id, (&&&), curry, uncurry)
+import qualified Term.Bound as Bound
+import Prelude hiding (curry, id, uncurry, (&&&), (.), (<*>))
 
 pointFree :: PointFree k a b -> k a b
 pointFree = out
@@ -52,17 +52,20 @@ to x = me
         }
 
 instance Lambda k => Bound.Bound (PointFree k a) where
-  f <*> x = me where
-    me = V {
-        out = out f <*> out x,
+  f <*> x = me
+    where
+      me =
+        V
+          { out = out f <*> out x,
             removeVar = \v -> case (removeVar f v, removeVar x v) of
               (Just f', Just x') -> Just (f' <*> x')
               (_, Just x') -> Just ((f . second) <*> x')
               (Just f', _) -> Just (f' <*> (x . second))
               _ -> Nothing
-      }
+          }
 
-  lam id t f = curry me where
+  lam id t f = curry me
+    where
       v = Var t id
       body = f (mkVar v . unit)
       me = case removeVar body v of
@@ -71,7 +74,6 @@ instance Lambda k => Bound.Bound (PointFree k a) where
 
   u64 x = to (u64 x) . unit
   add = to add . unit
-
 
 instance Category k => Category (PointFree k) where
   id = to id
@@ -91,7 +93,6 @@ instance Category k => Category (PointFree k) where
               (Just f', _) -> Just (f' . g)
               _ -> Nothing
           }
-
 
 mkVar :: Product k => Var a -> PointFree k Unit a
 mkVar v@(Var _ n) = me

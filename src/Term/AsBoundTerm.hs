@@ -1,13 +1,13 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE KindSignatures #-}
 
-module Lambda.AsBoundTerm (Expr, bindPoints) where
+module Term.AsBoundTerm (Expr, bindPoints) where
 
 import Control.Category
 import Control.Monad.State
 import Id (Stream (..))
-import Lambda.Bound
-import qualified Lambda.Term as Term
+import Term.Bound
+import qualified Term
 import Lambda.Type
 import Prelude hiding ((.), id, (&&&), (|||), curry, uncurry, (<*>))
 

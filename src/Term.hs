@@ -1,12 +1,12 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module Lambda.Term (Term (..), letBe) where
+module Term (Term (..), letBe) where
 
 import Control.Category
-import Lambda.Type
 import Data.Word (Word64)
-import Prelude hiding ((.), id, (<*>), uncurry)
+import Lambda.Type
+import Prelude hiding (id, uncurry, (.), (<*>))
 
 class Term t where
   lam :: ST a -> (t a -> t b) -> t (a ~> b)

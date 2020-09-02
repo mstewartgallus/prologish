@@ -1,7 +1,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module Lambda.Bound (Bound (..)) where
+module Term.Bound (Bound (..)) where
 
 import Control.Category
 import Lambda.Type

@@ -1,6 +1,7 @@
 module Main where
 
 import AsCallByName
+import AsPointFree
 import Cbpv (Cbpv)
 import qualified Cbpv.AsEval as AsEval
 import qualified Cbpv.AsView as AsViewCbpv
@@ -8,14 +9,13 @@ import qualified Cbpv.Sort
 import Data.Word
 import qualified Id
 import Lambda (Lambda)
-import Lambda.AsBoundTerm
 import qualified Lambda.AsConcrete as AsConcrete
-import Lambda.AsPointFree
 import Lambda.AsView
-import Lambda.Bound (Bound)
 import Lambda.Optimize
-import Lambda.Term
 import Lambda.Type
+import Term
+import Term.AsBoundTerm
+import Term.Bound (Bound)
 import Prelude hiding ((<*>))
 
 main :: IO ()
