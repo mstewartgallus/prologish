@@ -36,18 +36,6 @@ data Value k env a where
   LeftValue :: Sum k => Value k env a -> Value k env (a + b)
   RightValue :: Sum k => Value k env b -> Value k env (a + b)
 
-data Kont k a env where
-  StuckKont :: Category k => Expr k a b -> Kont k b env -> Kont k a env
-  EnvKont :: Category k => Kont k env env
-
-  FnKont :: Exp k => Kont k a env -> (forall x. Kont k x b -> Kont k x c) -> Kont k (b ~> c) env
-
-  AbsurdKont :: Sum k => Kont k Void env
-  EitherKont :: Sum k => Kont k a env -> Kont k b env -> Kont k (a + b) env
-
-  FirstKont :: Product k => Kont k a env -> Kont k (a * b) env
-  SecondKont :: Product k => Kont k b env -> Kont k (a * b) env
-
 apply :: Category k => Expr k b c -> Value k a b -> Value k a c
 apply hom x = let
   stuck = StuckValue hom x
@@ -105,52 +93,3 @@ toExpr expr = case expr of
 
 compile :: Category k => (forall env. Value k env a -> Value k env b) -> Expr k a b
 compile f = toExpr (f EnvValue)
-
-applyK :: Category k => Expr k b a -> Kont k a x -> Kont k b x
-applyK hom x = let
-  stuck = StuckKont hom x
-  in case hom of
-  Id -> x
-  f :.: g -> applyK g (applyK f x)
-
-  Absurd -> AbsurdKont
-
-  Fanin f g -> EitherKont (applyK f x) (applyK g x)
-  Left -> case x of
-    EitherKont l _ -> l
-    _ -> stuck
-  Right -> case x of
-    EitherKont _ r -> r
-    _ -> stuck
-
-  Fanout f g -> case x of
-    FirstKont l -> applyK f l
-    SecondKont r -> applyK g r
-    _ -> stuck
-  First -> FirstKont x
-  Second -> SecondKont x
-
-  Uncurry f -> doUncurryK f x
-  Curry f -> doCurryK f x
-
-  _ -> stuck
-
-doCurryK :: Exp k => Expr k (a * b) c -> Kont k (a ~> c) x -> Kont k b x
-doCurryK f x = undefined
-
-doUncurryK :: Exp k => Expr k a (b ~> c) -> Kont k c x -> Kont k (b * a) x
-doUncurryK f x = undefined
-
-toExprK :: Kont k arg env -> Expr k arg env
-toExprK expr = case expr of
-  StuckKont hom x -> toExprK x :.: hom
-  EnvKont -> Id
-
-  AbsurdKont -> Absurd
-  EitherKont f g -> Fanin (toExprK f) (toExprK g)
-
-  FirstKont x -> toExprK x :.: First
-  SecondKont x -> toExprK x :.: Second
-
-compileK :: Category k => (forall env. Kont k a env -> Kont k b env) -> Expr k b a
-compileK f = toExprK (f EnvKont)
