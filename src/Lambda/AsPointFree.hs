@@ -12,6 +12,7 @@ import Data.Typeable ((:~:) (..))
 import Lambda.Exp
 import Id (Id)
 import Lambda.Labels
+import qualified Lambda.Bound as Bound
 import Lambda
 import Lambda.Product
 import Lambda.Sum
@@ -51,6 +52,28 @@ to x = me
           removeVar = const Nothing,
           removeLabel = const Nothing
         }
+
+instance Lambda k => Bound.Bound (PointFree k a) where
+  f <*> x = me where
+    me = V {
+        out = out f <*> out x,
+            removeVar = \v -> case (removeVar f v, removeVar x v) of
+              (Just f', Just x') -> Just (f' <*> x')
+              (_, Just x') -> Just ((f . second) <*> x')
+              (Just f', _) -> Just (f' <*> (x . second))
+              _ -> Nothing
+      }
+
+  lam id t f = curry me where
+      v = Var t id
+      body = f (mkVar v . unit)
+      me = case removeVar body v of
+        Nothing -> body . second
+        Just y -> y
+
+  u64 x = to (u64 x) . unit
+  add = to add . unit
+
 
 instance Category k => Category (PointFree k) where
   id = to id
