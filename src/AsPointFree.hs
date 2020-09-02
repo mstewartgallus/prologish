@@ -11,10 +11,8 @@ import Data.Kind
 import Data.Maybe
 import Data.Typeable ((:~:) (..))
 import Id (Id)
-import Lambda
 import Lambda.Exp
 import Lambda.Product
-import Lambda.Sum
 import Lambda.Type
 import qualified Term.Bound as Bound
 import qualified Term.Type as Type
@@ -108,22 +106,6 @@ instance Product k => Product (Pf k) where
               (Just f', Just g') -> Just (f' &&& g')
               (_, Just g') -> Just ((f . second) &&& g')
               (Just f', _) -> Just (f' &&& (g . second))
-              _ -> Nothing
-          }
-
-instance Sum k => Sum (Pf k) where
-  absurd = to absurd
-  left = to left
-  right = to right
-  f ||| g = me
-    where
-      me =
-        V
-          { out = out f ||| out g,
-            removeVar = \v -> case (removeVar f v, removeVar g v) of
-              (Just f', Just g') -> Just (factor f' g')
-              (_, Just g') -> Just (factor (f . second) g')
-              (Just f', _) -> Just (factor f' (g . second))
               _ -> Nothing
           }
 
