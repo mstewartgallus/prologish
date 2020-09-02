@@ -15,6 +15,7 @@ import Lambda.Optimize
 import Lambda.Type
 import Term
 import Term.AsBoundTerm
+import qualified Term.AsView as AsTermView
 import Term.Bound (Bound)
 import Prelude hiding ((<*>))
 
@@ -23,7 +24,7 @@ main = do
   Id.Stream _ (Id.Stream _ x (Id.Stream _ y v)) (Id.Stream _ z (Id.Stream _ w u)) <- Id.stream
 
   putStrLn "The Program"
-  putStrLn (view (bound x))
+  putStrLn (AsTermView.view (bound x))
 
   putStrLn ""
   putStrLn "Point-Free Program"
