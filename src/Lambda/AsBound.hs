@@ -6,27 +6,17 @@ module Lambda.AsBound (Expr, bindPoints) where
 import Control.Category
 import Control.Monad.State
 import Lambda.Exp
-import Lambda.Hoas
 import Id (Stream (..))
-import Lambda.Labels
 import Lambda
 import Lambda.Product
 import Lambda.Sum
 import Lambda.Type
-import Lambda.Vars
 import Prelude hiding ((.), id, (&&&), (|||), curry, uncurry)
 
 newtype Expr k (a :: T) (b :: T) = Expr {unExpr :: Stream -> k a b}
 
 bindPoints :: Stream -> Expr k env a -> k env a
 bindPoints str (Expr x) = x str
-
-instance (Labels k, Vars k) => Hoas (Expr k) where
-  implicitEnv t f (Expr x) = Expr $ \(Stream n bodys xs) ->
-    bindImplicitEnv n t (\v -> unExpr (f (Expr $ const v)) bodys) (x xs)
-
-  implicitLabel t f (Expr x) = Expr $ \(Stream n bodys xs) ->
-    bindImplicitLabel n t (\v -> unExpr (f (Expr $ const v)) bodys) (x xs)
 
 instance Category k => Category (Expr k) where
   id = Expr $ pure id

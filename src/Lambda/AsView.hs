@@ -5,13 +5,11 @@ module Lambda.AsView (View, view) where
 
 import Control.Category
 import Lambda.Exp
-import Lambda.Labels
 import Lambda
 import Lambda.Bound
 import Lambda.Product
 import Lambda.Sum
 import Lambda.Type
-import Lambda.Vars
 
 newtype View (a :: T) (b :: T) = View String
 
@@ -53,15 +51,3 @@ instance Exp View where
 instance Lambda View where
   u64 x = View (show x)
   add = View "add"
-
-instance Vars View where
-  bindImplicitEnv n t f (View x) =
-    let v = "v" ++ show n
-        View body = f (View v)
-     in View (x ++ " be " ++ v ++ ": " ++ show t ++ ".\n" ++ body)
-
-instance Labels View where
-  bindImplicitLabel n t f (View x) =
-    let v = "l" ++ show n
-        View body = f (View v)
-     in View (x ++ " be " ++ v ++ ": " ++ show t ++ ".\n" ++ body)

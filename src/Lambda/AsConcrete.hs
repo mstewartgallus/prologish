@@ -9,14 +9,11 @@ module Lambda.AsConcrete (Expr (..), abstract) where
 import Control.Category
 import Control.Monad.State
 import Lambda.Exp
-import Lambda.Hoas
 import Id (Stream (..))
-import Lambda.Labels
 import Lambda
 import Lambda.Product
 import Lambda.Sum
 import Lambda.Type
-import Lambda.Vars
 import Prelude hiding ((.), id, (&&&), (|||), curry, uncurry, Either (..))
 import Data.Word
 

@@ -11,13 +11,11 @@ import Data.Maybe
 import Data.Typeable ((:~:) (..))
 import Lambda.Exp
 import Id (Id)
-import Lambda.Labels
 import qualified Lambda.Bound as Bound
 import Lambda
 import Lambda.Product
 import Lambda.Sum
 import Lambda.Type
-import Lambda.Vars
 import Prelude hiding ((.), (<*>), id, (&&&), curry, uncurry)
 
 pointFree :: PointFree k a b -> k a b
@@ -94,22 +92,6 @@ instance Category k => Category (PointFree k) where
               _ -> Nothing
           }
 
-instance (Exp k, Sum k) => Labels (PointFree k) where
-  bindImplicitLabel n t f x = me
-    where
-      v = Label t n
-      body = f (mkLabel v)
-      me = case removeLabel body v of
-        Nothing -> absurd . body
-        Just y -> (x ||| absurd) . y
-
-instance Exp k => Vars (PointFree k) where
-  bindImplicitEnv n t f x = me where
-      v = Var t n
-      body = f (mkVar v)
-      me = case removeVar body v of
-        Nothing -> body . unit
-        Just y -> y . (x &&& unit)
 
 mkVar :: Product k => Var a -> PointFree k Unit a
 mkVar v@(Var _ n) = me
@@ -212,10 +194,6 @@ instance Exp k => Exp (PointFree k) where
           }
       shuffle :: Product k => k (a * (b * c)) (b * (a * c))
       shuffle = (first . second) &&& (first &&& (second . second))
-
-instance Lambda k => Lambda (PointFree k) where
-  u64 x = to (u64 x)
-  add = to add
 
 factor :: (Sum k, Exp k) => k (x * a) c -> k (x * b) c -> k (x * (a + b)) c
 factor f g = uncurry (curry f ||| curry g)

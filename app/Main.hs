@@ -13,7 +13,6 @@ import qualified Lambda.AsConcrete as AsConcrete
 import Lambda.AsPointFree
 import Lambda.AsView
 import Lambda.Bound (Bound)
-import Lambda.Labels
 import Lambda.Optimize
 import Lambda.Term
 import Lambda.Type
