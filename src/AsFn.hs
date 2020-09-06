@@ -51,6 +51,23 @@ instance Fn k => Bound.Bound (PointFree k) where
   add = PointFree (to Fn.add)
 
 instance Fn k => Fn (Pf k) where
+  head = me
+    where
+      me =
+        V
+          { out = Fn.head,
+            removeVar = const Nothing
+          }
+  tail f = me
+    where
+      me =
+        V
+          { out = Fn.tail (out f),
+            removeVar = \v -> case removeVar f v of
+              Just f' -> Just (Fn.swap (Fn.tail f'))
+              _ -> Nothing
+          }
+
   f <*> x = me
     where
       me =
@@ -69,10 +86,8 @@ instance Fn k => Fn (Pf k) where
           { out = Fn.curry (out f),
             removeVar = \v -> case removeVar f v of
               Nothing -> Nothing
-              Just f' -> Just (Fn.curry (swap f'))
+              Just f' -> Just (Fn.curry (Fn.swap f'))
           }
-      swap :: Fn k => k (x ': a ': env) b -> k (a ': x ': env) b
-      swap = undefined
 
 data Pf k env (b :: T) = V
   { out :: k env b,

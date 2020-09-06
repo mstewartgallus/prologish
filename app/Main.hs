@@ -11,6 +11,7 @@ import qualified Cbpv.AsView as AsViewCbpv
 import qualified Cbpv.Sort
 import Data.Word
 import Fn (Fn)
+import qualified Fn.AsView as AsFnView
 import qualified Id
 import Lambda (Lambda)
 import qualified Lambda.AsConcrete as AsConcrete
@@ -32,8 +33,12 @@ main = do
   putStrLn (AsTermView.view (bound x))
 
   putStrLn ""
+  putStrLn "De-Bruijn Program"
+  putStrLn (AsFnView.view (debruijn y))
+
+  putStrLn ""
   putStrLn "Point-Free Program"
-  putStrLn (view (compiled y))
+  putStrLn (view (compiled z))
 
   putStrLn ""
   putStrLn "Optimized Program"
