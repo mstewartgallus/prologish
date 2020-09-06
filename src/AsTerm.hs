@@ -10,6 +10,8 @@ module AsTerm (PointFree, pointFree) where
 
 import Data.Maybe
 import Data.Typeable ((:~:) (..))
+import qualified HasApply
+import qualified HasWord
 import qualified Hoas.Bound as Bound
 import Hoas.Type
 import Id (Id)
@@ -22,9 +24,13 @@ pointFree (PointFree x) = out x
 
 newtype PointFree k a = PointFree (Pf k '[] a)
 
-instance Term k => Bound.Bound (PointFree k) where
+instance Term k => HasApply.HasApply (PointFree k) where
   PointFree f <*> PointFree x = PointFree (f Term.<*> x)
 
+instance Term k => HasWord.HasWord (PointFree k) where
+  u64 x = PointFree (to (Term.u64 x))
+
+instance Term k => Bound.Bound (PointFree k) where
   be n (PointFree x) t f = PointFree (Term.be x me)
     where
       v = Var t n
@@ -41,7 +47,6 @@ instance Term k => Bound.Bound (PointFree k) where
         Nothing -> Term.const body
         Just y -> y
 
-  u64 x = PointFree (to (Term.u64 x))
   add = PointFree (to Term.add)
 
 instance Term k => Term (Pf k) where

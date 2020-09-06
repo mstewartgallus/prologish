@@ -2,11 +2,20 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE NoStarIsType #-}
 
 module Hoas.Type (KnownT, inferT, eqT, ST (..), T, type (~>), type U64) where
+import qualified HasWord
+import qualified HasApply
 
 import Data.Typeable ((:~:) (..))
+
+instance HasApply.HasExpType T where
+  type Exp T = (~>)
+
+instance HasWord.HasWordType T where
+  type U64 T = U64
 
 type (~>) = 'Exp
 

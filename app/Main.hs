@@ -10,6 +10,8 @@ import qualified Cbpv.AsEval as AsEval
 import qualified Cbpv.AsView as AsViewCbpv
 import qualified Cbpv.Sort
 import Data.Word
+import HasApply hiding (Exp)
+import HasWord hiding (U64)
 import Hoas
 import Hoas.AsBound
 import qualified Hoas.AsView as AsHoasView
