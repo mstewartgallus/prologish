@@ -26,15 +26,22 @@ type family AsObject a = r | r -> a where
   AsObject (a Type.~> b) = AsObject a ~> AsObject b
   AsObject Type.U64 = U64
 
-asLambda :: Expr k '[a] b -> k (AsObject a) (AsObject b)
+type family AsList a = r | r -> a where
+  AsList '[] = Unit
+  AsList (h ': t) = AsObject h * AsList t
+
+asLambda :: Expr k '[] b -> k Unit (AsObject b)
 asLambda (E x) = x
 
 data Expr k (a :: [Type.T]) (b :: Type.T) where
-  E :: k (AsObject a) (AsObject b) -> Expr k '[a] b
+  E :: k (AsList a) (AsObject b) -> Expr k a b
 
 instance Lambda k => Fn (Expr k) where
-  -- curry f = \x -> E (curry (e (f x)))
+  head = E first
+  tail (E x) = E (x . second)
+
+  curry (E f) = E (curry f)
   E f <*> E x = E (f <*> x)
 
--- u64 x = E (u64 x . unit)
--- add = E (add . unit)
+  u64 x = E (u64 x . unit)
+  add = E (add . unit)

@@ -4,7 +4,7 @@ module Main where
 
 import AsCallByName
 import qualified AsFn
-import AsPointFree
+import qualified AsLambda
 import Cbpv (Cbpv)
 import qualified Cbpv.AsEval as AsEval
 import qualified Cbpv.AsView as AsViewCbpv
@@ -62,11 +62,11 @@ program =
 bound :: Bound t => Id.Stream -> t U64
 bound str = bindPoints str program
 
-compiled :: Lambda k => Id.Stream -> k Lambda.Type.Unit Lambda.Type.U64
-compiled str = pointFree (bound str)
-
 debruijn :: Fn k => Id.Stream -> k '[] U64
 debruijn str = AsFn.pointFree (bound str)
+
+compiled :: Lambda k => Id.Stream -> k Lambda.Type.Unit Lambda.Type.U64
+compiled str = AsLambda.asLambda (debruijn str)
 
 optimized :: Lambda k => Id.Stream -> k Lambda.Type.Unit Lambda.Type.U64
 optimized str = AsConcrete.abstract (optimize (compiled str))
