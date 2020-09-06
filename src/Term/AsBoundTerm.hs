@@ -15,7 +15,10 @@ bindPoints :: Stream -> Expr t a -> t a
 bindPoints str (Expr x) = x str
 
 instance Bound t => Term.Term (Expr t) where
-  lam t f = Expr $ \(Stream id _ ys) -> lam id t $ \x -> case f (Expr $ \_ -> x) of
+  be (Expr x) t f = Expr $ \(Stream n xs ys) -> be n (x xs) t $ \x' -> case f (Expr $ \_ -> x') of
+    Expr y -> y ys
+
+  lam t f = Expr $ \(Stream n _ ys) -> lam n t $ \x -> case f (Expr $ \_ -> x) of
     Expr y -> y ys
   Expr f <*> Expr x = Expr $ \(Stream _ fs xs) -> f fs <*> x xs
 

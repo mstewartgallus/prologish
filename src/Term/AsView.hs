@@ -12,6 +12,10 @@ view :: View a -> String
 view (View v) = v
 
 instance Bound View where
+  be n (View x) t f = View (x ++ " be " ++ v ++ ": " ++ show t ++ ".\n" ++ body) where
+        v = "v" ++ show n
+        View body = f (View v)
+
   lam n t f = View ("λ " ++ v ++ ": " ++ show t ++ ".\n" ++ body) where
         v = "v" ++ show n
         View body = f (View v)

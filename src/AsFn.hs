@@ -35,6 +35,8 @@ instance Fn k => Bound.Bound (PointFree k) where
               _ -> Nothing
           }
 
+  be n x t f = Bound.lam n t f Bound.<*> x
+
   lam n t f = PointFree (Fn.curry me)
     where
       v = Var t n

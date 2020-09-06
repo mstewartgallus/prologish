@@ -18,11 +18,11 @@ view (Code v) = v
 
 instance Category Stack where
   id = Stack "id"
-  Stack f . Stack g = Stack (g ++ " ∘ " ++ f)
+  Stack f . Stack g = Stack (f ++ " ∘ " ++ g)
 
 instance Category Code where
   id = Code "id"
-  Code f . Code g = Code (g ++ " ∘ " ++ f)
+  Code f . Code g = Code (f ++ " ∘ " ++ g)
 
 instance Cbpv Stack Code where
   to (Stack f) (Stack x) = Stack ("(to " ++ f ++ " " ++ x ++ ")")

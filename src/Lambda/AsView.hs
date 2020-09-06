@@ -17,7 +17,7 @@ view (View v) = v
 
 instance Category View where
   id = View "id"
-  View f . View g = View (g ++ " ∘ " ++ f)
+  View f . View g = View (f ++ " ∘ " ++ g)
 
 instance Product View where
   unit = View "unit"
