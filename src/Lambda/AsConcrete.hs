@@ -7,14 +7,12 @@
 module Lambda.AsConcrete (Expr (..), abstract) where
 
 import Control.Category
-import Control.Monad.State
 import Lambda.Exp
-import Id (Stream (..))
 import Lambda
 import Lambda.Product
 import Lambda.Sum
 import Lambda.Type
-import Prelude hiding ((.), id, (&&&), (|||), curry, uncurry, Either (..))
+import Prelude hiding ((.), id, curry, uncurry, Either (..))
 import Data.Word
 
 abstract :: Expr k a b -> k a b

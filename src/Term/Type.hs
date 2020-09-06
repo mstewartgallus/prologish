@@ -6,7 +6,6 @@
 
 module Term.Type (KnownT, inferT, eqT, ST (..), T, type (~>), type U64) where
 
-import Data.Kind (Type)
 import Data.Typeable ((:~:) (..))
 
 type (~>) = 'Exp

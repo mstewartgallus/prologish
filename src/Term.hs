@@ -3,7 +3,6 @@
 
 module Term (Term (..), letBe) where
 
-import Control.Category
 import Data.Word (Word64)
 import Term.Type
 import Prelude hiding (id, uncurry, (.), (<*>))

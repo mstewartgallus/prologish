@@ -9,18 +9,14 @@
 module AsLambda (Expr, asLambda) where
 
 import Control.Category
-import Data.Kind
-import Data.Maybe
-import Data.Typeable ((:~:) (..))
 import Fn (Fn)
 import qualified Fn
-import Id (Id)
 import Lambda
 import Lambda.Exp
 import Lambda.Product
 import Lambda.Type
 import qualified Term.Type as Type
-import Prelude hiding (curry, id, uncurry, (&&&), (.), (<*>))
+import Prelude hiding (curry, id, uncurry, (.), (<*>))
 
 type family AsObject a = r | r -> a where
   AsObject (a Type.~> b) = AsObject a ~> AsObject b

@@ -1,13 +1,8 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
 module Lambda.Type (T, Void, Unit, type (~>), type (*), type (+), type U64) where
-
-import Data.Kind (Type)
-import Data.Typeable ((:~:) (..))
 
 type Void = 'Void
 

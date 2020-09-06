@@ -3,7 +3,6 @@
 
 module Term.Bound (Bound (..)) where
 
-import Control.Category
 import Term.Type
 import Prelude hiding ((.), id, (<*>), uncurry)
 import Id (Id)

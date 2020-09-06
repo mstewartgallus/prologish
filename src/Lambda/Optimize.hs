@@ -9,17 +9,12 @@
 module Lambda.Optimize (optimize) where
 
 import Control.Category
-import Control.Monad.State
 import Lambda.Exp
-import Id (Stream (..))
-import Lambda
 import Lambda.Product
 import Lambda.Sum
 import Lambda.Type
 import Lambda.AsConcrete
-import Prelude hiding ((.), id, (&&&), (|||), curry, uncurry, Either (..))
-import Data.Word
-import Data.Typeable
+import Prelude hiding ((.), id, curry, uncurry, Either (..))
 
 optimize :: Category k => Expr k a b -> Expr k a b
 optimize expr = compile (apply expr)
@@ -73,7 +68,7 @@ doUncurry f x = let
   stuck = StuckValue (Uncurry f) x
   in case x of
   PairValue b a -> case apply f a of
-    FnValue env exp -> exp (PairValue b env)
+    FnValue env ep -> ep (PairValue b env)
     _ -> stuck
   _ -> stuck
 

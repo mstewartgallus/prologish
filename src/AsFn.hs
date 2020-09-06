@@ -8,18 +8,14 @@
 
 module AsFn (PointFree, pointFree) where
 
-import Control.Category
-import Data.Kind
 import Data.Maybe
 import Data.Typeable ((:~:) (..))
 import Fn (Fn)
 import qualified Fn
 import Id (Id)
-import Lambda
-import Lambda.Exp
 import qualified Term.Bound as Bound
 import Term.Type
-import Prelude hiding (curry, id, uncurry, (&&&), (.), (<*>))
+import Prelude hiding (curry, id, uncurry, (.), (<*>))
 
 pointFree :: PointFree k a -> k '[] a
 pointFree (PointFree x) = out x
@@ -39,9 +35,9 @@ instance Fn k => Bound.Bound (PointFree k) where
               _ -> Nothing
           }
 
-  lam id t f = PointFree (Fn.curry me)
+  lam n t f = PointFree (Fn.curry me)
     where
-      v = Var t id
+      v = Var t n
       PointFree body = f (PointFree (mkVar v))
       me = case removeVar body v of
         Nothing -> Fn.tail body
@@ -51,6 +47,9 @@ instance Fn k => Bound.Bound (PointFree k) where
   add = PointFree (to Fn.add)
 
 instance Fn k => Fn (Pf k) where
+  u64 x = to (Fn.u64 x)
+  add = to Fn.add
+
   head = me
     where
       me =
