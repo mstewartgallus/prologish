@@ -9,13 +9,13 @@
 module AsLambda (Expr, asLambda) where
 
 import Control.Category
-import Fn (Fn)
-import qualified Fn
+import qualified Hoas.Type as Type
 import Lambda
-import Lambda.Exp
-import Lambda.Product
+import Lambda.HasExp
+import Lambda.HasProduct
 import Lambda.Type
-import qualified Term.Type as Type
+import Term (Term)
+import qualified Term
 import Prelude hiding (curry, id, uncurry, (.), (<*>))
 
 type family AsObject a = r | r -> a where
@@ -32,9 +32,9 @@ asLambda (E x) = x
 data Expr k (a :: [Type.T]) (b :: Type.T) where
   E :: k (AsList a) (AsObject b) -> Expr k a b
 
-instance Lambda k => Fn (Expr k) where
-  head = E first
-  tail (E x) = E (x . second)
+instance Lambda k => Term (Expr k) where
+  tip = E first
+  const (E x) = E (x . second)
 
   E x `be` E f = E (curry f <*> x)
 

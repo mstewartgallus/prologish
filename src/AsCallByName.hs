@@ -13,9 +13,9 @@ import Cbpv
 import Cbpv.Sort
 import Control.Category
 import qualified Lambda
-import qualified Lambda.Exp as Exp
-import qualified Lambda.Product as Product
-import qualified Lambda.Sum as Sum
+import qualified Lambda.HasExp as Exp
+import qualified Lambda.HasProduct as Product
+import qualified Lambda.HasSum as Sum
 import qualified Lambda.Type as Type
 import Prelude hiding (curry, id, return, uncurry, (.), (<*>))
 
@@ -36,21 +36,21 @@ instance Cbpv c d => Category (Expr d) where
   id = Expr id
   Expr f . Expr g = Expr (f . g)
 
-instance Cbpv c d => Product.Product (Expr d) where
+instance Cbpv c d => Product.HasProduct (Expr d) where
   unit = Expr (thunk (return unit))
 
   first = Expr (thunk (force first . force id))
   second = Expr (thunk (force second . force id))
   Expr f &&& Expr g = Expr (thunk (return f `to` ((return g . return first) `to` return ((second . first) &&& second))))
 
-instance Cbpv c d => Sum.Sum (Expr d) where
+instance Cbpv c d => Sum.HasSum (Expr d) where
   absurd = Expr (thunk (force absurd . force id))
 
   left = Expr (thunk (return left))
   right = Expr (thunk (return right))
   Expr f ||| Expr g = Expr (thunk (force id . force (thunk (return f) ||| thunk (return g)) . force id))
 
-instance Cbpv c d => Exp.Exp (Expr d) where
+instance Cbpv c d => Exp.HasExp (Expr d) where
   curry (Expr f) = Expr (thunk (curry (force f . return (thunk id) . assocOut)))
   uncurry (Expr f) = Expr (thunk (uncurry (force f) . assocIn . force id))
 

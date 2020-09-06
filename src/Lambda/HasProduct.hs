@@ -2,12 +2,12 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module Lambda.Product (Product (..)) where
+module Lambda.HasProduct (HasProduct (..)) where
 
 import Control.Category
 import Lambda.Type
 
-class Category k => Product k where
+class Category k => HasProduct k where
   unit :: k x Unit
 
   (&&&) :: k env a -> k env b -> k env (a * b)

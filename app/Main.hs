@@ -3,26 +3,26 @@
 module Main where
 
 import AsCallByName
-import qualified AsFn
 import qualified AsLambda
+import qualified AsTerm
 import Cbpv (Cbpv)
 import qualified Cbpv.AsEval as AsEval
 import qualified Cbpv.AsView as AsViewCbpv
 import qualified Cbpv.Sort
 import Data.Word
-import Fn (Fn)
-import qualified Fn.AsView as AsFnView
+import Hoas
+import Hoas.AsBound
+import qualified Hoas.AsView as AsHoasView
+import Hoas.Bound (Bound)
+import Hoas.Type
 import qualified Id
 import Lambda (Lambda)
 import qualified Lambda.AsConcrete as AsConcrete
+import Lambda.AsOptimized
 import Lambda.AsView
-import Lambda.Optimize
 import qualified Lambda.Type
-import Term
-import Term.AsBoundTerm
+import Term (Term)
 import qualified Term.AsView as AsTermView
-import Term.Bound (Bound)
-import Term.Type
 import Prelude hiding ((<*>))
 
 main :: IO ()
@@ -30,11 +30,11 @@ main = do
   Id.Stream _ (Id.Stream _ x (Id.Stream _ y v)) (Id.Stream _ z (Id.Stream _ w u)) <- Id.stream
 
   putStrLn "The Program"
-  putStrLn (AsTermView.view (bound x))
+  putStrLn (AsHoasView.view (bound x))
 
   putStrLn ""
   putStrLn "De-Bruijn Program"
-  putStrLn (AsFnView.view (debruijn y))
+  putStrLn (AsTermView.view (debruijn y))
 
   putStrLn ""
   putStrLn "Point-Free Program"
@@ -52,7 +52,7 @@ main = do
   putStrLn "Result"
   putStrLn (show (result v))
 
-program :: Term t => t U64
+program :: Hoas t => t U64
 program =
   u64 42 `letBe` \x ->
     u64 3 `letBe` \y ->
@@ -62,8 +62,8 @@ program =
 bound :: Bound t => Id.Stream -> t U64
 bound str = bindPoints str program
 
-debruijn :: Fn k => Id.Stream -> k '[] U64
-debruijn str = AsFn.pointFree (bound str)
+debruijn :: Term k => Id.Stream -> k '[] U64
+debruijn str = AsTerm.pointFree (bound str)
 
 compiled :: Lambda k => Id.Stream -> k Lambda.Type.Unit Lambda.Type.U64
 compiled str = AsLambda.asLambda (debruijn str)

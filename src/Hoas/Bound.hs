@@ -1,9 +1,9 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module Term.Bound (Bound (..)) where
+module Hoas.Bound (Bound (..)) where
 
-import Term.Type
+import Hoas.Type
 import Prelude hiding ((.), id, (<*>), uncurry)
 import Id (Id)
 import Data.Word (Word64)

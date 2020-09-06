@@ -6,12 +6,12 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
 
-module Lambda.Optimize (optimize) where
+module Lambda.AsOptimized (optimize) where
 
 import Control.Category
-import Lambda.Exp
-import Lambda.Product
-import Lambda.Sum
+import Lambda.HasExp
+import Lambda.HasProduct
+import Lambda.HasSum
 import Lambda.Type
 import Lambda.AsConcrete
 import Prelude hiding ((.), id, curry, uncurry, Either (..))
@@ -23,13 +23,13 @@ data Value k env a where
   StuckValue :: Category k => Expr k a b -> Value k env a -> Value k env b
   EnvValue :: Category k => Value k env env
 
-  FnValue :: Exp k => Value k env a -> (forall x. Value k x (b * a) -> Value k x c) -> Value k env (b ~> c)
+  FnValue :: HasExp k => Value k env a -> (forall x. Value k x (b * a) -> Value k x c) -> Value k env (b ~> c)
 
-  CoinValue :: Product k => Value k env Unit
-  PairValue :: Product k => Value k env a -> Value k env b -> Value k env (a * b)
+  CoinValue :: HasProduct k => Value k env Unit
+  PairValue :: HasProduct k => Value k env a -> Value k env b -> Value k env (a * b)
 
-  LeftValue :: Sum k => Value k env a -> Value k env (a + b)
-  RightValue :: Sum k => Value k env b -> Value k env (a + b)
+  LeftValue :: HasSum k => Value k env a -> Value k env (a + b)
+  RightValue :: HasSum k => Value k env b -> Value k env (a + b)
 
 apply :: Category k => Expr k b c -> Value k a b -> Value k a c
 apply hom x = let
@@ -60,10 +60,10 @@ apply hom x = let
 
   _ -> stuck
 
-doCurry :: Exp k => Expr k (b * a) c -> Value k env a -> Value k env (b ~> c)
+doCurry :: HasExp k => Expr k (b * a) c -> Value k env a -> Value k env (b ~> c)
 doCurry f env = FnValue env (apply f)
 
-doUncurry :: Exp k => Expr k a (b ~> c) -> Value k env (b * a) -> Value k env c
+doUncurry :: HasExp k => Expr k a (b ~> c) -> Value k env (b * a) -> Value k env c
 doUncurry f x = let
   stuck = StuckValue (Uncurry f) x
   in case x of

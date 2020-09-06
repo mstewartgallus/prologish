@@ -1,20 +1,23 @@
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE NoStarIsType #-}
 
-module Term (Term (..), letBe) where
+module Term (Term (..)) where
 
 import Data.Word (Word64)
-import Term.Type
-import Prelude hiding (id, uncurry, (.), (<*>))
+import Hoas.Type
+import Prelude hiding (const, curry, (<*>))
 
 class Term t where
-  lam :: ST a -> (t a -> t b) -> t (a ~> b)
-  (<*>) :: t (a ~> b) -> t a -> t b
+  be :: t env a -> t (a ': env) b -> t env b
 
-  u64 :: Word64 -> t U64
-  add :: t (U64 ~> U64 ~> U64)
+  tip :: t (a ': env) a
+  const :: t env a -> t (any ': env) a
 
-  be :: t a -> ST a -> (t a -> t b) -> t b
+  curry :: t (a ': env) b -> t env (a ~> b)
+  (<*>) :: t env (a ~> b) -> t env a -> t env b
 
-letBe :: (KnownT a, Term t) => t a -> (t a -> t b) -> t b
-letBe x f = be x inferT f
+  u64 :: Word64 -> t env U64
+  add :: t env (U64 ~> U64 ~> U64)
+
+  swap :: t (x ': a ': env) b -> t (a ': x ': env) b
+  swap f = const (const (curry (curry f))) <*> tip <*> const tip

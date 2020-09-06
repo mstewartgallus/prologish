@@ -8,11 +8,11 @@
 module Lambda (Lambda (..)) where
 
 import Data.Word (Word64)
-import Lambda.Exp
-import Lambda.Product
-import Lambda.Sum
+import Lambda.HasExp
+import Lambda.HasProduct
+import Lambda.HasSum
 import Lambda.Type
 
-class (Sum k, Product k, Exp k) => Lambda k where
+class (HasSum k, HasProduct k, HasExp k) => Lambda k where
   u64 :: Word64 -> k Unit U64
   add :: k Unit (U64 ~> U64 ~> U64)
