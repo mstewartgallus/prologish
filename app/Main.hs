@@ -1,12 +1,16 @@
+{-# LANGUAGE DataKinds #-}
+
 module Main where
 
 import AsCallByName
+import qualified AsFn
 import AsPointFree
 import Cbpv (Cbpv)
 import qualified Cbpv.AsEval as AsEval
 import qualified Cbpv.AsView as AsViewCbpv
 import qualified Cbpv.Sort
 import Data.Word
+import Fn (Fn)
 import qualified Id
 import Lambda (Lambda)
 import qualified Lambda.AsConcrete as AsConcrete
@@ -55,6 +59,9 @@ bound str = bindPoints str program
 
 compiled :: Lambda k => Id.Stream -> k Lambda.Type.Unit Lambda.Type.U64
 compiled str = pointFree (bound str)
+
+debruijn :: Fn k => Id.Stream -> k '[] U64
+debruijn str = AsFn.pointFree (bound str)
 
 optimized :: Lambda k => Id.Stream -> k Lambda.Type.Unit Lambda.Type.U64
 optimized str = AsConcrete.abstract (optimize (compiled str))

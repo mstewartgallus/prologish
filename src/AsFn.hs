@@ -1,3 +1,4 @@
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -5,7 +6,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module AsFn (PointFree, pointFree, AsObject) where
+module AsFn (PointFree, pointFree) where
 
 import Control.Category
 import Data.Kind
@@ -16,58 +17,76 @@ import qualified Fn
 import Id (Id)
 import Lambda
 import Lambda.Exp
-import Lambda.Product
-import Lambda.Type
 import qualified Term.Bound as Bound
-import qualified Term.Type as Type
+import Term.Type
 import Prelude hiding (curry, id, uncurry, (&&&), (.), (<*>))
 
-pointFree :: PointFree k a -> k Unit -> k (AsObject a)
+pointFree :: PointFree k a -> k '[] a
 pointFree (PointFree x) = out x
 
-type family AsObject a = r | r -> a where
-  AsObject (a Type.~> b) = AsObject a ~> AsObject b
-  AsObject Type.U64 = U64
-
-newtype PointFree k a = PointFree (Pf k Unit (AsObject a))
+newtype PointFree k a = PointFree (Pf k '[] a)
 
 instance Fn k => Bound.Bound (PointFree k) where
   PointFree f <*> PointFree x = PointFree me
     where
       me =
         V
-          { out = \y -> out f y Fn.<*> out x y,
+          { out = out f Fn.<*> out x,
             removeVar = \v -> case (removeVar f v, removeVar x v) of
-              (Just f', Just x') -> Just (f' <*> x')
-              (_, Just x') -> Just ((f . second) <*> x')
-              (Just f', _) -> Just (f' <*> (x . second))
+              (Just f', Just x') -> Just (f' Fn.<*> x')
+              (_, Just x') -> Just (Fn.tail f Fn.<*> x')
+              (Just f', _) -> Just (f' Fn.<*> Fn.tail x)
               _ -> Nothing
           }
 
-  lam id t f = PointFree (curry me)
+  lam id t f = PointFree (Fn.curry me)
     where
       v = Var t id
       PointFree body = f (PointFree (mkVar v))
       me = case removeVar body v of
-        Nothing -> body . second
+        Nothing -> Fn.tail body
         Just y -> y
 
-  u64 x = PointFree (to (const (Fn.u64 x)))
-  add = PointFree (to (const Fn.add))
+  u64 x = PointFree (to (Fn.u64 x))
+  add = PointFree (to Fn.add)
 
-data Pf k a b = V
-  { out :: k a -> k b,
-    removeVar :: forall v. Var v -> Maybe (Pf k ((AsObject v) * a) b)
+instance Fn k => Fn (Pf k) where
+  f <*> x = me
+    where
+      me =
+        V
+          { out = out f Fn.<*> out x,
+            removeVar = \v -> case (removeVar f v, removeVar x v) of
+              (Just f', Just x') -> Just (f' Fn.<*> x')
+              (_, Just x') -> Just (Fn.tail f Fn.<*> x')
+              (Just f', _) -> Just (f' Fn.<*> Fn.tail x)
+              _ -> Nothing
+          }
+  curry f = me
+    where
+      me =
+        V
+          { out = Fn.curry (out f),
+            removeVar = \v -> case removeVar f v of
+              Nothing -> Nothing
+              Just f' -> Just (Fn.curry (swap f'))
+          }
+      swap :: Fn k => k (x ': a ': env) b -> k (a ': x ': env) b
+      swap = undefined
+
+data Pf k env (b :: T) = V
+  { out :: k env b,
+    removeVar :: forall v. Var v -> Maybe (Pf k (v ': env) b)
   }
 
-data Var a = Var (Type.ST a) Id
+data Var a = Var (ST a) Id
 
 eqVar :: Var a -> Var b -> Maybe (a :~: b)
 eqVar (Var t m) (Var t' n)
-  | m == n = Type.eqT t t'
+  | m == n = eqT t t'
   | otherwise = Nothing
 
-to :: (k a -> k b) -> Pf k a b
+to :: k a b -> Pf k a b
 to x = me
   where
     me =
@@ -76,21 +95,7 @@ to x = me
           removeVar = const Nothing
         }
 
-instance Fn k => Category (Pf k) where
-  id = to id
-  f . g = me
-    where
-      me =
-        V
-          { out = out f . out g,
-            removeVar = \v -> case (removeVar f v, removeVar g v) of
-              (Just f', Just g') -> Just (f' . (first &&& g'))
-              (_, Just g') -> Just (f . g')
-              (Just f', _) -> Just (f' . (first &&& (g . second)))
-              _ -> Nothing
-          }
-
-mkVar :: Fn k => Var a -> Pf k Unit (AsObject a)
+mkVar :: Fn k => Var a -> Pf k '[] a
 mkVar v@(Var _ n) = me
   where
     me =
@@ -98,57 +103,5 @@ mkVar v@(Var _ n) = me
         { out = error ("free variable " ++ show n),
           removeVar = \maybeV -> case eqVar v maybeV of
             Nothing -> Nothing
-            Just Refl -> Just (to Fn.first)
+            Just Refl -> Just (to Fn.head)
         }
-
-instance Fn k => Product (Pf k) where
-  unit = to (const Fn.unit)
-  first = to Fn.first
-  second = to Fn.second
-  f &&& g = me
-    where
-      me =
-        V
-          { out = \x -> out f x Fn.&&& out g x,
-            removeVar = \v -> case (removeVar f v, removeVar g v) of
-              (Just f', Just g') -> Just (f' &&& g')
-              (_, Just g') -> Just ((f . second) &&& g')
-              (Just f', _) -> Just (f' &&& (g . second))
-              _ -> Nothing
-          }
-
-instance Fn k => Exp (Pf k) where
-  f <*> x = me
-    where
-      me =
-        V
-          { out = \y -> out f y Fn.<*> out x y,
-            removeVar = \v -> case (removeVar f v, removeVar x v) of
-              (Just f', Just x') -> Just (f' <*> x')
-              (_, Just x') -> Just ((f . second) <*> x')
-              (Just f', _) -> Just (f' <*> (x . second))
-              _ -> Nothing
-          }
-
-  curry f = me
-    where
-      me =
-        V
-          { out = Fn.curry (out f),
-            removeVar = \v -> case removeVar f v of
-              Nothing -> Nothing
-              Just f' -> Just (curry (f' . shuffle))
-          }
-      shuffle :: Product k => k (a * (b * c)) (b * (a * c))
-      shuffle = (first . second) &&& (first &&& (second . second))
-  uncurry f = me
-    where
-      me =
-        V
-          { out = \x -> Fn.uncurry (out f) x,
-            removeVar = \v -> case removeVar f v of
-              Nothing -> Nothing
-              Just f' -> Just (uncurry f' . shuffle)
-          }
-      shuffle :: Product k => k (a * (b * c)) (b * (a * c))
-      shuffle = (first . second) &&& (first &&& (second . second))
