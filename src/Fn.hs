@@ -8,6 +8,8 @@ import Term.Type
 import Prelude hiding (curry, head, tail, (<*>))
 
 class Fn t where
+  be :: t env a -> t (a ': env) b -> t env b
+
   head :: t (a ': env) a
   tail :: t env a -> t (any ': env) a
 

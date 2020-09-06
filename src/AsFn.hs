@@ -23,19 +23,15 @@ pointFree (PointFree x) = out x
 newtype PointFree k a = PointFree (Pf k '[] a)
 
 instance Fn k => Bound.Bound (PointFree k) where
-  PointFree f <*> PointFree x = PointFree me
-    where
-      me =
-        V
-          { out = out f Fn.<*> out x,
-            removeVar = \v -> case (removeVar f v, removeVar x v) of
-              (Just f', Just x') -> Just (f' Fn.<*> x')
-              (_, Just x') -> Just (Fn.tail f Fn.<*> x')
-              (Just f', _) -> Just (f' Fn.<*> Fn.tail x)
-              _ -> Nothing
-          }
+  PointFree f <*> PointFree x = PointFree (f Fn.<*> x)
 
-  be n x t f = Bound.lam n t f Bound.<*> x
+  be n (PointFree x) t f = PointFree (Fn.be x me)
+    where
+      v = Var t n
+      PointFree body = f (PointFree (mkVar v))
+      me = case removeVar body v of
+        Nothing -> Fn.tail body
+        Just y -> y
 
   lam n t f = PointFree (Fn.curry me)
     where
@@ -66,6 +62,18 @@ instance Fn k => Fn (Pf k) where
           { out = Fn.tail (out f),
             removeVar = \v -> case removeVar f v of
               Just f' -> Just (Fn.swap (Fn.tail f'))
+              _ -> Nothing
+          }
+
+  be x f = me
+    where
+      me =
+        V
+          { out = out x `Fn.be` out f,
+            removeVar = \v -> case (removeVar x v, removeVar f v) of
+              (Just x', Just f') -> Just (x' `Fn.be` Fn.swap f')
+              (_, Just f') -> Just (Fn.tail x `Fn.be` Fn.swap f')
+              (Just x', _) -> Just (x' `Fn.be` Fn.swap (Fn.tail f))
               _ -> Nothing
           }
 

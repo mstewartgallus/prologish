@@ -12,8 +12,7 @@ view :: View env a -> String
 view (View v) = v
 
 instance Fn View where
-  swap (View x) = View ("(swap " ++ x ++ ")")
-
+  View x `be` View f = View ("(" ++ x ++ " be " ++ f ++ ")")
   View f <*> View x = View ("(" ++ f ++ " " ++ x ++ ")")
 
   u64 n = View (show n)

@@ -36,6 +36,8 @@ instance Lambda k => Fn (Expr k) where
   head = E first
   tail (E x) = E (x . second)
 
+  E x `be` E f = E (curry f <*> x)
+
   curry (E f) = E (curry f)
   E f <*> E x = E (f <*> x)
 
