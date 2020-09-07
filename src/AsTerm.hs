@@ -1,5 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE QuantifiedConstraints #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeFamilyDependencies #-}
@@ -10,8 +11,8 @@ module AsTerm (PointFree, pointFree) where
 
 import Data.Maybe
 import Data.Typeable ((:~:) (..))
-import qualified HasApply
-import qualified HasWord
+import HasApply
+import HasWord
 import qualified Hoas.Bound as Bound
 import Hoas.Type
 import Id (Id)
@@ -24,11 +25,11 @@ pointFree (PointFree x) = out x
 
 newtype PointFree k a = PointFree (Pf k '[] a)
 
-instance Term k => HasApply.HasApply (PointFree k) where
-  PointFree f <*> PointFree x = PointFree (f Term.<*> x)
+instance (forall env. HasApply (k env), Term k) => HasApply (PointFree k) where
+  PointFree f <*> PointFree x = PointFree (f <*> x)
 
-instance Term k => HasWord.HasWord (PointFree k) where
-  u64 x = PointFree (to (Term.u64 x))
+instance (forall env. HasWord (k env)) => HasWord (PointFree k) where
+  u64 x = PointFree (to (u64 x))
 
 instance Term k => Bound.Bound (PointFree k) where
   be n (PointFree x) t f = PointFree (Term.be x me)
@@ -49,8 +50,23 @@ instance Term k => Bound.Bound (PointFree k) where
 
   add = PointFree (to Term.add)
 
+instance (forall env. HasApply (k env), Term k) => HasApply (Pf k env) where
+  f <*> x = me
+    where
+      me =
+        V
+          { out = out f <*> out x,
+            removeVar = \v -> case (removeVar f v, removeVar x v) of
+              (Just f', Just x') -> Just (f' <*> x')
+              (_, Just x') -> Just (Term.const f <*> x')
+              (Just f', _) -> Just (f' <*> Term.const x)
+              _ -> Nothing
+          }
+
+instance (forall env. HasWord (k env)) => HasWord (Pf k env) where
+  u64 x = to (u64 x)
+
 instance Term k => Term (Pf k) where
-  u64 x = to (Term.u64 x)
   add = to Term.add
 
   tip = me
@@ -82,17 +98,6 @@ instance Term k => Term (Pf k) where
               _ -> Nothing
           }
 
-  f <*> x = me
-    where
-      me =
-        V
-          { out = out f Term.<*> out x,
-            removeVar = \v -> case (removeVar f v, removeVar x v) of
-              (Just f', Just x') -> Just (f' Term.<*> x')
-              (_, Just x') -> Just (Term.const f Term.<*> x')
-              (Just f', _) -> Just (f' Term.<*> Term.const x)
-              _ -> Nothing
-          }
   curry f = me
     where
       me =
