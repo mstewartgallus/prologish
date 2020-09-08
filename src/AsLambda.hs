@@ -9,8 +9,6 @@
 module AsLambda (Expr, asLambda) where
 
 import Control.Category
-import qualified HasApply
-import qualified HasWord
 import qualified Hoas.Type as Type
 import Lambda
 import Lambda.HasExp
@@ -34,12 +32,6 @@ asLambda (E x) = x
 data Expr k (a :: [Type.T]) (b :: Type.T) where
   E :: k (AsList a) (AsObject b) -> Expr k a b
 
-instance Lambda k => HasApply.HasApply (Expr k env) where
-  E f <*> E x = E (f <*> x)
-
-instance Lambda k => HasWord.HasWord (Expr k env) where
-  u64 x = E (u64 x . unit)
-
 instance Lambda k => Term (Expr k) where
   tip = E first
   const (E x) = E (x . second)
@@ -47,4 +39,7 @@ instance Lambda k => Term (Expr k) where
   E x `be` E f = E (curry f <*> x)
 
   curry (E f) = E (curry f)
+  E f <*> E x = E (f <*> x)
+
+  u64 x = E (u64 x . unit)
   add = E (add . unit)
