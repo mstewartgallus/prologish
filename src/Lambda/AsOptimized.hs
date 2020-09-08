@@ -6,21 +6,26 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
 
-module Lambda.AsOptimized (optimize) where
+module Lambda.AsOptimized (Expr, optimize) where
 
 import Control.Category
+import Lambda
 import Lambda.HasExp
 import Lambda.HasProduct
 import Lambda.HasSum
 import Lambda.Type
-import Lambda.AsConcrete
 import Prelude hiding ((.), id, curry, uncurry, Either (..))
 
-optimize :: Category k => Expr k a b -> Expr k a b
-optimize expr = compile (apply expr)
+-- | The optimizer is based off the idea of normalization by
+-- evaluation. Next this should really be moved back to the term level
+-- representation
+optimize :: Lambda k => Expr k a b -> k a b
+optimize (Expr x) = compile x
+
+newtype Expr k a b = Expr { apply :: forall env. Value k env a -> Value k env b }
 
 data Value k env a where
-  StuckValue :: Category k => Expr k a b -> Value k env a -> Value k env b
+  StuckValue :: Category k => k a b -> Value k env a -> Value k env b
   EnvValue :: Category k => Value k env env
 
   FnValue :: HasExp k => Value k env a -> (forall x. Value k x (b * a) -> Value k x c) -> Value k env (b ~> c)
@@ -31,60 +36,59 @@ data Value k env a where
   LeftValue :: HasSum k => Value k env a -> Value k env (a + b)
   RightValue :: HasSum k => Value k env b -> Value k env (a + b)
 
-apply :: Category k => Expr k b c -> Value k a b -> Value k a c
-apply hom x = let
-  stuck = StuckValue hom x
-  in case hom of
-  Id -> x
-  f :.: g -> apply f (apply g x)
+toExpr :: Lambda k => Value k env result -> k env result
+toExpr expr = case expr of
+  StuckValue hom x -> hom . toExpr x
+  EnvValue -> id
 
-  Coin -> CoinValue
+  CoinValue -> unit
+  PairValue f g -> toExpr f &&& toExpr g
 
-  Fanout f g -> PairValue (apply f x) (apply g x)
-  First -> case x of
+  LeftValue x -> left . toExpr x
+  RightValue x -> right . toExpr x
+
+  FnValue env f -> curry f' . toExpr env where
+    f' = compile f
+
+compile :: Lambda k => (forall env. Value k env a -> Value k env b) -> k a b
+compile f = toExpr (f EnvValue)
+
+instance Category k => Category (Expr k) where
+  id = Expr id
+  Expr f . Expr g = Expr (f . g)
+
+instance HasProduct k => HasProduct (Expr k) where
+  unit = Expr (const CoinValue)
+  Expr f &&& Expr g = Expr $ \x -> PairValue (f x) (g x)
+  first = Expr $ \x -> case x of
     PairValue l _ -> l
-    _ -> stuck
-  Second -> case x of
+    _ -> StuckValue first x
+  second = Expr $ \x -> case x of
     PairValue _ r -> r
-    _ -> stuck
+    _ -> StuckValue second x
 
-  Fanin f g -> case x of
-    LeftValue l -> apply f l
-    RightValue r -> apply g r
-    _ -> stuck
-  Left -> LeftValue x
-  Right -> RightValue x
+instance Lambda k => HasSum (Expr k) where
+  absurd = Expr (StuckValue absurd)
+  Expr f ||| Expr g = Expr $ \x -> case x of
+    LeftValue l -> f l
+    RightValue r -> g r
+    _ -> StuckValue (compile f ||| compile g) x
+  left = Expr LeftValue
+  right = Expr RightValue
 
-  Curry f -> doCurry f x
-  Uncurry f -> doUncurry f x
+instance Lambda k => HasExp (Expr k) where
+  curry (Expr f) = Expr (\x ->  FnValue x f)
+  uncurry f = Expr (doUncurry f)
 
-  _ -> stuck
+instance Lambda k => Lambda (Expr k) where
+  u64 x = Expr (StuckValue $ u64 x)
+  add = Expr (StuckValue add)
 
-doCurry :: HasExp k => Expr k (b * a) c -> Value k env a -> Value k env (b ~> c)
-doCurry f env = FnValue env (apply f)
-
-doUncurry :: HasExp k => Expr k a (b ~> c) -> Value k env (b * a) -> Value k env c
-doUncurry f x = let
-  stuck = StuckValue (Uncurry f) x
+doUncurry :: Lambda k => Expr k a (b ~> c) -> Value k env (b * a) -> Value k env c
+doUncurry (Expr f) x = let
+  stuck = StuckValue (uncurry (compile f)) x
   in case x of
-  PairValue b a -> case apply f a of
+  PairValue b a -> case f a of
     FnValue env ep -> ep (PairValue b env)
     _ -> stuck
   _ -> stuck
-
-toExpr :: Value k env result -> Expr k env result
-toExpr expr = case expr of
-  StuckValue hom x -> hom :.: toExpr x
-  EnvValue -> Id
-
-  CoinValue -> Coin
-  PairValue f g -> Fanout (toExpr f) (toExpr g)
-
-  LeftValue x -> Left :.: toExpr x
-  RightValue x -> Right :.: toExpr x
-
-  FnValue env f -> curry f' :.: toExpr env where
-    f' = compile f
-
-compile :: Category k => (forall env. Value k env a -> Value k env b) -> Expr k a b
-compile f = toExpr (f EnvValue)

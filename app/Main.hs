@@ -17,7 +17,6 @@ import Hoas.Bound (Bound)
 import Hoas.Type
 import qualified Id
 import Lambda (Lambda)
-import qualified Lambda.AsConcrete as AsConcrete
 import Lambda.AsOptimized
 import Lambda.AsView
 import qualified Lambda.Type
@@ -69,7 +68,7 @@ compiled :: Lambda k => Id.Stream -> k Lambda.Type.Unit Lambda.Type.U64
 compiled str = AsLambda.asLambda (debruijn str)
 
 optimized :: Lambda k => Id.Stream -> k Lambda.Type.Unit Lambda.Type.U64
-optimized str = AsConcrete.abstract (optimize (compiled str))
+optimized str = optimize (compiled str)
 
 cbpv :: Cbpv c d => Id.Stream -> d (Cbpv.Sort.U (Cbpv.Sort.F Cbpv.Sort.Unit)) (Cbpv.Sort.U (AsAlgebra Lambda.Type.U64))
 cbpv str = toCbpv (optimized str)
