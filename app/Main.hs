@@ -36,7 +36,7 @@ main = do
 
   putStrLn ""
   putStrLn "Pointful Style"
-  putStrLn (AsPointyView.view (fn z))
+  putStrLn (AsPointyView.view pointy)
 
   putStrLn ""
   putStrLn "De-Bruijn Program"
@@ -66,8 +66,8 @@ program =
 bound :: Bound t => Id.Stream -> t U64
 bound str = bindPoints str program
 
-fn :: Pointy t => Id.Stream -> t Lambda.Type.Unit -> t Lambda.Type.U64
-fn str = AsPointy.pointFree (bound str)
+pointy :: Pointy t => t Lambda.Type.Unit -> t Lambda.Type.U64
+pointy = AsPointy.asPointy program
 
 debruijn :: Term k => Id.Stream -> k '[] U64
 debruijn str = AsTerm.pointFree (bound str)

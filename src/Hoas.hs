@@ -15,6 +15,7 @@ class Hoas t where
   add :: t (U64 ~> U64 ~> U64)
 
   be :: t a -> ST a -> (t a -> t b) -> t b
+  be x t f = lam t f <*> x
 
 letBe :: (KnownT a, Hoas t) => t a -> (t a -> t b) -> t b
 letBe x f = be x inferT f

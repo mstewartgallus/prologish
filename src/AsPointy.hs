@@ -6,11 +6,11 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module AsPointy (PointFree, pointFree) where
+module AsPointy (AsPointy, asPointy) where
 
 import Data.Maybe
 import Data.Typeable ((:~:) (..))
-import qualified Hoas.Bound as Bound
+import qualified Hoas
 import qualified Hoas.Type as Type
 import Id (Id)
 import Lambda.Type
@@ -18,24 +18,24 @@ import Pointy (Pointy)
 import qualified Pointy
 import Prelude hiding (curry, id, uncurry, (.), (<*>))
 
-pointFree :: PointFree t a -> t Unit -> t (AsObject a)
-pointFree (PointFree x) = x
+asPointy :: AsPointy t a -> t Unit -> t (AsObject a)
+asPointy (AsPointy x) = x
 
 type family AsObject a = r | r -> a where
   AsObject (a Type.~> b) = AsObject a ~> AsObject b
   AsObject Type.U64 = U64
 
-newtype PointFree k b = PointFree (k Unit -> k (AsObject b))
+newtype AsPointy k b = AsPointy (k Unit -> k (AsObject b))
 
-instance Pointy k => Bound.Bound (PointFree k) where
-  PointFree f <*> PointFree x = PointFree (f Pointy.<*> x)
+instance Pointy k => Hoas.Hoas (AsPointy k) where
+  AsPointy f <*> AsPointy x = AsPointy (f Pointy.<*> x)
 
-  lam n t f = PointFree $ \x ->
+  lam t f = AsPointy $ \x ->
     ( Pointy.curry $ \y ->
-        let PointFree body = f (PointFree $ \_ -> Pointy.first y)
+        let AsPointy body = f (AsPointy $ \_ -> Pointy.first y)
          in body (Pointy.second y)
     )
       x
 
-  u64 x = PointFree (Pointy.u64 x)
-  add = PointFree (Pointy.add)
+  u64 x = AsPointy (Pointy.u64 x)
+  add = AsPointy (Pointy.add)
