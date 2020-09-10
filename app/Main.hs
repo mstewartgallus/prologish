@@ -3,7 +3,6 @@
 
 module Main where
 
-import qualified AsLambda
 import qualified AsMal
 import qualified AsTerm
 import Data.Word
@@ -13,10 +12,6 @@ import qualified Hoas.AsView as AsHoasView
 import Hoas.Bound (Bound)
 import Hoas.Type
 import qualified Id
-import Lambda (Lambda)
-import Lambda.AsOptimized
-import Lambda.AsView
-import qualified Lambda.Type
 import Mal (Mal)
 import qualified Mal.AsView as AsMalView
 import qualified Mal.Type
@@ -36,14 +31,6 @@ main = do
   putStrLn (AsTermView.view (debruijn x))
 
   putStrLn ""
-  putStrLn "Point-Free Program"
-  putStrLn (view (compiled x))
-
-  putStrLn ""
-  putStrLn "Optimized Program"
-  putStrLn (view (optimized x))
-
-  putStrLn ""
   putStrLn "Flipped Program"
   putStrLn (AsMalView.view (mal x))
 
@@ -60,12 +47,6 @@ bound str = bindPoints str program
 
 debruijn :: Term k => Id.Stream -> k '[] Type
 debruijn str = AsTerm.pointFree (bound str)
-
-compiled :: Lambda k => Id.Stream -> k Lambda.Type.Unit (AsLambda.AsObject Type)
-compiled str = AsLambda.asLambda (debruijn str)
-
-optimized :: Lambda k => Id.Stream -> k Lambda.Type.Unit (AsLambda.AsObject Type)
-optimized str = optimize (compiled str)
 
 mal :: Mal k => Id.Stream -> k (AsMal.AsObject Type) Mal.Type.Void
 mal str = AsMal.asMal (debruijn str)
