@@ -26,7 +26,7 @@ instance HasSum View where
   right = View "i₂"
 
 instance HasCoexp View where
-  throw (View f) = View ("(κ " ++ f ++ ")")
+  mal (View f) = View ("(κ " ++ f ++ ")")
   try (View f) = View ("(try " ++ f ++ ")")
 
 instance Mal View where

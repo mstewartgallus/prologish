@@ -13,11 +13,11 @@ view (View v) = v
 
 instance Bound View where
   be n (View x) t f = View (x ++ " be " ++ v ++ ": " ++ show t ++ ".\n" ++ body) where
-        v = "l" ++ show n
+        v = "v" ++ show n
         View body = f (View v)
 
-  kont n t f = View ("κ " ++ v ++ ": " ++ show t ++ ".\n" ++ body) where
-        v = "l" ++ show n
+  mal n t f = View ("κ " ++ v ++ ": " ++ show t ++ ".\n" ++ body) where
+        v = "v" ++ show n
         View body = f (View v)
 
   View f `try` View x = View ("try { " ++ f ++ " } catch { " ++ x ++ " }")

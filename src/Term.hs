@@ -13,7 +13,7 @@ class Term t where
   tip :: t a (a ': env)
   const :: t a env -> t a (any ': env)
 
-  throw :: t b (a ': env) -> t (a -< b) env
+  mal :: t b (a ': env) -> t (a -< b) env
   try :: t (a -< b) env -> t a env -> t b env
 
   unit :: t Unit r
@@ -22,4 +22,4 @@ class Term t where
   add :: t (U64 -< U64 -< U64) env
 
   swap :: t b (x ': a ': env) -> t b (a ': x ': env)
-  swap f = const (const (throw (throw f))) `try` tip `try` const tip
+  swap f = const (const (mal (mal f))) `try` tip `try` const tip

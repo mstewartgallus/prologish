@@ -20,7 +20,7 @@ instance Bound t => Hoas.Hoas (Expr t) where
   be (Expr x) t f = Expr $ \(Stream n xs ys) -> be n (x xs) t $ \x' -> case f (Expr $ \_ -> x') of
     Expr y -> y ys
 
-  kont t f = Expr $ \(Stream n _ ys) -> kont n t $ \x -> case f (Expr $ \_ -> x) of
+  mal t f = Expr $ \(Stream n _ ys) -> mal n t $ \x -> case f (Expr $ \_ -> x) of
     Expr y -> y ys
   Expr f `try` Expr x = Expr $ \(Stream _ fs xs) -> f fs `try` x xs
 

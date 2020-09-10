@@ -36,7 +36,7 @@ main = do
 
   putStrLn ""
   putStrLn "Flipped Program"
-  putStrLn (AsMalView.view (mal x))
+  putStrLn (AsMalView.view (malP x))
 
   putStrLn ""
   putStrLn "Result"
@@ -46,8 +46,8 @@ type Type = U64 -< U64 -< Unit
 
 program :: Hoas t => t Type
 program =
-  kont inferT $ \_ ->
-    kont inferT $ \_ ->
+  mal inferT $ \_ ->
+    mal inferT $ \_ ->
       unit
 
 bound :: Bound t => Id.Stream -> t Type
@@ -56,11 +56,11 @@ bound str = bindPoints str program
 debruijn :: Term k => Id.Stream -> k Type '[]
 debruijn str = AsTerm.pointFree (bound str)
 
-mal :: Mal k => Id.Stream -> k (AsMal.AsObject Type) Mal.Type.Void
-mal str = AsMal.asMal (debruijn str)
+malP :: Mal k => Id.Stream -> k (AsMal.AsObject Type) Mal.Type.Void
+malP str = AsMal.asMal (debruijn str)
 
 compiled :: MonadCont m => Id.Stream -> Value m (AsMal.AsObject Type) -> m (Value m Mal.Type.Void)
-compiled str = AsEval.asEval (mal str)
+compiled str = AsEval.asEval (malP str)
 
 -- fixme... use and generate lists ?
 result :: Id.Stream -> [Word64] -> [Word64] -> [[(Word64, Word64)]]

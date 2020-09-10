@@ -53,7 +53,7 @@ instance Monad m => HasSum (Expr m) where
   right = E (pure . Right)
 
 instance MonadCont m => HasCoexp (Expr m) where
-  throw (E f) = E $ \(Coexp x k) -> do
+  mal (E f) = E $ \(Coexp x k) -> do
     y <- f x
     case y of
       Left l -> do
