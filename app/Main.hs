@@ -31,24 +31,24 @@ main = do
   putStrLn (AsHoasView.view (bound x))
 
   putStrLn ""
-  putStrLn "De-Bruijn Program"
+  putStrLn "De-Bruijn"
   putStrLn (AsTermView.view (debruijn x))
 
   putStrLn ""
-  putStrLn "Flipped Program"
+  putStrLn "Co-CCC"
   putStrLn (AsMalView.view (malP x))
 
   putStrLn ""
   putStrLn "Result"
   putStrLn (show (result x [0 .. 1] [0 .. 5]))
 
-type Type = U64 -< U64 -< Unit
+type Type = U64 -< U64 -< Void
 
 program :: Hoas t => t Type
 program =
   mal inferT $ \_ ->
     mal inferT $ \_ ->
-      unit
+      done
 
 bound :: Bound t => Id.Stream -> t Type
 bound str = bindPoints str program
@@ -68,6 +68,6 @@ result str x y = flip runCont id $ do
   forM x $ \x' ->
     forM y $ \y' ->
       callCC $ \k -> do
-        Absurd go <- compiled str $ Coexp (Coexp (ValueUnit $ k (x', y')) $ \(Value64 a) -> a x') $ \(Value64 b) -> b y'
+        Absurd go <- compiled str $ Coexp (Coexp (Absurd $ k (x', y')) $ \(Value64 a) -> a x') $ \(Value64 b) -> b y'
         abs <- go
         Void.absurd abs

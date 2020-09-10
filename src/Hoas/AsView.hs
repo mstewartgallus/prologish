@@ -16,7 +16,7 @@ instance Bound View where
         v = "v" ++ show n
         View body = f (View v)
 
-  mal n t f = View ("κ " ++ v ++ ": " ++ show t ++ ".\n" ++ body) where
+  mal n t f = View ("mal " ++ v ++ ": " ++ show t ++ ".\n" ++ body) where
         v = "v" ++ show n
         View body = f (View v)
 
@@ -25,4 +25,4 @@ instance Bound View where
   u64 n (View y) = View (show n ++ " = " ++ y)
   add = View "add"
 
-  unit = View "unit"
+  done = View "done"

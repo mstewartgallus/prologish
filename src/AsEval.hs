@@ -31,8 +31,6 @@ data instance Value m Void = Absurd (m Void.Void)
 
 newtype instance Value m U64 = Value64 (Word64 -> m Void.Void)
 
-newtype instance Value m Unit = ValueUnit (m Void.Void)
-
 newtype Expr m a b = E (Value m a -> m (Value m b))
 
 instance Monad m => Category (Expr m) where
@@ -65,9 +63,6 @@ instance MonadCont m => HasCoexp (Expr m) where
     pure (Right env)
 
 instance MonadCont m => Mal (Expr m) where
-  unit = E $ \(ValueUnit x) -> do
-    abs <- x
-    Void.absurd abs
   u64 x = E $ \(Value64 k) -> do
     abs <- k x
     Void.absurd abs

@@ -15,7 +15,7 @@ bindPoints :: Stream -> Expr t a -> t a
 bindPoints str (Expr x) = x str
 
 instance Bound t => Hoas.Hoas (Expr t) where
-  unit = Expr $ const unit
+  done = Expr $ const done
 
   be (Expr x) t f = Expr $ \(Stream n xs ys) -> be n (x xs) t $ \x' -> case f (Expr $ \_ -> x') of
     Expr y -> y ys

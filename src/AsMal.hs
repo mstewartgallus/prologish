@@ -19,7 +19,7 @@ import Prelude hiding (id, throw, unthrow, (.), (<*>))
 
 type family AsObject a = r | r -> a where
   AsObject (a Type.-< b) = AsObject a -< AsObject b
-  AsObject Type.Unit = Unit
+  AsObject Type.Void = Void
   AsObject Type.U64 = U64
 
 type family AsList a = r | r -> a where
@@ -32,7 +32,7 @@ asMal (E x) = x
 newtype Expr k b a = E (k (AsObject b) (AsList a))
 
 instance Mal k => Term (Expr k) where
-  unit = E unit
+  done = E absurd
   tip = E left
   const (E x) = E (right . x)
 
