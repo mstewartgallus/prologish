@@ -34,7 +34,7 @@ main = do
   putStrLn "Flipped Program"
   putStrLn (AsMalView.view (mal x))
 
-type Type = U64 ~> U64 ~> U64
+type Type = U64 -< U64 -< U64
 
 program :: Hoas t => t Type
 program =

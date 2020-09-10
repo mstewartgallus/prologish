@@ -13,11 +13,11 @@ class Term t where
   tip :: t a (a ': env)
   const :: t a env -> t a (any ': env)
 
-  curry :: t b (a ': env) -> t (a ~> b) env
-  (<*>) :: t (a ~> b) env -> t a env -> t b env
+  curry :: t b (a ': env) -> t (a -< b) env
+  (<*>) :: t (a -< b) env -> t a env -> t b env
 
   u64 :: Word64 -> t U64 env
-  add :: t (U64 ~> U64 ~> U64) env
+  add :: t (U64 -< U64 -< U64) env
 
   swap :: t b (x ': a ': env) -> t b (a ': x ': env)
   swap f = const (const (curry (curry f))) <*> tip <*> const tip

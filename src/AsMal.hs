@@ -18,7 +18,7 @@ import qualified Term
 import Prelude hiding (curry, id, uncurry, (.), (<*>))
 
 type family AsObject a = r | r -> a where
-  AsObject (a Type.~> b) = AsObject a -< AsObject b
+  AsObject (a Type.-< b) = AsObject a -< AsObject b
   AsObject Type.U64 = U64
 
 type family AsList a = r | r -> a where
