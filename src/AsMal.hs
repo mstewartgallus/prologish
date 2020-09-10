@@ -21,6 +21,7 @@ import Mal.Type
 import Prelude hiding (curry, id, uncurry, (.), (<*>))
 
 type family AsOp a = r | r -> a where
+  AsOp Type.Unit = Void
   AsOp (a Type.* b) = AsOp a + AsOp b
   AsOp (a Type.~> b) = AsOp a -< AsOp b
   AsOp Type.U64 = U64
@@ -36,9 +37,16 @@ instance Category k => Category (Expr k) where
   id = E id
   E f . E g = E (g . f)
 
-instance HasSum k => HasProduct (Expr k)
+instance HasSum k => HasProduct (Expr k) where
+  unit = E absurd
 
-instance HasCoexp k => HasExp (Expr k)
+  E f &&& E g = E (f ||| g)
+  first = E left
+  second = E right
+
+instance HasCoexp k => HasExp (Expr k) where
+  curry (E f) = E (throw f)
+  uncurry (E f) = E (try f)
 
 -- instance Mal k => Term (Expr k) where
 --   tip = E first

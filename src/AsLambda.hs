@@ -6,7 +6,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module AsLambda (Expr, asLambda) where
+module AsLambda (Expr, asLambda, AsObject) where
 
 import Control.Category
 import qualified Hoas.Type as Type

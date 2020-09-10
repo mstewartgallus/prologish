@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE TypeOperators #-}
 
 module Main where
 
@@ -46,22 +47,22 @@ main = do
   putStrLn "Flipped Program"
   putStrLn (AsMalView.view (mal x))
 
-program :: Hoas t => t U64
-program =
-  u64 3 `letBe` \z ->
-    add <*> z <*> z
+type Type = U64 ~> U64
 
-bound :: Bound t => Id.Stream -> t U64
+program :: Hoas t => t Type
+program = lam inferT $ \x -> x
+
+bound :: Bound t => Id.Stream -> t Type
 bound str = bindPoints str program
 
-debruijn :: Term k => Id.Stream -> k '[] U64
+debruijn :: Term k => Id.Stream -> k '[] Type
 debruijn str = AsTerm.pointFree (bound str)
 
-compiled :: Lambda k => Id.Stream -> k Lambda.Type.Unit Lambda.Type.U64
+compiled :: Lambda k => Id.Stream -> k Lambda.Type.Unit (AsLambda.AsObject Type)
 compiled str = AsLambda.asLambda (debruijn str)
 
-optimized :: Lambda k => Id.Stream -> k Lambda.Type.Unit Lambda.Type.U64
+optimized :: Lambda k => Id.Stream -> k Lambda.Type.Unit (AsLambda.AsObject Type)
 optimized str = optimize (compiled str)
 
-mal :: Mal k => Id.Stream -> k (AsMal.AsOp Lambda.Type.U64) (AsMal.AsOp Lambda.Type.Unit)
+mal :: Mal k => Id.Stream -> k (AsMal.AsOp (AsLambda.AsObject Type)) Mal.Type.Void
 mal str = AsMal.asMal (optimized str)
