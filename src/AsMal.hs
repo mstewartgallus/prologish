@@ -25,11 +25,10 @@ type family AsList a = r | r -> a where
   AsList '[] = Void
   AsList (h ': t) = AsObject h + AsList t
 
-asMal :: Expr k '[] b -> k (AsObject b) Void
+asMal :: Expr k b '[] -> k (AsObject b) Void
 asMal (E x) = x
 
-data Expr k (a :: [Type.T]) (b :: Type.T) where
-  E :: k (AsObject b) (AsList a) -> Expr k a b
+newtype Expr k b a = E (k (AsObject b) (AsList a))
 
 instance Mal k => Term (Expr k) where
   tip = E left

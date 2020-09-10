@@ -6,9 +6,9 @@ module Term.AsView (View, view) where
 import Term
 import Hoas.Type
 
-newtype View (env :: [T]) (a :: T) = View String
+newtype View (a :: T)  (env :: [T]) = View String
 
-view :: View env a -> String
+view :: View a env -> String
 view (View v) = v
 
 instance Term View where

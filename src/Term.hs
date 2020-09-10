@@ -8,16 +8,16 @@ import Hoas.Type
 import Prelude hiding (const, curry, (<*>))
 
 class Term t where
-  be :: t env a -> t (a ': env) b -> t env b
+  be :: t a env -> t b (a ': env) -> t b env
 
-  tip :: t (a ': env) a
-  const :: t env a -> t (any ': env) a
+  tip :: t a (a ': env)
+  const :: t a env -> t a (any ': env)
 
-  curry :: t (a ': env) b -> t env (a ~> b)
-  (<*>) :: t env (a ~> b) -> t env a -> t env b
+  curry :: t b (a ': env) -> t (a ~> b) env
+  (<*>) :: t (a ~> b) env -> t a env -> t b env
 
-  u64 :: Word64 -> t env U64
-  add :: t env (U64 ~> U64 ~> U64)
+  u64 :: Word64 -> t U64 env
+  add :: t (U64 ~> U64 ~> U64) env
 
-  swap :: t (x ': a ': env) b -> t (a ': x ': env) b
+  swap :: t b (x ': a ': env) -> t b (a ': x ': env)
   swap f = const (const (curry (curry f))) <*> tip <*> const tip

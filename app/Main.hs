@@ -45,7 +45,7 @@ program =
 bound :: Bound t => Id.Stream -> t Type
 bound str = bindPoints str program
 
-debruijn :: Term k => Id.Stream -> k '[] Type
+debruijn :: Term k => Id.Stream -> k Type '[]
 debruijn str = AsTerm.pointFree (bound str)
 
 mal :: Mal k => Id.Stream -> k (AsMal.AsObject Type) Mal.Type.Void

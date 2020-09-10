@@ -17,10 +17,10 @@ import Term (Term)
 import qualified Term
 import Prelude hiding (curry, id, uncurry, (.), (<*>))
 
-pointFree :: PointFree k a -> k '[] a
+pointFree :: PointFree k a -> k a '[]
 pointFree (PointFree x) = out x
 
-newtype PointFree k a = PointFree (Pf k '[] a)
+newtype PointFree k a = PointFree (Pf k a '[])
 
 instance Term k => Bound.Bound (PointFree k) where
   PointFree f <*> PointFree x = PointFree (f Term.<*> x)
@@ -98,9 +98,9 @@ instance Term k => Term (Pf k) where
               Just f' -> Just (Term.curry (Term.swap f'))
           }
 
-data Pf k env (b :: T) = V
-  { out :: k env b,
-    removeVar :: forall v. Var v -> Maybe (Pf k (v ': env) b)
+data Pf k (b :: T) env = V
+  { out :: k b env,
+    removeVar :: forall v. Var v -> Maybe (Pf k b (v ': env))
   }
 
 data Var a = Var (ST a) Id
@@ -119,7 +119,7 @@ to x = me
           removeVar = const Nothing
         }
 
-mkVar :: Term k => Var a -> Pf k '[] a
+mkVar :: Term k => Var a -> Pf k a '[]
 mkVar v@(Var _ n) = me
   where
     me =
