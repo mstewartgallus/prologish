@@ -15,7 +15,7 @@ instance Term View where
   View x `be` View f = View ("(" ++ x ++ " be " ++ f ++ ")")
   View f `try` View x = View ("try {" ++ f ++ "} catch {" ++ x ++ "}")
 
-  u64 n = View (show n)
+  u64 n (View y) = View (show n ++ " = " ++ y)
   add = View "add"
 
   tip = View "I"

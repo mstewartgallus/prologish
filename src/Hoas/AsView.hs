@@ -22,5 +22,5 @@ instance Bound View where
 
   View f `try` View x = View ("try { " ++ f ++ " } catch { " ++ x ++ " }")
 
-  u64 n = View (show n)
+  u64 n (View y) = View (show n ++ " = " ++ y)
   add = View "add"

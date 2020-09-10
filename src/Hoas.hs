@@ -10,7 +10,7 @@ class Hoas t where
   kont :: ST a -> (t a -> t b) -> t (a -< b)
   try :: t (a -< b) -> t a -> t b
 
-  u64 :: Word64 -> t U64
+  u64 :: Word64 -> t U64 -> t r
   add :: t (U64 -< U64 -< U64)
 
   be :: t a -> ST a -> (t a -> t b) -> t b

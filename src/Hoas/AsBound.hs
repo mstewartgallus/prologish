@@ -22,5 +22,5 @@ instance Bound t => Hoas.Hoas (Expr t) where
     Expr y -> y ys
   Expr f `try` Expr x = Expr $ \(Stream _ fs xs) -> f fs `try` x xs
 
-  u64 x = Expr $ const (u64 x)
+  u64 x (Expr y) = Expr $ \s -> u64 x (y s)
   add = Expr $ const add
