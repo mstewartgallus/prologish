@@ -41,14 +41,17 @@ instance Term k => Bound.Bound (PointFree k) where
         Nothing -> Term.const body
         Just y -> y
 
-  u64 x (PointFree y) = PointFree (Term.u64 x y)
+  -- first :: t a -> t (a * b)
+  -- second :: t b -> t (a * b)
+
+  u64 x = PointFree (Term.u64 x)
   add = PointFree Term.add
   done = PointFree Term.done
 
 instance Term k => Term (Pf k) where
   done = to Term.done
 
-  -- u64 x (Pf y) = to (Term.u64 x y)
+  u64 x = to (Term.u64 x)
   add = to Term.add
 
   tip = me

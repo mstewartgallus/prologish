@@ -1,5 +1,7 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE EmptyCase #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE NoStarIsType #-}
 
 module Main where
 
@@ -40,15 +42,14 @@ main = do
 
   putStrLn ""
   putStrLn "Result"
-  putStrLn (show (result x [0 .. 1] [0 .. 5]))
+  putStrLn (show (result x))
 
-type Type = U64 -< U64 -< Void
+type Type = (U64 * U64) -< Unit
 
 program :: Hoas t => t Type
 program =
-  mal inferT $ \_ ->
-    mal inferT $ \_ ->
-      done
+  mal inferT $ \tuple ->
+    pair tuple (mal inferT $ \x -> u64 5 `try` x) (mal inferT $ \y -> u64 4 `try` y)
 
 bound :: Bound t => Id.Stream -> t Type
 bound str = bindPoints str program
@@ -63,11 +64,8 @@ compiled :: MonadCont m => Id.Stream -> Value m (AsMal.AsObject Type) -> m (Valu
 compiled str = AsEval.asEval (malP str)
 
 -- fixme... use and generate lists ?
-result :: Id.Stream -> [Word64] -> [Word64] -> [[(Word64, Word64)]]
-result str x y = flip runCont id $ do
-  forM x $ \x' ->
-    forM y $ \y' ->
-      callCC $ \k -> do
-        Absurd go <- compiled str $ Coexp (Coexp (Absurd $ k (x', y')) $ \(Value64 a) -> a x') $ \(Value64 b) -> b y'
-        abs <- go
-        Void.absurd abs
+result :: Id.Stream -> (Word64, Word64)
+result str = flip runCont id $ do
+  callCC $ \k -> do
+    abs <- compiled str $ Coexp Coin $ \(Pair (Value64 x) (Value64 y)) -> k (x, y)
+    case abs of

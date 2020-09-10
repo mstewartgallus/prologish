@@ -4,6 +4,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeFamilyDependencies #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE NoStarIsType #-}
 
 module AsMal (Expr, asMal, AsObject) where
 
@@ -18,8 +19,10 @@ import qualified Term
 import Prelude hiding (id, throw, unthrow, (.), (<*>))
 
 type family AsObject a = r | r -> a where
+  AsObject (a Type.* b) = AsObject a * AsObject b
   AsObject (a Type.-< b) = AsObject a -< AsObject b
   AsObject Type.Void = Void
+  AsObject Type.Unit = Unit
   AsObject Type.U64 = U64
 
 type family AsList a = r | r -> a where
@@ -39,5 +42,6 @@ instance Mal k => Term (Expr k) where
   mal (E f) = E (mal f)
   E f `try` E x = E (f `tryCatch` x)
 
--- u64 x = E (absurd . u64 x)
+  u64 x = E (absurd . u64 x)
+
 -- add = E (absurd . add)

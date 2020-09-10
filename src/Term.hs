@@ -1,5 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE NoStarIsType #-}
 
 module Term (Term (..)) where
 
@@ -18,7 +19,9 @@ class Term t where
 
   done :: t Void r
 
-  u64 :: Word64 -> t U64 r -> t x r
+  (&&&) :: t a c -> t b c -> t (a * b) c
+
+  u64 :: Word64 -> t (U64 -< Unit) r
   add :: t (U64 -< U64 -< U64) env
 
   swap :: t b (x ': a ': env) -> t b (a ': x ': env)

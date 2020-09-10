@@ -1,9 +1,11 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE EmptyCase #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeFamilyDependencies #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE NoStarIsType #-}
 
 module AsEval (Expr, asEval, Value (..)) where
 
@@ -25,11 +27,15 @@ data family Value (m :: Type -> Type) (a :: T)
 
 data instance Value m (a + b) = Left (Value m a) | Right (Value m b)
 
+data instance Value m (a * b) = Pair (Value m a) (Value m b)
+
 data instance Value m (a -< b) = Coexp (Value m b) (Value m a -> m Void.Void)
 
-data instance Value m Void = Absurd (m Void.Void)
+data instance Value m Unit = Coin
 
-newtype instance Value m U64 = Value64 (Word64 -> m Void.Void)
+data instance Value m Void
+
+newtype instance Value m U64 = Value64 Word64
 
 newtype Expr m a b = E (Value m a -> m (Value m b))
 
@@ -40,9 +46,7 @@ instance Monad m => Category (Expr m) where
     f y
 
 instance Monad m => HasSum (Expr m) where
-  absurd = E $ \(Absurd x) -> do
-    abs <- x
-    Void.absurd abs
+  absurd = E $ \x -> case x of
 
   E f ||| E g = E $ \x -> case x of
     Left l -> f l
@@ -63,6 +67,6 @@ instance MonadCont m => HasCoexp (Expr m) where
     pure (Right env)
 
 instance MonadCont m => Mal (Expr m) where
-  u64 x = E $ \(Value64 k) -> do
-    abs <- k x
+  u64 x = E $ \(Coexp Coin k) -> do
+    abs <- k (Value64 x)
     Void.absurd abs

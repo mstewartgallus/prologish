@@ -13,8 +13,10 @@ class Bound t where
 
   be :: Id -> t a -> ST a -> (t a -> t b) -> t b
 
+  pair :: t (a * b) -> t (a -< c) -> t (b -< c) -> t c
+
   mal :: Id -> ST a -> (t a -> t b) -> t (a -< b)
   try :: t (a -< b) -> t a -> t b
 
-  u64 :: Word64 -> t U64 -> t r
+  u64 :: Word64 -> t (U64 -< Unit)
   add :: t (U64 -< U64 -< U64)
