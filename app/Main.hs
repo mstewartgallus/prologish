@@ -45,8 +45,8 @@ type Type = U64 -< U64 -< U64
 
 program :: Hoas t => t Type
 program =
-  kont inferT $ \_ ->
-    kont inferT $ \x ->
+  kont inferT $ \x ->
+    kont inferT $ \_ ->
       x
 
 bound :: Bound t => Id.Stream -> t Type
@@ -61,9 +61,9 @@ mal str = AsMal.asMal (debruijn str)
 compiled :: MonadCont m => Id.Stream -> Value m (AsMal.AsObject Type) -> m (Value m Mal.Type.Void)
 compiled str = AsEval.asEval (mal str)
 
-result :: Id.Stream -> Word64 -> Word64
+result :: Id.Stream -> Word64 -> Either Word64 Word64
 result str input = flip runCont id $
   callCC $ \k -> do
-    Absurd go <- compiled str $ Coexp (Coexp (Value64 input) $ \(Value64 x) -> k x) $ \(Value64 y) -> k y
+    Absurd go <- compiled str $ Coexp (Coexp (Value64 input) $ \(Value64 x) -> k (Prelude.Left x)) $ \(Value64 y) -> k (Prelude.Right y)
     abs <- go
     Void.absurd abs
