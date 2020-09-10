@@ -11,6 +11,7 @@ import Control.Category
 import Control.Monad.Cont
 import Data.Kind
 import qualified Data.Void as Void
+import Data.Word
 import Mal
 import Mal.HasCoexp
 import Mal.HasSum
@@ -27,6 +28,8 @@ data instance Value m (a + b) = Left (Value m a) | Right (Value m b)
 data instance Value m (a -< b) = Coexp (Value m b) (Value m a -> m Void.Void)
 
 data instance Value m Void = Absurd (m Void.Void)
+
+newtype instance Value m U64 = Value64 Word64
 
 newtype Expr m a b = E (Value m a -> m (Value m b))
 

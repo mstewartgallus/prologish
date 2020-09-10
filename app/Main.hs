@@ -7,6 +7,7 @@ import AsEval
 import qualified AsMal
 import qualified AsTerm
 import Control.Monad.Cont
+import qualified Data.Void as Void
 import Data.Word
 import Hoas
 import Hoas.AsBound
@@ -36,12 +37,16 @@ main = do
   putStrLn "Flipped Program"
   putStrLn (AsMalView.view (mal x))
 
+  putStrLn ""
+  putStrLn "Result"
+  putStrLn (show (result x 5))
+
 type Type = U64 -< U64 -< U64
 
 program :: Hoas t => t Type
 program =
-  kont inferT $ \x ->
-    kont inferT $ \_ ->
+  kont inferT $ \_ ->
+    kont inferT $ \x ->
       x
 
 bound :: Bound t => Id.Stream -> t Type
@@ -55,3 +60,10 @@ mal str = AsMal.asMal (debruijn str)
 
 compiled :: MonadCont m => Id.Stream -> Value m (AsMal.AsObject Type) -> m (Value m Mal.Type.Void)
 compiled str = AsEval.asEval (mal str)
+
+result :: Id.Stream -> Word64 -> Word64
+result str input = flip runCont id $
+  callCC $ \k -> do
+    Absurd go <- compiled str $ Coexp (Coexp (Value64 input) $ \(Value64 x) -> k x) $ \(Value64 y) -> k y
+    abs <- go
+    Void.absurd abs
