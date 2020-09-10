@@ -3,8 +3,10 @@
 
 module Main where
 
+import AsEval
 import qualified AsMal
 import qualified AsTerm
+import Control.Monad.Cont
 import Data.Word
 import Hoas
 import Hoas.AsBound
@@ -50,3 +52,6 @@ debruijn str = AsTerm.pointFree (bound str)
 
 mal :: Mal k => Id.Stream -> k (AsMal.AsObject Type) Mal.Type.Void
 mal str = AsMal.asMal (debruijn str)
+
+compiled :: MonadCont m => Id.Stream -> Value m (AsMal.AsObject Type) -> m (Value m Mal.Type.Void)
+compiled str = AsEval.asEval (mal str)
