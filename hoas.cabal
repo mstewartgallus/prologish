@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: fa3d525f6849a9fca45563fa11586f5e4138e0f90ea038a6d789c6e60ee0a768
+-- hash: 962fdecdad16d39f516be97af8cb8bd81a843c3b327ede87efee5888be984ee2
 
 name:           hoas
 version:        0.1.0.0
@@ -27,14 +27,9 @@ source-repository head
 
 library
   exposed-modules:
-      AsCallByName
       AsLambda
-      AsPointy
+      AsMal
       AsTerm
-      Cbpv
-      Cbpv.AsEval
-      Cbpv.AsView
-      Cbpv.Sort
       Hoas
       Hoas.AsBound
       Hoas.AsView
@@ -46,11 +41,12 @@ library
       Lambda.AsView
       Lambda.HasExp
       Lambda.HasProduct
-      Lambda.HasSum
       Lambda.Type
-      Pointy
-      Pointy.AsOptimized
-      Pointy.AsView
+      Mal
+      Mal.AsView
+      Mal.HasCoexp
+      Mal.HasSum
+      Mal.Type
       Term
       Term.AsOptimized
       Term.AsView

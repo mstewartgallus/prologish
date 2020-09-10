@@ -7,7 +7,6 @@ import Control.Category
 import Lambda.HasExp
 import Lambda
 import Lambda.HasProduct
-import Lambda.HasSum
 import Lambda.Type
 
 newtype View (a :: T) (b :: T) = View String
@@ -25,13 +24,6 @@ instance HasProduct View where
   View f &&& View x = View ("⟨" ++ f ++ " , " ++ x ++ "⟩")
   first = View "π₁"
   second = View "π₂"
-
-instance HasSum View where
-  absurd = View "absurd"
-
-  View f ||| View x = View ("[" ++ f ++ " , " ++ x ++ "]")
-  left = View "i₁"
-  right = View "i₂"
 
 instance HasExp View where
   curry (View f) = View ("(λ " ++ f ++ ")")

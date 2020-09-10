@@ -12,7 +12,6 @@ import Control.Category
 import Lambda
 import Lambda.HasExp
 import Lambda.HasProduct
-import Lambda.HasSum
 import Lambda.Type
 import Prelude hiding ((.), id, curry, uncurry, Either (..))
 
@@ -33,9 +32,6 @@ data Value k env a where
   CoinValue :: HasProduct k => Value k env Unit
   PairValue :: HasProduct k => Value k env a -> Value k env b -> Value k env (a * b)
 
-  LeftValue :: HasSum k => Value k env a -> Value k env (a + b)
-  RightValue :: HasSum k => Value k env b -> Value k env (a + b)
-
 toExpr :: Lambda k => Value k env result -> k env result
 toExpr expr = case expr of
   StuckValue hom x -> hom . toExpr x
@@ -43,9 +39,6 @@ toExpr expr = case expr of
 
   CoinValue -> unit
   PairValue f g -> toExpr f &&& toExpr g
-
-  LeftValue x -> left . toExpr x
-  RightValue x -> right . toExpr x
 
   FnValue env f -> curry f' . toExpr env where
     f' = compile f
@@ -66,15 +59,6 @@ instance HasProduct k => HasProduct (Expr k) where
   second = Expr $ \x -> case x of
     PairValue _ r -> r
     _ -> StuckValue second x
-
-instance Lambda k => HasSum (Expr k) where
-  absurd = Expr (StuckValue absurd)
-  Expr f ||| Expr g = Expr $ \x -> case x of
-    LeftValue l -> f l
-    RightValue r -> g r
-    _ -> StuckValue (compile f ||| compile g) x
-  left = Expr LeftValue
-  right = Expr RightValue
 
 instance Lambda k => HasExp (Expr k) where
   curry (Expr f) = Expr (\x ->  FnValue x f)
