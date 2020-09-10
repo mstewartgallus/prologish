@@ -47,10 +47,13 @@ main = do
   putStrLn "Flipped Program"
   putStrLn (AsMalView.view (mal x))
 
-type Type = U64 ~> U64
+type Type = U64 ~> U64 ~> U64
 
 program :: Hoas t => t Type
-program = lam inferT $ \x -> x
+program =
+  lam inferT $ \x ->
+    lam inferT $ \_ ->
+      x
 
 bound :: Bound t => Id.Stream -> t Type
 bound str = bindPoints str program
@@ -64,5 +67,5 @@ compiled str = AsLambda.asLambda (debruijn str)
 optimized :: Lambda k => Id.Stream -> k Lambda.Type.Unit (AsLambda.AsObject Type)
 optimized str = optimize (compiled str)
 
-mal :: Mal k => Id.Stream -> k (AsMal.AsOp (AsLambda.AsObject Type)) Mal.Type.Void
-mal str = AsMal.asMal (optimized str)
+mal :: Mal k => Id.Stream -> k (AsMal.AsObject Type) Mal.Type.Void
+mal str = AsMal.asMal (debruijn str)
