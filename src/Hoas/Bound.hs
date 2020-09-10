@@ -11,8 +11,8 @@ import Data.Word (Word64)
 class Bound t where
   be :: Id -> t a -> ST a -> (t a -> t b) -> t b
 
-  throw :: Id -> ST a -> (t a -> t b) -> t (a -< b)
-  (<*>) :: t (a -< b) -> t a -> t b
+  kont :: Id -> ST a -> (t a -> t b) -> t (a -< b)
+  try :: t (a -< b) -> t a -> t b
 
   u64 :: Word64 -> t U64
   add :: t (U64 -< U64 -< U64)

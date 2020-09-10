@@ -14,10 +14,10 @@ class Term t where
   const :: t a env -> t a (any ': env)
 
   throw :: t b (a ': env) -> t (a -< b) env
-  (<*>) :: t (a -< b) env -> t a env -> t b env
+  try :: t (a -< b) env -> t a env -> t b env
 
   u64 :: Word64 -> t U64 env
   add :: t (U64 -< U64 -< U64) env
 
   swap :: t b (x ': a ': env) -> t b (a ': x ': env)
-  swap f = const (const (throw (throw f))) <*> tip <*> const tip
+  swap f = const (const (throw (throw f))) `try` tip `try` const tip

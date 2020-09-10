@@ -35,7 +35,7 @@ instance Mal k => Term (Expr k) where
   const (E x) = E (right . x)
 
   throw (E f) = E (throw f)
-  E f <*> E x = E (f <*> x)
+  E f `try` E x = E (f `tryCatch` x)
 
 -- u64 x = E (absurd . u64 x)
 -- add = E (absurd . add)

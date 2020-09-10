@@ -13,7 +13,7 @@ view (View v) = v
 
 instance Term View where
   View x `be` View f = View ("(" ++ x ++ " be " ++ f ++ ")")
-  View f <*> View x = View ("(" ++ f ++ " " ++ x ++ ")")
+  View f `try` View x = View ("try {" ++ f ++ "} catch {" ++ x ++ "}")
 
   u64 n = View (show n)
   add = View "add"
@@ -21,4 +21,4 @@ instance Term View where
   tip = View "I"
   const (View x) = View ("(K " ++ x ++ ")")
 
-  throw (View f) = View ("(throw " ++ f ++ ")")
+  throw (View f) = View ("(κ " ++ f ++ ")")

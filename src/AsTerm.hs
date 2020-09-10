@@ -23,7 +23,7 @@ pointFree (PointFree x) = out x
 newtype PointFree k a = PointFree (Pf k a '[])
 
 instance Term k => Bound.Bound (PointFree k) where
-  PointFree f <*> PointFree x = PointFree (f Term.<*> x)
+  PointFree f `try` PointFree x = PointFree (f `Term.try` x)
 
   be n (PointFree x) t f = PointFree (Term.be x me)
     where
@@ -33,7 +33,7 @@ instance Term k => Bound.Bound (PointFree k) where
         Nothing -> Term.const body
         Just y -> y
 
-  throw n t f = PointFree (Term.throw me)
+  kont n t f = PointFree (Term.throw me)
     where
       v = Var t n
       PointFree body = f (PointFree (mkVar v))
@@ -77,15 +77,15 @@ instance Term k => Term (Pf k) where
               _ -> Nothing
           }
 
-  f <*> x = me
+  f `try` x = me
     where
       me =
         V
-          { out = out f Term.<*> out x,
+          { out = out f `Term.try` out x,
             removeVar = \v -> case (removeVar f v, removeVar x v) of
-              (Just f', Just x') -> Just (f' Term.<*> x')
-              (_, Just x') -> Just (Term.const f Term.<*> x')
-              (Just f', _) -> Just (f' Term.<*> Term.const x)
+              (Just f', Just x') -> Just (f' `Term.try` x')
+              (_, Just x') -> Just (Term.const f `Term.try` x')
+              (Just f', _) -> Just (f' `Term.try` Term.const x)
               _ -> Nothing
           }
   throw f = me
