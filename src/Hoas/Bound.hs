@@ -9,6 +9,8 @@ import Id (Id)
 import Data.Word (Word64)
 
 class Bound t where
+  unit :: t Unit
+
   be :: Id -> t a -> ST a -> (t a -> t b) -> t b
 
   kont :: Id -> ST a -> (t a -> t b) -> t (a -< b)

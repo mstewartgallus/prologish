@@ -30,5 +30,6 @@ instance HasCoexp View where
   try (View f) = View ("(try " ++ f ++ ")")
 
 instance Mal View where
+  unit = View "unit"
 --   u64 x = View (show x)
 --   add = View "add"

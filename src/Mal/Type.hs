@@ -1,9 +1,10 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Mal.Type (T, Void, type (-<), type (+), type U64) where
+module Mal.Type (T, Unit, Void, type (-<), type (+), type U64) where
 
 type Void = 'Void
+type Unit = 'Unit
 
 type (-<) = 'Coexp
 
@@ -15,4 +16,4 @@ infixr 9 -<
 
 infixl 0 +
 
-data T = U64 | Void | Sum T T | Coexp T T
+data T = U64 | Unit | Void | Sum T T | Coexp T T

@@ -16,6 +16,8 @@ class Term t where
   throw :: t b (a ': env) -> t (a -< b) env
   try :: t (a -< b) env -> t a env -> t b env
 
+  unit :: t Unit r
+
   u64 :: Word64 -> t U64 r -> t x r
   add :: t (U64 -< U64 -< U64) env
 

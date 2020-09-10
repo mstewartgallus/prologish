@@ -7,6 +7,8 @@ import Hoas.Type
 import Prelude hiding (id, uncurry, (.), (<*>))
 
 class Hoas t where
+  unit :: t Unit
+
   kont :: ST a -> (t a -> t b) -> t (a -< b)
   try :: t (a -< b) -> t a -> t b
 

@@ -24,3 +24,5 @@ instance Bound View where
 
   u64 n (View y) = View (show n ++ " = " ++ y)
   add = View "add"
+
+  unit = View "unit"

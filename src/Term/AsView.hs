@@ -22,3 +22,4 @@ instance Term View where
   const (View x) = View ("(K " ++ x ++ ")")
 
   throw (View f) = View ("(κ " ++ f ++ ")")
+  unit = View "unit"

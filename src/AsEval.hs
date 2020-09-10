@@ -29,7 +29,9 @@ data instance Value m (a -< b) = Coexp (Value m b) (Value m a -> m Void.Void)
 
 data instance Value m Void = Absurd (m Void.Void)
 
-newtype instance Value m U64 = Value64 Word64
+newtype instance Value m U64 = Value64 (Word64 -> m Void.Void)
+
+newtype instance Value m Unit = ValueUnit (m Void.Void)
 
 newtype Expr m a b = E (Value m a -> m (Value m b))
 
@@ -62,4 +64,10 @@ instance MonadCont m => HasCoexp (Expr m) where
     env <- f $ Coexp b $ \x -> k (Left x)
     pure (Right env)
 
-instance MonadCont m => Mal (Expr m)
+instance MonadCont m => Mal (Expr m) where
+  unit = E $ \(ValueUnit x) -> do
+    abs <- x
+    Void.absurd abs
+  u64 x = E $ \(Value64 k) -> do
+    abs <- k x
+    Void.absurd abs

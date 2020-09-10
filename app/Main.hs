@@ -6,6 +6,7 @@ module Main where
 import AsEval
 import qualified AsMal
 import qualified AsTerm
+import Control.Monad
 import Control.Monad.Cont
 import qualified Data.Void as Void
 import Data.Word
@@ -39,15 +40,15 @@ main = do
 
   putStrLn ""
   putStrLn "Result"
-  putStrLn (show (result x 5))
+  putStrLn (show (result x [0 .. 1] [0 .. 5]))
 
-type Type = U64 -< U64 -< U64
+type Type = U64 -< U64 -< Unit
 
 program :: Hoas t => t Type
 program =
-  kont inferT $ \x ->
+  kont inferT $ \_ ->
     kont inferT $ \_ ->
-      x
+      unit
 
 bound :: Bound t => Id.Stream -> t Type
 bound str = bindPoints str program
@@ -61,9 +62,12 @@ mal str = AsMal.asMal (debruijn str)
 compiled :: MonadCont m => Id.Stream -> Value m (AsMal.AsObject Type) -> m (Value m Mal.Type.Void)
 compiled str = AsEval.asEval (mal str)
 
-result :: Id.Stream -> Word64 -> Either Word64 Word64
-result str input = flip runCont id $
-  callCC $ \k -> do
-    Absurd go <- compiled str $ Coexp (Coexp (Value64 input) $ \(Value64 x) -> k (Prelude.Left x)) $ \(Value64 y) -> k (Prelude.Right y)
-    abs <- go
-    Void.absurd abs
+-- fixme... use and generate lists ?
+result :: Id.Stream -> [Word64] -> [Word64] -> [[(Word64, Word64)]]
+result str x y = flip runCont id $ do
+  forM x $ \x' ->
+    forM y $ \y' ->
+      callCC $ \k -> do
+        Absurd go <- compiled str $ Coexp (Coexp (ValueUnit $ k (x', y')) $ \(Value64 a) -> a x') $ \(Value64 b) -> b y'
+        abs <- go
+        Void.absurd abs

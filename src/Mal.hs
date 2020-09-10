@@ -12,7 +12,8 @@ import Mal.HasCoexp
 import Mal.HasSum
 import Mal.Type
 
-class HasCoexp k => Mal k
+class HasCoexp k => Mal k where
+  unit :: k Unit r
+  u64 :: Word64 -> k U64 Void
 
--- u64 :: Word64 -> k Unit U64
 -- add :: k Unit (U64 ~> U64 ~> U64)
