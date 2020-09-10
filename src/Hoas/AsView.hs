@@ -16,7 +16,7 @@ instance Bound View where
         v = "v" ++ show n
         View body = f (View v)
 
-  lam n t f = View ("λ " ++ v ++ ": " ++ show t ++ ".\n" ++ body) where
+  throw n t f = View ("throw " ++ v ++ ": " ++ show t ++ ".\n" ++ body) where
         v = "v" ++ show n
         View body = f (View v)
 

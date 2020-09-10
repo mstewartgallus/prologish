@@ -38,8 +38,8 @@ type Type = U64 -< U64 -< U64
 
 program :: Hoas t => t Type
 program =
-  lam inferT $ \x ->
-    lam inferT $ \_ ->
+  throw inferT $ \x ->
+    throw inferT $ \_ ->
       x
 
 bound :: Bound t => Id.Stream -> t Type

@@ -15,7 +15,7 @@ import Hoas.Type
 import Id (Id)
 import Term (Term)
 import qualified Term
-import Prelude hiding (curry, id, uncurry, (.), (<*>))
+import Prelude hiding (id, throw, unthrow, (.), (<*>))
 
 pointFree :: PointFree k a -> k a '[]
 pointFree (PointFree x) = out x
@@ -33,7 +33,7 @@ instance Term k => Bound.Bound (PointFree k) where
         Nothing -> Term.const body
         Just y -> y
 
-  lam n t f = PointFree (Term.curry me)
+  throw n t f = PointFree (Term.throw me)
     where
       v = Var t n
       PointFree body = f (PointFree (mkVar v))
@@ -88,14 +88,14 @@ instance Term k => Term (Pf k) where
               (Just f', _) -> Just (f' Term.<*> Term.const x)
               _ -> Nothing
           }
-  curry f = me
+  throw f = me
     where
       me =
         V
-          { out = Term.curry (out f),
+          { out = Term.throw (out f),
             removeVar = \v -> case removeVar f v of
               Nothing -> Nothing
-              Just f' -> Just (Term.curry (Term.swap f'))
+              Just f' -> Just (Term.throw (Term.swap f'))
           }
 
 data Pf k (b :: T) env = V

@@ -15,7 +15,7 @@ import Mal.HasSum
 import Mal.Type
 import Term (Term)
 import qualified Term
-import Prelude hiding (curry, id, uncurry, (.), (<*>))
+import Prelude hiding (id, throw, unthrow, (.), (<*>))
 
 type family AsObject a = r | r -> a where
   AsObject (a Type.-< b) = AsObject a -< AsObject b
@@ -34,7 +34,7 @@ instance Mal k => Term (Expr k) where
   tip = E left
   const (E x) = E (right . x)
 
-  curry (E f) = E (throw f)
+  throw (E f) = E (throw f)
   E f <*> E x = E (f <*> x)
 
 -- u64 x = E (absurd . u64 x)

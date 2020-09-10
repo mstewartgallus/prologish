@@ -21,4 +21,4 @@ instance Term View where
   tip = View "I"
   const (View x) = View ("(K " ++ x ++ ")")
 
-  curry (View f) = View ("(λ " ++ f ++ ")")
+  throw (View f) = View ("(throw " ++ f ++ ")")
