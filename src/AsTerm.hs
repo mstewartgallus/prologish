@@ -38,6 +38,8 @@ instance Term k => Bound.Bound (PointFree k) where
 
   PointFree x `isBoth` (PointFree f, PointFree g) = PointFree $ x `Term.isBoth` (f, g)
 
+  pick (PointFree x) = PointFree $ Term.pick x
+
   PointFree x `isU64` n = PointFree (x `Term.isU64` n)
   add = PointFree Term.add
   isLeft (PointFree x) = PointFree $ Term.isLeft x
@@ -45,15 +47,9 @@ instance Term k => Bound.Bound (PointFree k) where
 instance Term k => Term (Pf k) where
   add = to Term.add
 
-  x `isU64` n = me
-    where
-      me =
-        V
-          { out = out x `Term.isU64` n,
-            removeVar = \v -> case removeVar x v of
-              Just x' -> Just $ x' `Term.isU64` n
-              _ -> Nothing
-          }
+  x `isU64` n = lift1 (`Term.isU64` n) x
+
+  pick = lift1 Term.pick
 
   x `isBoth` (f, g) = me
     where
@@ -70,34 +66,10 @@ instance Term k => Term (Pf k) where
               _ -> Nothing
           }
 
-  f ||| g = me
-    where
-      me =
-        V
-          { out = out f Term.||| out g,
-            removeVar = \v -> case (removeVar f v, removeVar g v) of
-              (Just f', Just g') -> Just (f' Term.||| g')
-              (_, Just g') -> Just (Term.const f Term.||| g')
-              (Just f', _) -> Just (f' Term.||| Term.const g)
-              _ -> Nothing
-          }
-  isLeft x = me
-    where
-      me =
-        V
-          { out = Term.isLeft $ out x,
-            removeVar = \v -> case removeVar x v of
-              Just x' -> Just $ Term.isLeft x'
-              _ -> Nothing
-          }
+  (|||) = lift2 (Term.|||)
+  isLeft = lift1 Term.isLeft
 
-  tip = me
-    where
-      me =
-        V
-          { out = Term.tip,
-            removeVar = const Nothing
-          }
+  tip = to Term.tip
   const f = me
     where
       me =
@@ -108,17 +80,8 @@ instance Term k => Term (Pf k) where
               _ -> Nothing
           }
 
-  f `try` x = me
-    where
-      me =
-        V
-          { out = out f `Term.try` out x,
-            removeVar = \v -> case (removeVar f v, removeVar x v) of
-              (Just f', Just x') -> Just (f' `Term.try` x')
-              (_, Just x') -> Just (Term.const f `Term.try` x')
-              (Just f', _) -> Just (f' `Term.try` Term.const x)
-              _ -> Nothing
-          }
+  try = lift2 Term.try
+
   mal f = me
     where
       me =
@@ -148,6 +111,30 @@ to x = me
       V
         { out = x,
           removeVar = const Nothing
+        }
+
+lift1 :: (forall r. t a r -> t b r) -> Pf t a r -> Pf t b r
+lift1 f x = me
+  where
+    me =
+      V
+        { out = f (out x),
+          removeVar = \v -> case removeVar x v of
+            Just x' -> Just $ lift1 f x'
+            _ -> Nothing
+        }
+
+lift2 :: Term t => (forall r. t a r -> t b r -> t c r) -> Pf t a r -> Pf t b r -> Pf t c r
+lift2 f x y = me
+  where
+    me =
+      V
+        { out = f (out x) (out y),
+          removeVar = \v -> case (removeVar x v, removeVar y v) of
+            (Just x', Just y') -> Just $ lift2 f x' y'
+            (_, Just y') -> Just $ lift2 f (Term.const x) y'
+            (Just x', _) -> Just $ lift2 f x' (Term.const y)
+            _ -> Nothing
         }
 
 mkVar :: Term k => Var a -> Pf k a '[]

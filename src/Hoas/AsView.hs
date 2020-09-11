@@ -20,7 +20,7 @@ instance Bound View where
         v = "v" ++ show n
         V body = f (V v)
 
-  V f `try` V x = V ("(" ++ f ++ " " ++ x ++ ")")
+  V f `try` V x = V ("(try " ++ f ++ " " ++ x ++ ")")
 
   isUnit (V x) = V $ "(isUnit " ++ x ++ ")"
   V x `isBoth` (V f, V g) = V $ "<" ++ x ++ " | " ++ f ++ ", " ++ g ++ ">"
@@ -31,6 +31,8 @@ instance Bound View where
   V f ||| V g = V ("[" ++ f ++ "; " ++ g ++ "]")
   isLeft (V x) = V $ "(i₁ " ++ x ++ ")"
   isRight (V x) = V $ "(i₂ " ++ x ++ ")"
+
+  pick (V x) = V $ "(pick " ++ x ++ ")"
 
   isU64 (V x) n = V $ "(" ++ x ++ " = " ++ show n ++ ")"
   add = V "add"

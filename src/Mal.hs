@@ -15,5 +15,7 @@ import Mal.HasSum
 import Mal.Type
 
 class (HasProduct k, HasCoexp k) => Mal k where
+  pick :: k B (Unit + Unit)
+
   u64 :: Word64 -> k Unit U64
   add :: k (U64 -< (U64 * U64)) r

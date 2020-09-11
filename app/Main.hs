@@ -23,7 +23,7 @@ import qualified Mal.AsView as AsMalView
 import qualified Mal.Type
 import Term (Term)
 import qualified Term.AsView as AsTermView
-import Prelude hiding ((<*>))
+import Prelude hiding (Bool (..), Either (..), (<*>))
 
 main :: IO ()
 main = do
@@ -44,22 +44,13 @@ main = do
   putStrLn "Result"
   putStrLn (show (result x))
 
-type Type = U64 -< Unit
+type Type = B |- U64 |- U64
 
 program :: Hoas t => t Type
-program = mal inferT $ \x ->
-  isLeft
-    ( ( (add `try` x)
-          `isBoth` ( mal inferT $ \y -> y `isU64` 8,
-                     mal inferT $ \z -> z `isU64` 9
-                   )
-      )
-        ||| ( (add `try` x)
-                `isBoth` ( mal inferT $ \y -> y `isU64` 7,
-                           mal inferT $ \z -> z `isU64` 12
-                         )
-            )
-    )
+program =
+  mal inferT $ \y ->
+    mal inferT $ \x ->
+      pick ((x `isU64` 1) ||| (y `isU64` 2))
 
 bound :: Bound t => Id.Stream -> t Type
 bound str = bindPoints str program
@@ -73,8 +64,12 @@ malP str = AsMal.asMal (debruijn str)
 compiled :: MonadCont m => Id.Stream -> Value m (AsMal.AsObject Type) -> m (Value m Mal.Type.Void)
 compiled str = AsEval.asEval (malP str)
 
-result :: Id.Stream -> Word64
+result :: Id.Stream -> [(String, Word64)]
 result str = flip runCont id $ do
-  callCC $ \k -> do
-    abs <- compiled str $ Coin :- \(Value64 x) -> k x
-    case abs of
+  forM [True, False] $ \input ->
+    callCC $ \k -> do
+      abs <-
+        compiled str $
+          input :- (\(Value64 x) -> k ("x", x))
+            :- (\(Value64 y) -> k ("y", y))
+      case abs of

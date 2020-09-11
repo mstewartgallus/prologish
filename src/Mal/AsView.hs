@@ -10,33 +10,34 @@ import Mal.HasSum
 import Mal.HasProduct
 import Mal.Type
 
-newtype View (a :: T) (b :: T) = View String
+newtype View (a :: T) (b :: T) = V String
 
 view :: View a b -> String
-view (View v) = v
+view (V v) = v
 
 instance Category View where
-  id = View "id"
-  View f . View g = View (f ++ " ∘ " ++ g)
+  id = V "id"
+  V f . V g = V (f ++ " ∘ " ++ g)
 
 instance HasProduct View where
-  unit = View "unit"
+  unit = V "unit"
 
-  View f &&& View x = View ("<" ++ f ++ ", " ++ x ++ ">")
-  first = View "π₁"
-  second = View "π₂"
+  V f &&& V x = V ("<" ++ f ++ ", " ++ x ++ ">")
+  first = V "π₁"
+  second = V "π₂"
 
 instance HasSum View where
-  absurd = View "absurd"
+  absurd = V "absurd"
 
-  View f ||| View x = View ("[" ++ f ++ "; " ++ x ++ "]")
-  left = View "i₁"
-  right = View "i₂"
+  V f ||| V g = V ("[" ++ f ++ "; " ++ g ++ "]")
+  left = V "i₁"
+  right = V "i₂"
 
 instance HasCoexp View where
-  mal (View f) = View ("(⊨ " ++ f ++ ")")
-  try (View f) = View ("(try " ++ f ++ ")")
+  mal (V f) = V ("(⊨ " ++ f ++ ")")
+  try (V f) = V ("(try " ++ f ++ ")")
 
 instance Mal View where
-  u64 x = View (show x)
-  add = View "add"
+  pick = V "pick"
+  u64 x = V (show x)
+  add = V "add"

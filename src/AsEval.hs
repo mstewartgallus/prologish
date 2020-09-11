@@ -23,12 +23,14 @@ import Mal.HasCoexp
 import Mal.HasProduct
 import Mal.HasSum
 import Mal.Type
-import Prelude hiding (Either (..), id, (.))
+import Prelude hiding (Bool (..), Either (..), id, (.))
 
 asEval :: Expr m a b -> Value m a -> m (Value m b)
 asEval (E x) = x
 
 data family Value (m :: Type -> Type) (a :: T)
+
+data instance Value m B = True | False
 
 data instance Value m (a + b) = Left (Value m a) | Right (Value m b)
 
@@ -84,6 +86,10 @@ instance MonadCont m => HasCoexp (Expr m) where
     pure (Right env)
 
 instance MonadCont m => Mal (Expr m) where
+  pick = E $ \x -> case x of
+    True -> pure $ Left Coin
+    False -> pure $ Right Coin
+
   u64 x = E $ \Coin -> pure $ Value64 x
 
   add = E $ \(Value64 x ::: Value64 y :- k) -> do

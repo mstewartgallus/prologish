@@ -33,5 +33,7 @@ instance Bound t => Hoas.Hoas (Expr t) where
   isLeft (Expr x) = Expr $ \s -> isLeft (x s)
   isRight (Expr x) = Expr $ \s -> isRight (x s)
 
+  pick (Expr f) = Expr $ \s -> pick (f s)
+
   Expr x `isU64` n = Expr $ \s -> x s `isU64` n
   add = Expr $ const add

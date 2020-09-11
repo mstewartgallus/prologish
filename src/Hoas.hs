@@ -21,6 +21,10 @@ class Hoas t where
   isLeft :: t (a + b) -> t a
   isRight :: t (a + b) -> t b
 
+  pick :: t (Unit + Unit) -> t B
+  isTrue :: t B -> t Unit
+  isFalse :: t B -> t Unit
+
   be :: t a -> ST a -> (t a -> t b) -> t b
   be x t f = mal t f `try` x
 

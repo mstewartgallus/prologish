@@ -2,7 +2,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module Mal.Type (T, Unit, Void, type (-<), type (*), type (+), type U64) where
+module Mal.Type (T, Unit, Void, type (-<), type (*), type (+), type B, type U64) where
 
 type Void = 'Void
 type Unit = 'Unit
@@ -12,6 +12,7 @@ type (-<) = 'Coexp
 type (+) = 'Sum
 type (*) = 'Prod
 
+type B = 'B
 type U64 = 'U64
 
 infixr 9 -<
@@ -19,4 +20,4 @@ infixr 9 -<
 infixl 0 +
 infixl 0 *
 
-data T = U64 | Unit | Void | Sum T T | Prod T T | Coexp T T
+data T = U64 | B | Unit | Void | Sum T T | Prod T T | Coexp T T

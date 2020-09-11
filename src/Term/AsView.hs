@@ -12,7 +12,7 @@ view :: View a env -> String
 view (V v) = v
 
 instance Term View where
-  V f `try` V x = V $ "(" ++ f ++ " try " ++ x ++ ")"
+  V f `try` V x = V $ "(try " ++ f ++ " " ++ x ++ ")"
 
   V x `isU64` n = V ("(" ++ x ++ " = " ++ show n ++ ")")
   add = V "add"
@@ -31,3 +31,5 @@ instance Term View where
   V f ||| V g = V ("[" ++ f ++ "; " ++ g ++ "]")
   isLeft (V x) = V $ "(i₁ " ++ x ++ ")"
   isRight (V x) = V $ "(i₂ " ++ x ++ ")"
+
+  pick (V x) = V "pick"

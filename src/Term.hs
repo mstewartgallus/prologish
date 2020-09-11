@@ -25,6 +25,8 @@ class Term t where
   isLeft :: t (a + b) r -> t a r
   isRight :: t (a + b) r -> t b r
 
+  pick :: t (Unit + Unit) r -> t B r
+
   isU64 :: t U64 r -> Word64 -> t Unit r
   add :: t (U64 -< (U64 * U64)) r
 

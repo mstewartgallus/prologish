@@ -4,12 +4,13 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module Hoas.Type (KnownT, inferT, eqT, ST (..), T, Void, Unit, type (+), type (*), type (-<), type U64) where
+module Hoas.Type (KnownT, inferT, eqT, ST (..), T, Void, Unit, type (+), type (*), type (|-), type (-<), type B, type U64) where
 
 import Data.Typeable ((:~:) (..))
 
 type (-<) = 'Coexp
-
+type a |- b = b -< a
+infixl 9 |-
 infixr 9 -<
 
 type (*) = 'Prod
@@ -21,14 +22,16 @@ infixl 0 +
 
 type Void = 'Void
 type Unit = 'Unit
+type B = 'B
 type U64 = 'U64
 
 data T = Unit | Void | Sum T T | Prod T T | Coexp T T
-  | U64
+  | B | U64
 
 data ST a where
   SUnit :: ST Unit
   SVoid :: ST Void
+  SB :: ST B
   SU64 :: ST U64
   (:+:) :: ST a -> ST b -> ST (a + b)
   (:*:) :: ST a -> ST b -> ST (a * b)
@@ -36,6 +39,9 @@ data ST a where
 
 class KnownT t where
   inferT :: ST t
+
+instance KnownT 'B where
+  inferT = SB
 
 instance KnownT 'U64 where
   inferT = SU64
@@ -59,6 +65,7 @@ eqT :: ST a -> ST b -> Maybe (a :~: b)
 eqT l r = case (l, r) of
   (SVoid, SVoid) -> Just Refl
   (SUnit, SUnit) -> Just Refl
+  (SB, SB) -> Just Refl
   (SU64, SU64) -> Just Refl
   (x :+: y, x' :+: y') -> do
     Refl <- eqT x x'
@@ -78,7 +85,8 @@ instance Show (ST a) where
   show expr = case expr of
     SVoid -> "void"
     SUnit -> "unit"
+    SB -> "b"
     SU64 -> "u64"
     x :+: y -> "(" ++ show x ++ " + " ++ show y ++ ")"
-    x :*: y -> "(" ++ show x ++ " * " ++ show y ++ ")"
-    x :-< y -> "(" ++ show x ++ " -< " ++ show y ++ ")"
+    x :*: y -> "(" ++ show x ++ " × " ++ show y ++ ")"
+    x :-< y -> "(" ++ show y ++ " ⊦ " ++ show x ++ ")"

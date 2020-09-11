@@ -25,6 +25,7 @@ type family AsObject a = r | r -> a where
   AsObject (a Type.-< b) = AsObject a -< AsObject b
   AsObject Type.Void = Void
   AsObject Type.Unit = Unit
+  AsObject Type.B = B
   AsObject Type.U64 = U64
 
 type family AsList a = r | r -> a where
@@ -57,5 +58,7 @@ instance Mal k => Term (Expr k) where
   isFirst (E x) = E (x . first)
   isSecond (E x) = E (x . second)
   E x `isU64` n = E (x . u64 n)
+
+  pick (E x) = E (x . pick)
 
   add = E add
