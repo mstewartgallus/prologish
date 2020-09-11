@@ -34,7 +34,7 @@ instance HasSum View where
   right = View "i₂"
 
 instance HasCoexp View where
-  mal (View f) = View ("(mal " ++ f ++ ")")
+  mal (View f) = View ("(⊦ " ++ f ++ ")")
   try (View f) = View ("(try " ++ f ++ ")")
 
 instance Mal View where

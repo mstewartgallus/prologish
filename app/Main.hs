@@ -66,9 +66,8 @@ malP str = AsMal.asMal (debruijn str)
 compiled :: MonadCont m => Id.Stream -> Value m (AsMal.AsObject Type) -> m (Value m Mal.Type.Void)
 compiled str = AsEval.asEval (malP str)
 
--- fixme... use and generate lists ?
 result :: Id.Stream -> (Word64, Word64)
 result str = flip runCont id $ do
   callCC $ \k -> do
-    abs <- compiled str $ Coexp Coin $ \(Pair (Value64 x) (Value64 y)) -> k (x, y)
+    abs <- compiled str $ Coin :- \(Value64 x ::: Value64 y) -> k (x, y)
     case abs of

@@ -2,11 +2,15 @@
 {-# LANGUAGE EmptyCase #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE Strict #-}
+{-# LANGUAGE StrictData #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeFamilyDependencies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
+-- | Strict / Strict Data are not for performance but simply to
+-- emphasize the semantics don't depend on laziness
 module AsEval (Expr, asEval, Value (..)) where
 
 import Control.Category
@@ -28,9 +32,9 @@ data family Value (m :: Type -> Type) (a :: T)
 
 data instance Value m (a + b) = Left (Value m a) | Right (Value m b)
 
-data instance Value m (a * b) = Pair (Value m a) (Value m b)
+data instance Value m (a * b) = Value m a ::: Value m b
 
-data instance Value m (a -< b) = Coexp (Value m b) (Value m a -> m Void.Void)
+data instance Value m (a -< b) = Value m b :- (Value m a -> m Void.Void)
 
 data instance Value m Unit = Coin
 
@@ -52,9 +56,9 @@ instance Monad m => HasProduct (Expr m) where
   E f &&& E g = E $ \x -> do
     f' <- f x
     g' <- g x
-    pure $ Pair f' g'
-  first = E $ \(Pair x _) -> pure x
-  second = E $ \(Pair _ x) -> pure x
+    pure $ f' ::: g'
+  first = E $ \(x ::: _) -> pure x
+  second = E $ \(_ ::: x) -> pure x
 
 instance Monad m => HasSum (Expr m) where
   absurd = E $ \x -> case x of
@@ -66,7 +70,7 @@ instance Monad m => HasSum (Expr m) where
   right = E (pure . Right)
 
 instance MonadCont m => HasCoexp (Expr m) where
-  mal (E f) = E $ \(Coexp x k) -> do
+  mal (E f) = E $ \(x :- k) -> do
     y <- f x
     case y of
       Left l -> do
@@ -74,7 +78,7 @@ instance MonadCont m => HasCoexp (Expr m) where
         Void.absurd abs
       Right r -> pure r
   try (E f) = E $ \b -> callCC $ \k -> do
-    env <- f $ Coexp b $ \x -> k (Left x)
+    env <- f $ b :- \x -> k (Left x)
     pure (Right env)
 
 instance MonadCont m => Mal (Expr m) where

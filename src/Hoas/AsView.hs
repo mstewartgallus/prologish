@@ -12,15 +12,15 @@ view :: View a -> String
 view (V v) = v
 
 instance Bound View where
-  be n (V x) t f = V (x ++ " be " ++ v ++ ": " ++ show t ++ ".\n" ++ body) where
+  be n (V x) t f = V (x ++ " be " ++ v ++ " ∈ " ++ show t ++ ".\n" ++ body) where
         v = "v" ++ show n
         V body = f (V v)
 
-  mal n t f = V ("mal " ++ v ++ ": " ++ show t ++ ".\n" ++ body) where
+  mal n t f = V (v ++ " ∈ " ++ show t ++ " ⊨\n" ++ body) where
         v = "v" ++ show n
         V body = f (V v)
 
-  V f `try` V x = V ("try { " ++ f ++ " } catch { " ++ x ++ " }")
+  V f `try` V x = V ("(" ++ f ++ " try " ++ x ++ ")")
 
   isUnit (V x) = V $ "(isUnit " ++ x ++ ")"
   V x `isBoth` (V f, V g) = V $ "<" ++ x ++ " | " ++ f ++ ", " ++ g ++ ">"

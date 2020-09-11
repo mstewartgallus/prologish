@@ -20,7 +20,7 @@ instance Term View where
   tip = V "I"
   const (V x) = V ("(K " ++ x ++ ")")
 
-  mal (V f) = V ("(mal " ++ f ++ ")")
+  mal (V f) = V ("(⊦ " ++ f ++ ")")
 
   V x `isBoth` (V f, V g) = V $ "<" ++ x ++ " | " ++ f ++ ", " ++ g ++ ">"
 
