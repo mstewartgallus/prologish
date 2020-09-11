@@ -7,7 +7,7 @@ module Main where
 
 import AsEval
 import qualified AsMal
-import qualified AsTerm
+-- import qualified AsTerm
 import Control.Monad
 import Control.Monad.Cont
 import qualified Data.Void as Void
@@ -32,54 +32,39 @@ main = do
   putStrLn "The Program"
   putStrLn (AsHoasView.view (bound x))
 
-  putStrLn ""
-  putStrLn "De-Bruijn"
-  putStrLn (AsTermView.view (debruijn x))
+-- putStrLn ""
+-- putStrLn "De-Bruijn"
+-- putStrLn (AsTermView.view (debruijn x))
 
-  putStrLn ""
-  putStrLn "Co-CCC"
-  putStrLn (AsMalView.view (malP x))
+-- putStrLn ""
+-- putStrLn "Co-CCC"
+-- putStrLn (AsMalView.view (malP x))
 
-  putStrLn ""
-  putStrLn "Result"
-  putStrLn (show (result x))
+-- putStrLn ""
+-- putStrLn "Result"
+-- putStrLn (show (result x))
 
-type Type = B |- (U64 * U64)
+type Type = Unit |- U64
 
 program :: Hoas t => t Type
 program =
-  mal inferT $ \tuple ->
-    pick $
-      tuple
-        `isBoth` ( mal inferT $ \a ->
-                     tuple
-                       `isBoth` ( mal inferT $ \_ -> (a `isU64` 13) ||| (a `isU64` 43),
-                                  mal inferT $ \b -> (a `isU64` 90) ||| (b `isU64` 18)
-                                ),
-                   mal inferT $ \_ ->
-                     tuple
-                       `isBoth` ( mal inferT $ \a -> (a `isU64` 3) ||| (a `isU64` 4),
-                                  mal inferT $ \b -> (b `isU64` 9) ||| (b `isU64` 8)
-                                )
-                 )
+  mal inferT unit $ \x ->
+    x `isU64` 90
 
 bound :: Bound t => Id.Stream -> t Type
 bound str = bindPoints str program
 
-debruijn :: Term k => Id.Stream -> k Type '[]
-debruijn str = AsTerm.pointFree (bound str)
+-- debruijn :: Term k => Id.Stream -> k Type '[]
+-- debruijn str = AsTerm.pointFree (bound str)
 
-malP :: Mal k => Id.Stream -> k (AsMal.AsObject Type) Mal.Type.Void
-malP str = AsMal.asMal (debruijn str)
+-- malP :: Mal k => Id.Stream -> k (AsMal.AsObject Type) Mal.Type.Void
+-- malP str = AsMal.asMal (debruijn str)
 
-compiled :: MonadCont m => Id.Stream -> Value m (AsMal.AsObject Type) -> m (Value m Mal.Type.Void)
-compiled str = AsEval.asEval (malP str)
+-- compiled :: MonadCont m => Id.Stream -> Value m (AsMal.AsObject Type) -> m (Value m Mal.Type.Void)
+-- compiled str = AsEval.asEval (malP str)
 
-result :: Id.Stream -> [(Word64, Word64)]
-result str = flip runCont id $ do
-  forM [True, False] $ \input ->
-    callCC $ \k -> do
-      abs <-
-        compiled str $
-          input :- (\(Value64 x ::: Value64 y) -> k (x, y))
-      case abs of
+-- result :: Id.Stream -> Word64
+-- result str = flip runCont id $ callCC $ \k -> do
+--       abs <- compiled str $
+--           Coin :- (\(Value64 x) -> k x)
+--       case abs of

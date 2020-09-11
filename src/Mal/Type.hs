@@ -2,12 +2,13 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module Mal.Type (T, Unit, Void, type (-<), type (*), type (+), type B, type U64) where
+module Mal.Type (T, Unit, Void, type (-<), type (|-), type (*), type (+), type B, type U64) where
 
 type Void = 'Void
 type Unit = 'Unit
 
 type (-<) = 'Coexp
+type a |- b = b -< a
 
 type (+) = 'Sum
 type (*) = 'Prod

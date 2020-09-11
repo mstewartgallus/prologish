@@ -9,31 +9,28 @@ import qualified Hoas
 import Hoas.Type
 import Prelude hiding ((.), id, curry, uncurry, (<*>))
 
-newtype Expr t (a :: T) = Expr (Stream -> t a)
+newtype Expr t (a :: T) = E (Stream -> t a)
 
 bindPoints :: Stream -> Expr t a -> t a
-bindPoints str (Expr x) = x str
+bindPoints str (E x) = x str
 
 instance Bound t => Hoas.Hoas (Expr t) where
+  mal t (E x) k = E $ \(Stream n xs ys) -> mal n t (x xs) $ \x -> case k (E $ \_ -> x) of
+    E y -> y ys
 
-  be (Expr x) t f = Expr $ \(Stream n xs ys) -> be n (x xs) t $ \x' -> case f (Expr $ \_ -> x') of
-    Expr y -> y ys
+  assume (E x) = E $ \s -> assume (x s)
+  deny (E f) (E x) = E $ \(Stream _ fs xs) -> f fs `deny` x xs
 
-  mal t f = Expr $ \(Stream n _ ys) -> mal n t $ \x -> case f (Expr $ \_ -> x) of
-    Expr y -> y ys
-  Expr f `try` Expr x = Expr $ \(Stream _ fs xs) -> f fs `try` x xs
+  unit = E $ const unit
+  E f &&& E g = E $ \(Stream _ fs gs) -> f fs &&& g gs
+  first (E x) = E $ \s -> first (x s)
+  second (E x) = E $ \s -> second (x s)
 
-  isUnit (Expr x) = Expr $ \s -> isUnit (x s)
-  Expr x `isBoth` (Expr f, Expr g) = Expr $ \(Stream _ xs (Stream _ gs fs)) -> x xs `isBoth` (f fs, g gs)
-  isFirst (Expr x) = Expr $ \s -> isFirst (x s)
-  isSecond (Expr x) = Expr $ \s -> isSecond (x s)
+  absurd (E x) = E $ \s -> absurd (x s)
+  E x `isEither` (E f, E g) = E $ \(Stream _ xs (Stream _ gs fs)) -> x xs `isEither` (f fs, g gs)
+  left (E x) = E $ \s -> left (x s)
+  right (E x) = E $ \s -> right (x s)
 
-  isAbsurd = Expr $ const isAbsurd
-  Expr f ||| Expr g = Expr $ \(Stream _ fs gs) -> f fs ||| g gs
-  isLeft (Expr x) = Expr $ \s -> isLeft (x s)
-  isRight (Expr x) = Expr $ \s -> isRight (x s)
+  pick (E f) = E $ \s -> pick (f s)
 
-  pick (Expr f) = Expr $ \s -> pick (f s)
-
-  Expr x `isU64` n = Expr $ \s -> x s `isU64` n
-  add = Expr $ const add
+  E x `isU64` n = E $ \s -> x s `isU64` n

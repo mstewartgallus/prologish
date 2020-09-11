@@ -12,27 +12,25 @@ view :: View a -> String
 view (V v) = v
 
 instance Bound View where
-  be n (V x) t f = V (x ++ " be " ++ v ++ " : " ++ show t ++ ".\n" ++ body) where
+  mal n t (V x) k = V (x ++ " ⊨ " ++ v ++ " : " ++ show t ++ ".\n" ++ body) where
         v = "v" ++ show n
-        V body = f (V v)
+        V body = k (V v)
+  assume (V x) = V $ "(assume " ++ x ++ ")"
+  deny (V x) (V y) = V $ "(deny " ++ x ++ " " ++ y ++ ")"
 
-  mal n t f = V (v ++ " : " ++ show t ++ " ⊨\n" ++ body) where
-        v = "v" ++ show n
-        V body = f (V v)
+  unit = V "unit"
+  V x &&& V y = V $ "<" ++ x ++ ", " ++ y ++ ">"
+  first (V x) = V $ "(π₁ " ++ x ++ ")"
+  second (V x) = V $ "(π₂ " ++ x ++ ")"
 
-  V f `try` V x = V ("(try " ++ f ++ " " ++ x ++ ")")
+  absurd (V x) = V $ "(absurd " ++ x ++ ")"
+  V x `isEither` (V f, V g) = V $ "[" ++ x ++ " | " ++ f ++ "; " ++ g ++ "]"
 
-  isUnit (V x) = V $ "(isUnit " ++ x ++ ")"
-  V x `isBoth` (V f, V g) = V $ "<" ++ x ++ " | " ++ f ++ ", " ++ g ++ ">"
-  isFirst (V x) = V $ "(π₁ " ++ x ++ ")"
-  isSecond (V x) = V $ "(π₂ " ++ x ++ ")"
-
-  isAbsurd = V "isAbsurd"
-  V f ||| V g = V ("[" ++ f ++ "; " ++ g ++ "]")
-  isLeft (V x) = V $ "(i₁ " ++ x ++ ")"
-  isRight (V x) = V $ "(i₂ " ++ x ++ ")"
+  left (V x) = V $ "(i₁ " ++ x ++ ")"
+  right (V x) = V $ "(i₂ " ++ x ++ ")"
 
   pick (V x) = V $ "(pick " ++ x ++ ")"
+  true = V "true"
+  false = V "false"
 
   isU64 (V x) n = V $ "(" ++ x ++ " = " ++ show n ++ ")"
-  add = V "add"
