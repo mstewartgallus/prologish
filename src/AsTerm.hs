@@ -25,14 +25,6 @@ newtype PointFree k a = PointFree (Pf k a '[])
 instance Term k => Bound.Bound (PointFree k) where
   PointFree f `try` PointFree x = PointFree (f `Term.try` x)
 
-  be n (PointFree x) t f = PointFree (Term.be x me)
-    where
-      v = Var t n
-      PointFree body = f (PointFree (mkVar v))
-      me = case removeVar body v of
-        Nothing -> Term.const body
-        Just y -> y
-
   mal n t f = PointFree (Term.mal me)
     where
       v = Var t n
@@ -41,19 +33,60 @@ instance Term k => Bound.Bound (PointFree k) where
         Nothing -> Term.const body
         Just y -> y
 
-  -- pair (PointFree x) (PointFree f) (PointFree g) = PointFree (((f `Term.try` Term.first x) Term.&&& (g `Term.try` Term.second x)))
+  isAbsurd = PointFree Term.absurd
+  PointFree f ||| PointFree g = PointFree $ f Term.||| g
+
+  PointFree x `isBoth` (PointFree f, PointFree g) = PointFree $ x `Term.isBoth` (f, g)
+
   -- first :: t a -> t (a * b)
   -- second :: t b -> t (a * b)
 
-  -- isU64 x = PointFree (Term.isU64 x)
-  -- add = PointFree Term.add
-  done = PointFree Term.absurd
+  PointFree x `isU64` n = PointFree (x `Term.isU64` n)
+
+-- add = PointFree Term.add
 
 instance Term k => Term (Pf k) where
   -- absurd = to Term.absurd
 
   -- u64 x = to (Term.u64 x)
   -- add = to Term.add
+
+  x `isU64` n = me
+    where
+      me =
+        V
+          { out = out x `Term.isU64` n,
+            removeVar = \v -> case removeVar x v of
+              Just x' -> Just $ x' `Term.isU64` n
+              _ -> Nothing
+          }
+
+  x `isBoth` (f, g) = me
+    where
+      me =
+        V
+          { out = out x `Term.isBoth` (out f, out g),
+            removeVar = \v -> case (removeVar x v, removeVar f v, removeVar g v) of
+              (Nothing, Nothing, Just g') -> Just (Term.const x `Term.isBoth` (Term.const f, g'))
+              (Nothing, Just f', Nothing) -> Just (Term.const x `Term.isBoth` (f', Term.const g))
+              (Nothing, Just f', Just g') -> Just (Term.const x `Term.isBoth` (f', g'))
+              (Just x', Nothing, Nothing) -> Just (x' `Term.isBoth` (Term.const f, Term.const g))
+              (Just x', Nothing, Just g') -> Just (x' `Term.isBoth` (Term.const f, g'))
+              (Just x', Just f', Just g') -> Just (x' `Term.isBoth` (f', g'))
+              _ -> Nothing
+          }
+
+  f ||| g = me
+    where
+      me =
+        V
+          { out = out f Term.||| out g,
+            removeVar = \v -> case (removeVar f v, removeVar g v) of
+              (Just f', Just g') -> Just (f' Term.||| g')
+              (_, Just g') -> Just (Term.const f Term.||| g')
+              (Just f', _) -> Just (f' Term.||| Term.const g)
+              _ -> Nothing
+          }
 
   tip = me
     where
@@ -69,18 +102,6 @@ instance Term k => Term (Pf k) where
           { out = Term.const (out f),
             removeVar = \v -> case removeVar f v of
               Just f' -> Just (Term.swap (Term.const f'))
-              _ -> Nothing
-          }
-
-  be x f = me
-    where
-      me =
-        V
-          { out = out x `Term.be` out f,
-            removeVar = \v -> case (removeVar x v, removeVar f v) of
-              (Just x', Just f') -> Just (x' `Term.be` Term.swap f')
-              (_, Just f') -> Just (Term.const x `Term.be` Term.swap f')
-              (Just x', _) -> Just (x' `Term.be` Term.swap (Term.const f))
               _ -> Nothing
           }
 

@@ -9,8 +9,6 @@ import Id (Id)
 import Data.Word (Word64)
 
 class Bound t where
-  done :: t Void
-
   be :: Id -> t a -> ST a -> (t a -> t b) -> t b
 
   isUnit :: t Unit -> t x
@@ -22,7 +20,7 @@ class Bound t where
   try :: t (a -< b) -> t a -> t b
 
   isAbsurd :: t Void
-  isEither :: t a -> t b -> t (a + b)
+  (|||) :: t a -> t b -> t (a + b)
   isLeft :: t (a + b) -> t a
   isRight :: t (a + b) -> t b
 

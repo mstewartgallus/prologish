@@ -12,6 +12,7 @@ import Control.Category
 import qualified Hoas.Type as Type
 import Mal
 import Mal.HasCoexp
+import Mal.HasProduct
 import Mal.HasSum
 import Mal.Type
 import Term (Term)
@@ -19,6 +20,7 @@ import qualified Term
 import Prelude hiding (id, throw, unthrow, (.), (<*>))
 
 type family AsObject a = r | r -> a where
+  AsObject (a Type.+ b) = AsObject a + AsObject b
   AsObject (a Type.* b) = AsObject a * AsObject b
   AsObject (a Type.-< b) = AsObject a -< AsObject b
   AsObject Type.Void = Void
@@ -42,6 +44,14 @@ instance Mal k => Term (Expr k) where
   mal (E f) = E (mal f)
   E f `try` E x = E (f `tryCatch` x)
 
--- isU64 n (E x) = E (u64 n)
+  E x `isBoth` (E f, E g) =
+    E $
+      let f' = mal ((right ||| left) . try f)
+          g' = mal ((right ||| left) . try g)
+       in (id ||| x) . try (f' &&& g')
+
+  isFirst (E x) = E (x . first)
+  isSecond (E x) = E (x . second)
+  E x `isU64` n = E (x . u64 n)
 
 -- add = E (absurd . add)

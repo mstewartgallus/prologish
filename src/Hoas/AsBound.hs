@@ -24,12 +24,12 @@ instance Bound t => Hoas.Hoas (Expr t) where
   Expr f `try` Expr x = Expr $ \(Stream _ fs xs) -> f fs `try` x xs
 
   isUnit (Expr x) = Expr $ \s -> isUnit (x s)
-  Expr x `isBoth` (Expr f, Expr g) = Expr $ \(Stream _ xs (Stream _ fs gs)) -> x xs `isBoth` (f fs, g gs)
+  Expr x `isBoth` (Expr f, Expr g) = Expr $ \(Stream _ xs (Stream _ gs fs)) -> x xs `isBoth` (f fs, g gs)
   isFirst (Expr x) = Expr $ \s -> isFirst (x s)
   isSecond (Expr x) = Expr $ \s -> isSecond (x s)
 
   isAbsurd = Expr $ const isAbsurd
-  isEither (Expr f) (Expr g) = Expr $ \(Stream _ fs gs) -> isEither (f fs) (g gs)
+  Expr f ||| Expr g = Expr $ \(Stream _ fs gs) -> f fs ||| g gs
   isLeft (Expr x) = Expr $ \s -> isLeft (x s)
   isRight (Expr x) = Expr $ \s -> isRight (x s)
 

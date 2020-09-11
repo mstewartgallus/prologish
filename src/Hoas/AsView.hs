@@ -6,31 +6,31 @@ module Hoas.AsView (View, view) where
 import Hoas.Bound
 import Hoas.Type
 
-newtype View (a :: T) = View String
+newtype View (a :: T) = V String
 
 view :: View a -> String
-view (View v) = v
+view (V v) = v
 
 instance Bound View where
-  be n (View x) t f = View (x ++ " be " ++ v ++ ": " ++ show t ++ ".\n" ++ body) where
+  be n (V x) t f = V (x ++ " be " ++ v ++ ": " ++ show t ++ ".\n" ++ body) where
         v = "v" ++ show n
-        View body = f (View v)
+        V body = f (V v)
 
-  mal n t f = View ("mal " ++ v ++ ": " ++ show t ++ ".\n" ++ body) where
+  mal n t f = V ("mal " ++ v ++ ": " ++ show t ++ ".\n" ++ body) where
         v = "v" ++ show n
-        View body = f (View v)
+        V body = f (V v)
 
-  View f `try` View x = View ("try { " ++ f ++ " } catch { " ++ x ++ " }")
+  V f `try` V x = V ("try { " ++ f ++ " } catch { " ++ x ++ " }")
 
-  isUnit (View x) = View $ "(isUnit " ++ x ++ ")"
-  View x `isBoth` (View f, View g) = View (x ++ " = <" ++ f ++ ", " ++ g ++ ">")
-  isFirst (View x) = View $ "(isFirst " ++ x ++ ")"
-  isSecond (View x) = View $ "(isSecond " ++ x ++ ")"
+  isUnit (V x) = V $ "(isUnit " ++ x ++ ")"
+  V x `isBoth` (V f, V g) = V $ "<" ++ x ++ " | " ++ f ++ ", " ++ g ++ ">"
+  isFirst (V x) = V $ "(isFirst " ++ x ++ ")"
+  isSecond (V x) = V $ "(isSecond " ++ x ++ ")"
 
-  isAbsurd = View "isAbsurd"
-  isEither (View f) (View g) = View ("[" ++ f ++ "; " ++ g ++ "]")
-  isLeft (View x) = View $ "(isLeft " ++ x ++ ")"
-  isRight (View x) = View $ "(isRight " ++ x ++ ")"
+  isAbsurd = V "isAbsurd"
+  V f ||| V g = V ("[" ++ f ++ "; " ++ g ++ "]")
+  isLeft (V x) = V $ "(isLeft " ++ x ++ ")"
+  isRight (V x) = V $ "(isRight " ++ x ++ ")"
 
-  isU64 (View x) n = View ("(" ++ x ++ " = " ++ show n ++ ")")
-  add = View "add"
+  isU64 (V x) n = V ("(" ++ x ++ " = " ++ show n ++ ")")
+  add = V "add"

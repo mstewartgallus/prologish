@@ -6,20 +6,23 @@ module Term.AsView (View, view) where
 import Term
 import Hoas.Type
 
-newtype View (a :: T)  (env :: [T]) = View String
+newtype View (a :: T)  (env :: [T]) = V String
 
 view :: View a env -> String
-view (View v) = v
+view (V v) = v
 
 instance Term View where
-  View x `be` View f = View ("(" ++ x ++ " be " ++ f ++ ")")
-  View f `try` View x = View $ "(" ++ f ++ " try " ++ x ++ ")"
+  V f `try` V x = V $ "(" ++ f ++ " try " ++ x ++ ")"
 
-  u64 n = View (show n)
-  add (View x) (View y) = View $ "(" ++ x ++ " + " ++ y ++ ")"
+  V x `isU64` n = V ("(" ++ x ++ " = " ++ show n ++ ")")
+  add (V x) (V y) = V $ "(" ++ x ++ " + " ++ y ++ ")"
 
-  tip = View "I"
-  const (View x) = View ("(K " ++ x ++ ")")
+  tip = V "I"
+  const (V x) = V ("(K " ++ x ++ ")")
 
-  mal (View f) = View ("(mal " ++ f ++ ")")
-  absurd = View "absurd"
+  mal (V f) = V ("(mal " ++ f ++ ")")
+
+  V x `isBoth` (V f, V g) = V $ "<" ++ x ++ " | " ++ f ++ ", " ++ g ++ ">"
+
+  absurd = V "absurd"
+  V f ||| V g = V $ "[" ++ f ++ "; " ++ g ++ "]"
