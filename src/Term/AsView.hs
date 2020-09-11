@@ -32,4 +32,4 @@ instance Term View where
   isLeft (V x) = V $ "(i₁ " ++ x ++ ")"
   isRight (V x) = V $ "(i₂ " ++ x ++ ")"
 
-  pick (V x) = V "pick"
+  pick (V x) = V $ "(pick " ++ x ++ ")"
