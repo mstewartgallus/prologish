@@ -9,10 +9,10 @@ module Mal (Mal (..)) where
 
 import Data.Word (Word64)
 import Mal.HasCoexp
+import Mal.HasProduct
 import Mal.HasSum
 import Mal.Type
 
-class HasCoexp k => Mal k where
-  u64 :: Word64 -> k (U64 -< Unit) Void
-
--- add :: k Unit (U64 ~> U64 ~> U64)
+class (HasProduct k, HasCoexp k) => Mal k where
+  u64 :: Word64 -> k Unit U64
+  add :: k env U64 -> k env U64 -> k env U64

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 7c1b241035611f3f811c83ff68ab0ed8c49d0b392ef0b27b62cb8751ff163b5e
+-- hash: d65c9967ca829870fcbe2f023cf5f903fdd847a130dafb0e02eb6830b0e04e55
 
 name:           hoas
 version:        0.1.0.0
@@ -39,6 +39,7 @@ library
       Mal
       Mal.AsView
       Mal.HasCoexp
+      Mal.HasProduct
       Mal.HasSum
       Mal.Type
       Term

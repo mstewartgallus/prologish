@@ -35,13 +35,13 @@ asMal (E x) = x
 newtype Expr k b a = E (k (AsObject b) (AsList a))
 
 instance Mal k => Term (Expr k) where
-  done = E absurd
+  absurd = E absurd
   tip = E left
   const (E x) = E (right . x)
 
   mal (E f) = E (mal f)
   E f `try` E x = E (f `tryCatch` x)
 
-  u64 x = E (absurd . u64 x)
+-- isU64 n (E x) = E (u64 n)
 
 -- add = E (absurd . add)

@@ -7,6 +7,7 @@ import Control.Category
 import Mal.HasCoexp
 import Mal
 import Mal.HasSum
+import Mal.HasProduct
 import Mal.Type
 
 newtype View (a :: T) (b :: T) = View String
@@ -18,10 +19,17 @@ instance Category View where
   id = View "id"
   View f . View g = View (f ++ " ∘ " ++ g)
 
+instance HasProduct View where
+  unit = View "unit"
+
+  View f &&& View x = View ("<" ++ f ++ ", " ++ x ++ ">")
+  first = View "π₁"
+  second = View "π₂"
+
 instance HasSum View where
   absurd = View "absurd"
 
-  View f ||| View x = View ("[" ++ f ++ " , " ++ x ++ "]")
+  View f ||| View x = View ("[" ++ f ++ "; " ++ x ++ "]")
   left = View "i₁"
   right = View "i₂"
 

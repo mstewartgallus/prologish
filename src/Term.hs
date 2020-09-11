@@ -17,12 +17,18 @@ class Term t where
   mal :: t b (a ': env) -> t (a -< b) env
   try :: t (a -< b) env -> t a env -> t b env
 
-  done :: t Void r
+  unit :: t a '[Unit]
+  (&&&) :: t c '[a] -> t c '[b] -> t c '[a * b]
+  first :: t (a * b) '[a]
+  second :: t (a * b) '[b]
 
-  (&&&) :: t a c -> t b c -> t (a * b) c
+  absurd :: t Void r
+  (|||) :: t a c -> t b c -> t (a + b) c
+  left :: t a '[a + b]
+  right :: t b '[a + b]
 
-  u64 :: Word64 -> t (U64 -< Unit) r
-  add :: t (U64 -< U64 -< U64) env
+  u64 :: Word64 -> t Unit '[U64]
+  add :: t env '[U64] -> t env '[U64] -> t env '[U64]
 
   swap :: t b (x ': a ': env) -> t b (a ': x ': env)
   swap f = const (const (mal (mal f))) `try` tip `try` const tip

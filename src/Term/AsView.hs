@@ -13,13 +13,13 @@ view (View v) = v
 
 instance Term View where
   View x `be` View f = View ("(" ++ x ++ " be " ++ f ++ ")")
-  View f `try` View x = View ("try {" ++ f ++ "} catch {" ++ x ++ "}")
+  View f `try` View x = View $ "(" ++ f ++ " try " ++ x ++ ")"
 
   u64 n = View (show n)
-  add = View "add"
+  add (View x) (View y) = View $ "(" ++ x ++ " + " ++ y ++ ")"
 
   tip = View "I"
   const (View x) = View ("(K " ++ x ++ ")")
 
   mal (View f) = View ("(mal " ++ f ++ ")")
-  done = View "done"
+  absurd = View "absurd"

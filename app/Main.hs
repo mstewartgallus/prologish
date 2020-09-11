@@ -49,7 +49,10 @@ type Type = (U64 * U64) -< Unit
 program :: Hoas t => t Type
 program =
   mal inferT $ \tuple ->
-    pair tuple (mal inferT $ \x -> u64 5 `try` x) (mal inferT $ \y -> u64 4 `try` y)
+    tuple
+      `isBoth` ( mal inferT $ \x -> x `isU64` 5,
+                 mal inferT $ \y -> y `isU64` 3
+               )
 
 bound :: Bound t => Id.Stream -> t Type
 bound str = bindPoints str program

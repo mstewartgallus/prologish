@@ -16,6 +16,7 @@ import qualified Data.Void as Void
 import Data.Word
 import Mal
 import Mal.HasCoexp
+import Mal.HasProduct
 import Mal.HasSum
 import Mal.Type
 import Prelude hiding (Either (..), id, (.))
@@ -45,6 +46,16 @@ instance Monad m => Category (Expr m) where
     y <- g x
     f y
 
+instance Monad m => HasProduct (Expr m) where
+  unit = E $ const $ pure Coin
+
+  E f &&& E g = E $ \x -> do
+    f' <- f x
+    g' <- g x
+    pure $ Pair f' g'
+  first = E $ \(Pair x _) -> pure x
+  second = E $ \(Pair _ x) -> pure x
+
 instance Monad m => HasSum (Expr m) where
   absurd = E $ \x -> case x of
 
@@ -67,6 +78,4 @@ instance MonadCont m => HasCoexp (Expr m) where
     pure (Right env)
 
 instance MonadCont m => Mal (Expr m) where
-  u64 x = E $ \(Coexp Coin k) -> do
-    abs <- k (Value64 x)
-    Void.absurd abs
+  u64 x = E $ \Coin -> pure $ Value64 x

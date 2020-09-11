@@ -41,18 +41,19 @@ instance Term k => Bound.Bound (PointFree k) where
         Nothing -> Term.const body
         Just y -> y
 
+  -- pair (PointFree x) (PointFree f) (PointFree g) = PointFree (((f `Term.try` Term.first x) Term.&&& (g `Term.try` Term.second x)))
   -- first :: t a -> t (a * b)
   -- second :: t b -> t (a * b)
 
-  u64 x = PointFree (Term.u64 x)
-  add = PointFree Term.add
-  done = PointFree Term.done
+  -- isU64 x = PointFree (Term.isU64 x)
+  -- add = PointFree Term.add
+  done = PointFree Term.absurd
 
 instance Term k => Term (Pf k) where
-  done = to Term.done
+  -- absurd = to Term.absurd
 
-  u64 x = to (Term.u64 x)
-  add = to Term.add
+  -- u64 x = to (Term.u64 x)
+  -- add = to Term.add
 
   tip = me
     where

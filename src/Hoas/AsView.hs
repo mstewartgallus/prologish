@@ -22,9 +22,15 @@ instance Bound View where
 
   View f `try` View x = View ("try { " ++ f ++ " } catch { " ++ x ++ " }")
 
-  pair (View x) (View f) (View g) = View (x ++ " = <" ++ f ++ ", " ++ g ++ ">")
+  isUnit (View x) = View $ "(isUnit " ++ x ++ ")"
+  View x `isBoth` (View f, View g) = View (x ++ " = <" ++ f ++ ", " ++ g ++ ">")
+  isFirst (View x) = View $ "(isFirst " ++ x ++ ")"
+  isSecond (View x) = View $ "(isSecond " ++ x ++ ")"
 
-  u64 n = View (show n)
+  isAbsurd = View "isAbsurd"
+  isEither (View f) (View g) = View ("[" ++ f ++ "; " ++ g ++ "]")
+  isLeft (View x) = View $ "(isLeft " ++ x ++ ")"
+  isRight (View x) = View $ "(isRight " ++ x ++ ")"
+
+  isU64 (View x) n = View ("(" ++ x ++ " = " ++ show n ++ ")")
   add = View "add"
-
-  done = View "done"

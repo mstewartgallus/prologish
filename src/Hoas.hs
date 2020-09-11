@@ -8,18 +8,21 @@ import Hoas.Type
 import Prelude hiding (id, uncurry, (.), (<*>))
 
 class Hoas t where
-  done :: t Void
-
   mal :: ST a -> (t a -> t b) -> t (a -< b)
   try :: t (a -< b) -> t a -> t b
 
-  -- U64 -< Unit => k (U64 -< Unit) Void => k Unit (U64 + Void) => k Unit U64
-  u64 :: Word64 -> t (U64 -< Unit)
+  isU64 :: t U64 -> Word64 -> t Unit
   add :: t (U64 -< U64 -< U64)
 
-  pair :: t (a * b) -> t (a -< c) -> t (b -< c) -> t c
-  first :: t a -> t (a * b)
-  second :: t b -> t (a * b)
+  isAbsurd :: t Void
+  isBoth :: t (a * b) -> (t (a -< c), t (b -< c)) -> t c
+  isFirst :: t a -> t (a * b)
+  isSecond :: t b -> t (a * b)
+
+  isUnit :: t Unit -> t x
+  isEither :: t a -> t b -> t (a + b)
+  isLeft :: t (a + b) -> t a
+  isRight :: t (a + b) -> t b
 
   be :: t a -> ST a -> (t a -> t b) -> t b
   be x t f = mal t f `try` x
