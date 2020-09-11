@@ -50,8 +50,12 @@ instance Mal k => Term (Expr k) where
           g' = mal ((right ||| left) . try g)
        in (id ||| x) . try (f' &&& g')
 
+  E f ||| E g = E (f ||| g)
+  isLeft (E x) = E (x . left)
+  isRight (E x) = E (x . right)
+
   isFirst (E x) = E (x . first)
   isSecond (E x) = E (x . second)
   E x `isU64` n = E (x . u64 n)
 
--- add = E (absurd . add)
+  add = E add

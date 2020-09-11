@@ -12,11 +12,11 @@ view :: View a -> String
 view (V v) = v
 
 instance Bound View where
-  be n (V x) t f = V (x ++ " be " ++ v ++ " ∈ " ++ show t ++ ".\n" ++ body) where
+  be n (V x) t f = V (x ++ " be " ++ v ++ " : " ++ show t ++ ".\n" ++ body) where
         v = "v" ++ show n
         V body = f (V v)
 
-  mal n t f = V (v ++ " ∈ " ++ show t ++ " ⊨\n" ++ body) where
+  mal n t f = V (v ++ " : " ++ show t ++ " ⊨\n" ++ body) where
         v = "v" ++ show n
         V body = f (V v)
 
@@ -32,5 +32,5 @@ instance Bound View where
   isLeft (V x) = V $ "(isLeft " ++ x ++ ")"
   isRight (V x) = V $ "(isRight " ++ x ++ ")"
 
-  isU64 (V x) n = V ("(" ++ x ++ " = " ++ show n ++ ")")
+  isU64 (V x) n = V $ "(" ++ x ++ " = " ++ show n ++ ")"
   add = V "add"

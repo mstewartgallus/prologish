@@ -38,18 +38,12 @@ instance Term k => Bound.Bound (PointFree k) where
 
   PointFree x `isBoth` (PointFree f, PointFree g) = PointFree $ x `Term.isBoth` (f, g)
 
-  -- first :: t a -> t (a * b)
-  -- second :: t b -> t (a * b)
-
   PointFree x `isU64` n = PointFree (x `Term.isU64` n)
-
--- add = PointFree Term.add
+  add = PointFree Term.add
+  isLeft (PointFree x) = PointFree $ Term.isLeft x
 
 instance Term k => Term (Pf k) where
-  -- absurd = to Term.absurd
-
-  -- u64 x = to (Term.u64 x)
-  -- add = to Term.add
+  add = to Term.add
 
   x `isU64` n = me
     where
@@ -85,6 +79,15 @@ instance Term k => Term (Pf k) where
               (Just f', Just g') -> Just (f' Term.||| g')
               (_, Just g') -> Just (Term.const f Term.||| g')
               (Just f', _) -> Just (f' Term.||| Term.const g)
+              _ -> Nothing
+          }
+  isLeft x = me
+    where
+      me =
+        V
+          { out = Term.isLeft $ out x,
+            removeVar = \v -> case removeVar x v of
+              Just x' -> Just $ Term.isLeft x'
               _ -> Nothing
           }
 

@@ -36,6 +36,8 @@ data instance Value m (a * b) = Value m a ::: Value m b
 
 data instance Value m (a -< b) = Value m b :- (Value m a -> m Void.Void)
 
+infixl 9 :-
+
 data instance Value m Unit = Coin
 
 data instance Value m Void
@@ -83,3 +85,7 @@ instance MonadCont m => HasCoexp (Expr m) where
 
 instance MonadCont m => Mal (Expr m) where
   u64 x = E $ \Coin -> pure $ Value64 x
+
+  add = E $ \(Value64 x ::: Value64 y :- k) -> do
+    abs <- k (Value64 (x + y))
+    Void.absurd abs

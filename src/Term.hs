@@ -22,11 +22,11 @@ class Term t where
 
   absurd :: t Void r
   (|||) :: t a c -> t b c -> t (a + b) c
-  left :: t a '[a + b]
-  right :: t b '[a + b]
+  isLeft :: t (a + b) r -> t a r
+  isRight :: t (a + b) r -> t b r
 
   isU64 :: t U64 r -> Word64 -> t Unit r
-  add :: t env '[U64] -> t env '[U64] -> t env '[U64]
+  add :: t (U64 -< (U64 * U64)) r
 
   swap :: t b (x ': a ': env) -> t b (a ': x ': env)
   swap f = const (const (mal (mal f))) `try` tip `try` const tip

@@ -11,9 +11,6 @@ class Hoas t where
   mal :: ST a -> (t a -> t b) -> t (a -< b)
   try :: t (a -< b) -> t a -> t b
 
-  isU64 :: t U64 -> Word64 -> t Unit
-  add :: t (U64 -< U64 -< U64)
-
   isAbsurd :: t Void
   isBoth :: t (a * b) -> (t (a -< c), t (b -< c)) -> t c
   isFirst :: t a -> t (a * b)
@@ -26,6 +23,9 @@ class Hoas t where
 
   be :: t a -> ST a -> (t a -> t b) -> t b
   be x t f = mal t f `try` x
+
+  isU64 :: t U64 -> Word64 -> t Unit
+  add :: t (U64 -< (U64 * U64))
 
 infixl 9 |||
 

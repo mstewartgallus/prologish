@@ -39,4 +39,4 @@ instance HasCoexp View where
 
 instance Mal View where
   u64 x = View (show x)
---   add = View "add"
+  add = View "add"

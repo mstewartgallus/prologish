@@ -15,7 +15,7 @@ instance Term View where
   V f `try` V x = V $ "(" ++ f ++ " try " ++ x ++ ")"
 
   V x `isU64` n = V ("(" ++ x ++ " = " ++ show n ++ ")")
-  add (V x) (V y) = V $ "(" ++ x ++ " + " ++ y ++ ")"
+  add = V "add"
 
   tip = V "I"
   const (V x) = V ("(K " ++ x ++ ")")
@@ -23,6 +23,8 @@ instance Term View where
   mal (V f) = V ("(⊦ " ++ f ++ ")")
 
   V x `isBoth` (V f, V g) = V $ "<" ++ x ++ " | " ++ f ++ ", " ++ g ++ ">"
+
+  isLeft (V x) = V $ "(isLeft " ++ x ++ ")"
 
   absurd = V "absurd"
   V f ||| V g = V $ "[" ++ f ++ "; " ++ g ++ "]"

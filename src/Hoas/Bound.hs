@@ -25,4 +25,4 @@ class Bound t where
   isRight :: t (a + b) -> t b
 
   isU64 :: t U64 -> Word64 -> t Unit
-  add :: t (U64 -< U64 -< U64)
+  add :: t (U64 -< (U64 * U64))
