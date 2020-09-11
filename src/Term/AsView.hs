@@ -20,11 +20,14 @@ instance Term View where
   tip = V "I"
   const (V x) = V ("(K " ++ x ++ ")")
 
-  mal (V f) = V ("(⊦ " ++ f ++ ")")
+  mal (V f) = V ("(⊨ " ++ f ++ ")")
 
+  isUnit (V x) = V $ "(isUnit " ++ x ++ ")"
   V x `isBoth` (V f, V g) = V $ "<" ++ x ++ " | " ++ f ++ ", " ++ g ++ ">"
-
-  isLeft (V x) = V $ "(isLeft " ++ x ++ ")"
+  isFirst (V x) = V $ "(π₁ " ++ x ++ ")"
+  isSecond (V x) = V $ "(π₂ " ++ x ++ ")"
 
   absurd = V "absurd"
-  V f ||| V g = V $ "[" ++ f ++ "; " ++ g ++ "]"
+  V f ||| V g = V ("[" ++ f ++ "; " ++ g ++ "]")
+  isLeft (V x) = V $ "(i₁ " ++ x ++ ")"
+  isRight (V x) = V $ "(i₂ " ++ x ++ ")"

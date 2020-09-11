@@ -20,17 +20,17 @@ instance Bound View where
         v = "v" ++ show n
         V body = f (V v)
 
-  V f `try` V x = V ("(" ++ f ++ " try " ++ x ++ ")")
+  V f `try` V x = V ("(" ++ f ++ " " ++ x ++ ")")
 
   isUnit (V x) = V $ "(isUnit " ++ x ++ ")"
   V x `isBoth` (V f, V g) = V $ "<" ++ x ++ " | " ++ f ++ ", " ++ g ++ ">"
-  isFirst (V x) = V $ "(isFirst " ++ x ++ ")"
-  isSecond (V x) = V $ "(isSecond " ++ x ++ ")"
+  isFirst (V x) = V $ "(π₁ " ++ x ++ ")"
+  isSecond (V x) = V $ "(π₂ " ++ x ++ ")"
 
   isAbsurd = V "isAbsurd"
   V f ||| V g = V ("[" ++ f ++ "; " ++ g ++ "]")
-  isLeft (V x) = V $ "(isLeft " ++ x ++ ")"
-  isRight (V x) = V $ "(isRight " ++ x ++ ")"
+  isLeft (V x) = V $ "(i₁ " ++ x ++ ")"
+  isRight (V x) = V $ "(i₂ " ++ x ++ ")"
 
   isU64 (V x) n = V $ "(" ++ x ++ " = " ++ show n ++ ")"
   add = V "add"
