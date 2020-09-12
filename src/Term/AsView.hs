@@ -13,10 +13,11 @@ view (V v) = v
 
 instance Term View where
   u64 n = V (show n)
-  -- add = V "add"
+  add (V x) (V y) = V $ "(" ++ x ++ " + " ++ y ++ ")"
 
   tip = V "I"
   const (V x) = V ("(K " ++ x ++ ")")
 
-  -- V f <*> V x = V ("(" ++ f ++ " " ++ x ++ ")")
   kont (V x) (V k) = V ("(kont " ++ k ++ ")")
+  V f `jump` V x = V ("(" ++ f ++ " " ++ x ++ ")")
+  val (V f) = V ("(val " ++ f ++ ")")
