@@ -44,12 +44,12 @@ main = do
 -- putStrLn "Result"
 -- putStrLn (show (result x))
 
-type Type = Unit |- U64
+type Type = Unit |- (U64 |- U64)
 
 program :: Hoas t => t Type
 program =
-  mal inferT unit $ \x ->
-    x `isU64` 90
+  kont inferT unit $ \x ->
+    x `jump` (val x `add` u64 1)
 
 bound :: Bound t => Id.Stream -> t Type
 bound str = bindPoints str program

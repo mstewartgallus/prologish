@@ -4,14 +4,9 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module Hoas.Type (KnownT, inferT, eqT, ST (..), T, Void, Unit, type (+), type (*), type (|-), type (-<), type B, type U64) where
+module Hoas.Type (KnownT, inferT, eqT, ST (..), T, Void, Unit, type (|-), type (-<), type (+), type (*), type B, type U64) where
 
 import Data.Typeable ((:~:) (..))
-
-type (-<) = 'Coexp
-type a |- b = b -< a
-infixl 9 |-
-infixr 9 -<
 
 type (*) = 'Prod
 infixl 0 *
@@ -20,22 +15,30 @@ type (+) = 'Sum
 
 infixl 0 +
 
+type (|-) = 'Coexp
+
+infixl 9 |-
+
+type a -< b = b |- a
+infixr 9 -<
+
+
 type Void = 'Void
 type Unit = 'Unit
+type Not a = Unit |- a
 type B = 'B
 type U64 = 'U64
 
-data T = Unit | Void | Sum T T | Prod T T | Coexp T T
-  | B | U64
+data T = Unit | Void | Coexp T T | Sum T T | Prod T T | Not T | B | U64
 
 data ST a where
   SUnit :: ST Unit
   SVoid :: ST Void
   SB :: ST B
   SU64 :: ST U64
+  (:-) :: ST a -> ST b -> ST (a |- b)
   (:+:) :: ST a -> ST b -> ST (a + b)
   (:*:) :: ST a -> ST b -> ST (a * b)
-  (:-<) :: ST a -> ST b -> ST (a -< b)
 
 class KnownT t where
   inferT :: ST t
@@ -52,14 +55,14 @@ instance KnownT 'Unit where
 instance KnownT 'Void where
   inferT = SVoid
 
+instance (KnownT a, KnownT b) => KnownT ('Coexp a b) where
+  inferT = inferT :- inferT
+
 instance (KnownT a, KnownT b) => KnownT ('Sum a b) where
   inferT = inferT :+: inferT
 
 instance (KnownT a, KnownT b) => KnownT ('Prod a b) where
   inferT = inferT :*: inferT
-
-instance (KnownT a, KnownT b) => KnownT ('Coexp a b) where
-  inferT = inferT :-< inferT
 
 eqT :: ST a -> ST b -> Maybe (a :~: b)
 eqT l r = case (l, r) of
@@ -75,7 +78,7 @@ eqT l r = case (l, r) of
     Refl <- eqT x x'
     Refl <- eqT y y'
     return Refl
-  (x :-< y, x' :-< y') -> do
+  (x :- y, x' :- y') -> do
     Refl <- eqT x x'
     Refl <- eqT y y'
     return Refl
@@ -87,6 +90,6 @@ instance Show (ST a) where
     SUnit -> "unit"
     SB -> "b"
     SU64 -> "u64"
+    x :- y -> "(" ++ show x ++ " |- " ++ show y ++ ")"
     x :+: y -> "(" ++ show x ++ " + " ++ show y ++ ")"
     x :*: y -> "(" ++ show x ++ " × " ++ show y ++ ")"
-    x :-< y -> "(" ++ show y ++ " ⊦ " ++ show x ++ ")"

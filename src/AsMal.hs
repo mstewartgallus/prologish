@@ -22,43 +22,43 @@ import Prelude hiding (id, throw, unthrow, (.), (<*>))
 type family AsObject a = r | r -> a where
   AsObject (a Type.+ b) = AsObject a + AsObject b
   AsObject (a Type.* b) = AsObject a * AsObject b
-  AsObject (a Type.-< b) = AsObject a -< AsObject b
   AsObject Type.Void = Void
   AsObject Type.Unit = Unit
   AsObject Type.B = B
   AsObject Type.U64 = U64
 
 type family AsList a = r | r -> a where
-  AsList '[] = Void
-  AsList (h ': t) = AsObject h + AsList t
+  AsList '[] = Unit
+  AsList (h ': t) = AsObject h * AsList t
 
-asMal :: Expr k b '[] -> k (AsObject b) Void
+asMal :: Expr k '[] b -> k Unit (AsObject b)
 asMal (E x) = x
 
-newtype Expr k b a = E (k (AsObject b) (AsList a))
+newtype Expr k a b = E (k (AsList a) (AsObject b))
 
-instance Mal k => Term (Expr k) where
-  absurd = E absurd
-  tip = E left
-  const (E x) = E (right . x)
+instance Mal k => Term (Expr k)
 
-  mal (E f) = E (mal f)
-  E f `try` E x = E (f `tryCatch` x)
+-- absurd = E absurd
+-- tip = E left
+-- const (E x) = E (right . x)
 
-  E x `isBoth` (E f, E g) =
-    E $
-      let f' = mal ((right ||| left) . try f)
-          g' = mal ((right ||| left) . try g)
-       in (id ||| x) . try (f' &&& g')
+-- mal (E f) = E (mal f)
+-- E f `try` E x = E (f `tryCatch` x)
 
-  E f ||| E g = E (f ||| g)
-  isLeft (E x) = E (x . left)
-  isRight (E x) = E (x . right)
+-- E x `isBoth` (E f, E g) =
+--   E $
+--     let f' = mal ((right ||| left) . try f)
+--         g' = mal ((right ||| left) . try g)
+--      in (id ||| x) . try (f' &&& g')
 
-  isFirst (E x) = E (x . first)
-  isSecond (E x) = E (x . second)
-  E x `isU64` n = E (x . u64 n)
+-- E f ||| E g = E (f ||| g)
+-- isLeft (E x) = E (x . left)
+-- isRight (E x) = E (x . right)
 
-  pick (E x) = E (x . pick)
+-- isFirst (E x) = E (x . first)
+-- isSecond (E x) = E (x . second)
+-- E x `isU64` n = E (x . u64 n)
 
-  add = E add
+-- pick (E x) = E (x . pick)
+
+-- add = E add

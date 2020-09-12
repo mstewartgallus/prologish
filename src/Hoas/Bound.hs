@@ -9,9 +9,9 @@ import Id (Id)
 import Data.Word (Word64)
 
 class Bound t where
-  mal :: Id -> ST b -> t a -> (t b -> t Void) -> t (a |- b)
-  assume :: t (a -< b) -> t b
-  deny :: t (a -< b) -> t a -> t Void
+  kont :: Id -> ST a -> t x -> (t a -> t Void) -> t (x |- a)
+  jump :: t (x |- a) -> t a -> t Void
+  val :: t (x |- a) -> t x
 
   unit :: t Unit
   (&&&) :: t a -> t b -> t (a * b)
@@ -19,7 +19,7 @@ class Bound t where
   second :: t (a * b) -> t b
 
   absurd :: t Void -> t a
-  isEither :: t (a + b) -> (t (a -< c), t (b -< c)) -> t c
+  -- isEither :: t (a + b) -> (t (a -< c), t (b -< c)) -> t c
   left :: t a -> t (a + b)
   right :: t b -> t (a + b)
 
@@ -27,4 +27,5 @@ class Bound t where
   true :: t B
   false :: t B
 
-  isU64 :: t U64 -> Word64 -> t Void
+  u64 :: Word64 -> t U64
+  add :: t U64 -> t U64 -> t U64

@@ -12,11 +12,11 @@ view :: View a -> String
 view (V v) = v
 
 instance Bound View where
-  mal n t (V x) k = V (x ++ " ⊨ " ++ v ++ " : " ++ show t ++ ".\n" ++ body) where
-        v = "v" ++ show n
+  kont n t (V x) k = V (x ++ " |= " ++ v ++ " : " ++ show t ++ ".\n" ++ body) where
+        v = "k" ++ show n
         V body = k (V v)
-  assume (V x) = V $ "(assume " ++ x ++ ")"
-  deny (V x) (V y) = V $ "(deny " ++ x ++ " " ++ y ++ ")"
+  V f `jump` V x = V $ "(" ++ f ++ " " ++ x ++ ")"
+  val (V f) = V $ "(val " ++ f ++ ")"
 
   unit = V "unit"
   V x &&& V y = V $ "<" ++ x ++ ", " ++ y ++ ">"
@@ -24,7 +24,7 @@ instance Bound View where
   second (V x) = V $ "(π₂ " ++ x ++ ")"
 
   absurd (V x) = V $ "(absurd " ++ x ++ ")"
-  V x `isEither` (V f, V g) = V $ "[" ++ x ++ " | " ++ f ++ "; " ++ g ++ "]"
+  -- V x `isEither` (V f, V g) = V $ "[" ++ x ++ " | " ++ f ++ "; " ++ g ++ "]"
 
   left (V x) = V $ "(i₁ " ++ x ++ ")"
   right (V x) = V $ "(i₂ " ++ x ++ ")"
@@ -33,4 +33,5 @@ instance Bound View where
   true = V "true"
   false = V "false"
 
-  isU64 (V x) n = V $ "(" ++ x ++ " = " ++ show n ++ ")"
+  u64 n = V $ show n
+  add (V x) (V y) = V $ "(" ++ x ++ " + " ++ y ++ ")"

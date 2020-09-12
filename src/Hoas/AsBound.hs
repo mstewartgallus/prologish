@@ -15,11 +15,10 @@ bindPoints :: Stream -> Expr t a -> t a
 bindPoints str (E x) = x str
 
 instance Bound t => Hoas.Hoas (Expr t) where
-  mal t (E x) k = E $ \(Stream n xs ys) -> mal n t (x xs) $ \x -> case k (E $ \_ -> x) of
+  kont t (E x) k = E $ \(Stream n xs ys) -> kont n t (x xs) $ \x -> case k (E $ \_ -> x) of
     E y -> y ys
-
-  assume (E x) = E $ \s -> assume (x s)
-  deny (E f) (E x) = E $ \(Stream _ fs xs) -> f fs `deny` x xs
+  val (E f) = E $ \s -> val (f s)
+  jump (E f) (E x) = E $ \(Stream _ fs xs) -> f fs `jump` x xs
 
   unit = E $ const unit
   E f &&& E g = E $ \(Stream _ fs gs) -> f fs &&& g gs
@@ -27,10 +26,11 @@ instance Bound t => Hoas.Hoas (Expr t) where
   second (E x) = E $ \s -> second (x s)
 
   absurd (E x) = E $ \s -> absurd (x s)
-  E x `isEither` (E f, E g) = E $ \(Stream _ xs (Stream _ gs fs)) -> x xs `isEither` (f fs, g gs)
+  -- E x `isEither` (E f, E g) = E $ \(Stream _ xs (Stream _ gs fs)) -> x xs `isEither` (f fs, g gs)
   left (E x) = E $ \s -> left (x s)
   right (E x) = E $ \s -> right (x s)
 
   pick (E f) = E $ \s -> pick (f s)
 
-  E x `isU64` n = E $ \s -> x s `isU64` n
+  u64 n = E $ const $ u64 n
+  add (E x) (E y) = E $ \(Stream _ xs ys) -> add (x xs) (y ys)
