@@ -23,25 +23,22 @@ pointFree (PointFree x) = out x
 newtype PointFree k a = PointFree (Pf k '[] a)
 
 instance Term k => Bound.Bound (PointFree k) where
-  -- PointFree f <*> PointFree x = PointFree (f Term.<*> x)
+  val (PointFree x) = PointFree (Term.val x)
+  jump (PointFree k) (PointFree x) = PointFree (Term.jump k x)
 
-  -- lam n t f = PointFree (Term.curry me)
-  --   where
-  --     v = Var t n
-  --     PointFree body = f (PointFree (mkVar v))
-  --     me = case removeVar body v of
-  --       Nothing -> Term.const body
-  --       Just y -> y
+  kont n t (PointFree x) f = PointFree (Term.kont x me)
+    where
+      v = Var t n
+      PointFree body = f (PointFree (mkVar v))
+      me = case removeVar body v of
+        Nothing -> Term.const body
+        Just y -> y
 
-  u64 x = PointFree (to (Term.u64 x))
-
--- add = PointFree (to Term.add)
+  u64 x = PointFree (lift0 (Term.u64 x))
+  add (PointFree x) (PointFree y) = PointFree (Term.add x y)
 
 instance Term k => Term (Pf k) where
-  u64 x = to (Term.u64 x)
-
-  -- add = to Term.add
-
+  val = lift1 Term.val
   tip = me
     where
       me =
@@ -59,26 +56,17 @@ instance Term k => Term (Pf k) where
               _ -> Nothing
           }
 
--- f <*> x = me
---   where
---     me =
---       V
---         { out = out f Term.<*> out x,
---           removeVar = \v -> case (removeVar f v, removeVar x v) of
---             (Just f', Just x') -> Just (f' Term.<*> x')
---             (_, Just x') -> Just (Term.const f Term.<*> x')
---             (Just f', _) -> Just (f' Term.<*> Term.const x)
---             _ -> Nothing
---         }
--- curry f = me
---   where
---     me =
---       V
---         { out = Term.curry (out f),
---           removeVar = \v -> case removeVar f v of
---             Nothing -> Nothing
---             Just f' -> Just (Term.curry (Term.swap f'))
--- }
+  jump = lift2 Term.jump
+  kont x y = me
+    where
+      me =
+        V
+          { out = Term.kont (out x) (out y),
+            removeVar = \v -> error "todo"
+          }
+
+  u64 x = lift0 (Term.u64 x)
+  add = lift2 Term.add
 
 data Pf k env (b :: T) = V
   { out :: k env b,
@@ -92,15 +80,6 @@ eqVar (Var t m) (Var t' n)
   | m == n = eqT t t'
   | otherwise = Nothing
 
-to :: k a b -> Pf k a b
-to x = me
-  where
-    me =
-      V
-        { out = x,
-          removeVar = const Nothing
-        }
-
 mkVar :: Term k => Var a -> Pf k '[] a
 mkVar v@(Var _ n) = me
   where
@@ -109,5 +88,47 @@ mkVar v@(Var _ n) = me
         { out = error ("free variable " ++ show n),
           removeVar = \maybeV -> case eqVar v maybeV of
             Nothing -> Nothing
-            Just Refl -> Just (to Term.tip)
+            Just Refl -> Just (lift0 Term.tip)
+        }
+
+lift0 :: k a b -> Pf k a b
+lift0 x = me
+  where
+    me =
+      V
+        { out = x,
+          removeVar = const Nothing
+        }
+
+lift1 ::
+  Term k =>
+  (forall env. k env a -> k env c) ->
+  Pf k env a ->
+  Pf k env c
+lift1 f x = me
+  where
+    me =
+      V
+        { out = f (out x),
+          removeVar = \v -> case removeVar x v of
+            Just x' -> Just $ lift1 f x'
+            _ -> Nothing
+        }
+
+lift2 ::
+  Term k =>
+  (forall env. k env a -> k env b -> k env c) ->
+  Pf k env a ->
+  Pf k env b ->
+  Pf k env c
+lift2 f x y = me
+  where
+    me =
+      V
+        { out = f (out x) (out y),
+          removeVar = \v -> case (removeVar x v, removeVar y v) of
+            (Just x', Just y') -> Just $ lift2 f x' y'
+            (_, Just y') -> Just $ lift2 f (Term.const x) y'
+            (Just x', _) -> Just $ lift2 f x' (Term.const y)
+            _ -> Nothing
         }

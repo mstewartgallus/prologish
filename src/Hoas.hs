@@ -7,8 +7,6 @@ import Data.Word (Word64)
 import Hoas.Type
 import Prelude hiding (id, uncurry, (.), (<*>))
 
--- |
--- Deriving the internal logic from the coexponential
 class Hoas t where
   kont :: ST a -> t x -> (t a -> t Void) -> t (x |- a)
   jump :: t (x |- a) -> t a -> t Void

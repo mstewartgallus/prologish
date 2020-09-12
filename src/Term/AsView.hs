@@ -6,17 +6,17 @@ module Term.AsView (View, view) where
 import Term
 import Hoas.Type
 
-newtype View (env :: [T]) (a :: T) = View String
+newtype View (env :: [T]) (a :: T) = V String
 
 view :: View env a -> String
-view (View v) = v
+view (V v) = v
 
 instance Term View where
-  u64 n = View (show n)
-  -- add = View "add"
+  u64 n = V (show n)
+  -- add = V "add"
 
-  tip = View "I"
-  const (View x) = View ("(K " ++ x ++ ")")
+  tip = V "I"
+  const (V x) = V ("(K " ++ x ++ ")")
 
-  -- View f <*> View x = View ("(" ++ f ++ " " ++ x ++ ")")
-  -- curry (View f) = View ("(λ " ++ f ++ ")")
+  -- V f <*> V x = V ("(" ++ f ++ " " ++ x ++ ")")
+  kont (V x) (V k) = V ("(kont " ++ k ++ ")")

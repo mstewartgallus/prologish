@@ -7,7 +7,7 @@ module Main where
 
 import AsEval
 import qualified AsMal
--- import qualified AsTerm
+import qualified AsTerm
 import Control.Monad
 import Control.Monad.Cont
 import qualified Data.Void as Void
@@ -32,9 +32,9 @@ main = do
   putStrLn "The Program"
   putStrLn (AsHoasView.view (bound x))
 
--- putStrLn ""
--- putStrLn "De-Bruijn"
--- putStrLn (AsTermView.view (debruijn x))
+  putStrLn ""
+  putStrLn "De-Bruijn"
+  putStrLn (AsTermView.view (debruijn x))
 
 -- putStrLn ""
 -- putStrLn "Co-CCC"
@@ -54,8 +54,8 @@ program =
 bound :: Bound t => Id.Stream -> t Type
 bound str = bindPoints str program
 
--- debruijn :: Term k => Id.Stream -> k Type '[]
--- debruijn str = AsTerm.pointFree (bound str)
+debruijn :: Term t => Id.Stream -> t '[] Type
+debruijn str = AsTerm.pointFree (bound str)
 
 -- malP :: Mal k => Id.Stream -> k (AsMal.AsObject Type) Mal.Type.Void
 -- malP str = AsMal.asMal (debruijn str)
