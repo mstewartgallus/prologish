@@ -23,10 +23,10 @@ pointFree (PointFree x) = out x
 newtype PointFree k a = PointFree (Pf k '[] a)
 
 instance Term k => Bound.Bound (PointFree k) where
-  val (PointFree x) = PointFree (Term.mal (Term.right Term.tip) x)
-  jump (PointFree k) (PointFree x) = PointFree (Term.mal (Term.left (Term.const x)) k)
+  val (PointFree x) = PointFree (Term.val x)
+  jump (PointFree k) (PointFree x) = PointFree (Term.jump k (Term.const x))
 
-  kont n t (PointFree x) f = PointFree (Term.try Term.tip (Term.absurd me) x)
+  kont n t (PointFree x) f = PointFree (Term.kont x me)
     where
       v = Var t n
       PointFree body = f (PointFree (mkVar v))
@@ -67,29 +67,31 @@ instance Term k => Term (Pf k) where
               _ -> error "todo"
           }
 
-  mal x y = me
+  kont x k = me
     where
       me =
         V
-          { out = Term.mal (out x) (out y),
-            removeVar = \v -> case (removeVar x v, removeVar y v) of
-              (Just x', Just y') -> Just $ Term.mal (Term.swap x') y'
-              (_, Just y') -> Just $ Term.mal (Term.swap (Term.const x)) y'
-              (Just x', _) -> Just $ Term.mal (Term.swap x') (Term.const y)
-              _ -> Nothing
-          }
-
-  try x y z = me
-    where
-      me =
-        V
-          { out = Term.try (out x) (out y) (out z),
-            removeVar = \v -> case (removeVar x v, removeVar y v, removeVar z v) of
-              -- (Just x', Just y', Just z') -> Just $ Term.try x' y' z'
+          { out = Term.kont (out x) (out k),
+            removeVar = \v -> case (removeVar x v, removeVar k v) of
+              -- (Just x', Just y') -> Just $ Term.mal (Term.swap x') y'
               -- (_, Just y') -> Just $ Term.mal (Term.swap (Term.const x)) y'
               -- (Just x', _) -> Just $ Term.mal (Term.swap x') (Term.const y)
               _ -> error "todo"
           }
+
+  jump k x = me
+    where
+      me =
+        V
+          { out = Term.jump (out k) (out x),
+            removeVar = \v -> case (removeVar k v, removeVar x v) of
+              -- (Just x', Just y') -> Just $ Term.jump x' y'
+              -- (_, Just y') -> Just $ Term.mal (Term.swap (Term.const x)) y'
+              -- (Just x', _) -> Just $ Term.mal (Term.swap x') (Term.const y)
+              _ -> error "todo"
+          }
+
+  val = lift1 Term.val
 
   unit = lift0 Term.unit
 

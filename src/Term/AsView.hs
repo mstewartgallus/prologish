@@ -24,7 +24,8 @@ instance Term View where
   left (V x) = V $ "(left " ++ x ++ ")"
   right (V x) = V $ "(right " ++ x ++ ")"
 
-  mal (V x) (V k) = V ("(mal " ++ x ++ " " ++ k ++ ")")
-  try (V x) (V k) (V y) = V ("(try " ++ x ++ " " ++ k ++ " " ++ y ++ ")")
+  kont (V k) (V y) = V ("(k " ++ k ++ " " ++ y ++ ")")
+  val (V k) = V ("(val " ++ k ++ ")")
+  jump (V k) (V x) = V ("(" ++ k ++ " " ++ x ++ ")")
 
   swap (V x) = V $ "(swap " ++ x ++ ")"

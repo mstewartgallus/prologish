@@ -9,8 +9,9 @@ import Hoas.Type
 import Prelude hiding (const, curry, (<*>))
 
 class Term t where
-  mal :: t (b : x) (a + env) -> t x (b |- a) -> t x env
-  try :: t (b |- a : x) env -> t (a : x) env -> t x b -> t x env
+  val :: t x (b |- a) -> t x b
+  jump :: t x (b |- a) -> t '[b] a -> t x Void
+  kont :: t x b -> t '[a] Void -> t x (b |- a)
 
   tip :: t (a ': env) a
   const :: t env a -> t (any ': env) a

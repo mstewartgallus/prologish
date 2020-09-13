@@ -12,6 +12,8 @@ class Hoas t where
   jump :: t (x |- a) -> t a -> t Void
   val :: t (x |- a) -> t x
 
+  try :: (t (a -< b) -> t env) -> t b -> t (a + env)
+
   unit :: t Unit
   (&&&) :: t a -> t b -> t (a * b)
   first :: t (a * b) -> t a
