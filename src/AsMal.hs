@@ -40,7 +40,7 @@ newtype Expr k a b = E (k (AsList a) (AsObject b))
 instance Mal k => Term (Expr k) where
   absurd (E x) = E (absurd . x)
 
-  val (E x) = E (val . x)
+  val (E x) = E (val x)
 
   -- jump (E f) (E x) = E (jump f x)
   -- tip = E first

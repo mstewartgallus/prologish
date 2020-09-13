@@ -13,11 +13,26 @@ class HasSum k => HasCoexp k where
   mal :: k b (a + env) -> k (a -< b) env
   try :: k (a -< b) env -> k b (a + env)
 
-  kont :: k x b -> k c Void -> k x (b |- c)
+  -- | kont rule
+  --
+  --- env |- v : b      (x : c) |- y : Void
+  -- ---------------------------------
+  --  env |- v kont (x : c). y : c -< b
+  kont :: k env b -> k c Void -> k env (b |- c)
   kont x f = (((absurd . f) ||| id) . try id) . x
 
-  val :: k (b |- a) b
-  val = mal right
+  -- | val rule, gives the closure environment !
+  --
+  --- env |- k : a -< b
+  -- ---------------------------------
+  --  env |- val k : b
+  val :: k env (b |- a) -> k env b
+  val x = mal right . x
 
-  jump :: k x (b |- a) -> k b a -> k x Void
-  jump f x = mal (left . x) . f
+  -- | jump rule
+  --
+  --- env |- k : a -< b      b |- x : a
+  -- ---------------------------------
+  --  env |- k x
+  jump :: k env (b |- a) -> k b a -> k env Void
+  jump k x = mal (left . x) . k
