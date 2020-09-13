@@ -10,8 +10,9 @@ import Data.Word (Word64)
 
 class Bound t where
   kont :: Id -> ST a -> t x -> (t a -> t Void) -> t (x |- a)
+
   jump :: t (x |- a) -> t a -> t Void
-  val :: t (x |- a) -> t x
+  val :: t  (x |- a) -> t x
 
   unit :: t Unit
   (&&&) :: t a -> t b -> t (a * b)

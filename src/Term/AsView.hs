@@ -18,6 +18,13 @@ instance Term View where
   tip = V "I"
   const (V x) = V ("(K " ++ x ++ ")")
 
-  kont (V x) (V k) = V ("(kont " ++ k ++ ")")
-  V f `jump` V x = V ("(" ++ f ++ " " ++ x ++ ")")
-  val (V f) = V ("(val " ++ f ++ ")")
+  unit = V "unit"
+
+  absurd (V x) = V $ "(absurd " ++ x ++ ")"
+  left (V x) = V $ "(left " ++ x ++ ")"
+  right (V x) = V $ "(right " ++ x ++ ")"
+
+  mal (V x) (V k) = V ("(mal " ++ x ++ " " ++ k ++ ")")
+  try (V x) (V k) (V y) = V ("(try " ++ x ++ " " ++ k ++ " " ++ y ++ ")")
+
+  swap (V x) = V $ "(swap " ++ x ++ ")"

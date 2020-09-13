@@ -36,9 +36,9 @@ main = do
   putStrLn "De-Bruijn"
   putStrLn (AsTermView.view (debruijn x))
 
--- putStrLn ""
--- putStrLn "Co-CCC"
--- putStrLn (AsMalView.view (malP x))
+  putStrLn ""
+  putStrLn "Co-CCC"
+  putStrLn (AsMalView.view (malP x))
 
 -- putStrLn ""
 -- putStrLn "Result"
@@ -57,8 +57,8 @@ bound str = bindPoints str program
 debruijn :: Term t => Id.Stream -> t '[] Type
 debruijn str = AsTerm.pointFree (bound str)
 
--- malP :: Mal k => Id.Stream -> k (AsMal.AsObject Type) Mal.Type.Void
--- malP str = AsMal.asMal (debruijn str)
+malP :: Mal k => Id.Stream -> k Mal.Type.Unit (AsMal.AsObject Type)
+malP str = AsMal.asMal (debruijn str)
 
 -- compiled :: MonadCont m => Id.Stream -> Value m (AsMal.AsObject Type) -> m (Value m Mal.Type.Void)
 -- compiled str = AsEval.asEval (malP str)

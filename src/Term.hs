@@ -1,5 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE NoStarIsType #-}
 
 module Term (Term (..)) where
 
@@ -8,16 +9,23 @@ import Hoas.Type
 import Prelude hiding (const, curry, (<*>))
 
 class Term t where
-  kont :: t env b -> t (c : env) Void -> t env (b |- c)
-
-  jump :: t env (a |- b) -> t env b -> t env Void
-  val :: t env (a |- b) -> t env a
+  mal :: t (b : x) (a + env) -> t x (b |- a) -> t x env
+  try :: t (a -< b : x) env -> t (a : x) env -> t x b -> t x env
 
   tip :: t (a ': env) a
   const :: t env a -> t (any ': env) a
+  swap :: t (x ': a ': env) b -> t (a ': x ': env) b
+
+  unit :: t env Unit
+  (&&&) :: t env a -> t env b -> t env (a * b)
+  first :: t env (a * b) -> t env a
+  second :: t env (a * b) -> t env b
+
+  absurd :: t env Void -> t env a
+
+  -- isEither :: t (a + b) -> (t (a -< c), t (b -< c)) -> t c
+  left :: t env a -> t env (a + b)
+  right :: t env b -> t env (a + b)
 
   u64 :: Word64 -> t env U64
   add :: t env U64 -> t env U64 -> t env U64
-
-  swap :: t (x ': a ': env) b -> t (a ': x ': env) b
-  swap f = undefined -- const (const (mal (mal f))) `try` tip `try` const tip

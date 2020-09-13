@@ -12,11 +12,11 @@ view :: View a -> String
 view (V v) = v
 
 instance Bound View where
-  kont n t (V x) k = V (x ++ " |= " ++ v ++ " : " ++ show t ++ ".\n" ++ body) where
+  kont n t (V x) k = V (x ++ " kont " ++ v ++ " : " ++ show t ++ ".\n" ++ body) where
         v = "k" ++ show n
         V body = k (V v)
-  V f `jump` V x = V $ "(" ++ f ++ " " ++ x ++ ")"
   val (V f) = V $ "(val " ++ f ++ ")"
+  jump (V f) (V x) = V $ "(" ++ f ++ " " ++ x ++ ")"
 
   unit = V "unit"
   V x &&& V y = V $ "<" ++ x ++ ", " ++ y ++ ">"

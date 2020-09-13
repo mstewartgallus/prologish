@@ -5,7 +5,7 @@ module Hoas (Hoas (..)) where
 
 import Data.Word (Word64)
 import Hoas.Type
-import Prelude hiding (id, uncurry, (.), (<*>))
+import Prelude hiding (uncurry, (.), (<*>))
 
 class Hoas t where
   kont :: ST a -> t x -> (t a -> t Void) -> t (x |- a)
@@ -18,8 +18,7 @@ class Hoas t where
   second :: t (a * b) -> t b
 
   absurd :: t Void -> t a
-
-  -- isEither :: t (a + b) -> (t (a -< c), t (b -< c)) -> t c
+  either :: t (a + b) -> (t a -> t c, t b -> t c) -> t c
   left :: t a -> t (a + b)
   right :: t b -> t (a + b)
 

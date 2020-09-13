@@ -23,10 +23,10 @@ pointFree (PointFree x) = out x
 newtype PointFree k a = PointFree (Pf k '[] a)
 
 instance Term k => Bound.Bound (PointFree k) where
-  val (PointFree x) = PointFree (Term.val x)
-  jump (PointFree k) (PointFree x) = PointFree (Term.jump k x)
+  val (PointFree x) = PointFree (Term.mal (Term.right Term.tip) x)
+  jump (PointFree k) (PointFree x) = PointFree (Term.mal (Term.left (Term.const x)) k)
 
-  kont n t (PointFree x) f = PointFree (Term.kont x me)
+  kont n t (PointFree x) f = PointFree (Term.try Term.tip (Term.absurd me) x)
     where
       v = Var t n
       PointFree body = f (PointFree (mkVar v))
@@ -34,11 +34,13 @@ instance Term k => Bound.Bound (PointFree k) where
         Nothing -> Term.const body
         Just y -> y
 
+  unit = PointFree Term.unit
+  left (PointFree x) = PointFree (Term.left x)
+
   u64 x = PointFree (lift0 (Term.u64 x))
   add (PointFree x) (PointFree y) = PointFree (Term.add x y)
 
 instance Term k => Term (Pf k) where
-  val = lift1 Term.val
   tip = me
     where
       me =
@@ -55,15 +57,45 @@ instance Term k => Term (Pf k) where
               Just f' -> Just (Term.swap (Term.const f'))
               _ -> Nothing
           }
-
-  jump = lift2 Term.jump
-  kont x y = me
+  swap x = me
     where
       me =
         V
-          { out = Term.kont (out x) (out y),
-            removeVar = \v -> error "todo"
+          { out = Term.swap (out x),
+            removeVar = \v -> case removeVar x v of
+              -- Just x' -> Just (Term.const x')
+              _ -> error "todo"
           }
+
+  mal x y = me
+    where
+      me =
+        V
+          { out = Term.mal (out x) (out y),
+            removeVar = \v -> case (removeVar x v, removeVar y v) of
+              (Just x', Just y') -> Just $ Term.mal (Term.swap x') y'
+              (_, Just y') -> Just $ Term.mal (Term.swap (Term.const x)) y'
+              (Just x', _) -> Just $ Term.mal (Term.swap x') (Term.const y)
+              _ -> Nothing
+          }
+
+  try x y z = me
+    where
+      me =
+        V
+          { out = Term.try (out x) (out y) (out z),
+            removeVar = \v -> case (removeVar x v, removeVar y v, removeVar z v) of
+              -- (Just x', Just y', Just z') -> Just $ Term.try x' y' z'
+              -- (_, Just y') -> Just $ Term.mal (Term.swap (Term.const x)) y'
+              -- (Just x', _) -> Just $ Term.mal (Term.swap x') (Term.const y)
+              _ -> error "todo"
+          }
+
+  unit = lift0 Term.unit
+
+  absurd = lift1 Term.absurd
+  left = lift1 Term.left
+  right = lift1 Term.right
 
   u64 x = lift0 (Term.u64 x)
   add = lift2 Term.add
