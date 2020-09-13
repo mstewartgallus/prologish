@@ -41,13 +41,7 @@ instance Mal k => Term (Expr k) where
   tip = E first
   const (E x) = E (x . second)
 
-  -- mal :: k b (c + env) -> k (b |- c) env
-  -- kont :: t env b -> t (c : env) Void -> t env (b |- c)
-  -- mal (E x) (E k) = E (mal x . k)
-  -- try (E x) (E f) = E undefined
-
-  -- mal (E f) = E (mal f)
-  -- E f `try` E x = E (f `tryCatch` x)
+  -- try :: t (b |- a : x) env -> t (a : x) env -> t x b -> t x env
 
   unit = E unit
   E f &&& E g = E (f &&& g)

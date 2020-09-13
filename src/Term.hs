@@ -10,7 +10,7 @@ import Prelude hiding (const, curry, (<*>))
 
 class Term t where
   mal :: t (b : x) (a + env) -> t x (b |- a) -> t x env
-  try :: t (a -< b : x) env -> t (a : x) env -> t x b -> t x env
+  try :: t (b |- a : x) env -> t (a : x) env -> t x b -> t x env
 
   tip :: t (a ': env) a
   const :: t env a -> t (any ': env) a
