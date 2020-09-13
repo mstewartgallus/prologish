@@ -40,4 +40,4 @@ instance HasCoexp View where
 instance Mal View where
   pick = V "pick"
   u64 x = V (show x)
-  add = V "add"
+  add (V x) (V y) = V $ "(" ++ x ++ " + " ++ y ++ ")"

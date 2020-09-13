@@ -18,4 +18,4 @@ class (HasProduct k, HasCoexp k) => Mal k where
   pick :: k B (Unit + Unit)
 
   u64 :: Word64 -> k Unit U64
-  add :: k (U64 -< (U64 * U64)) r
+  add :: k env U64 -> k env U64 -> k env U64
