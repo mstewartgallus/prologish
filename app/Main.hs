@@ -39,13 +39,13 @@ main = do
 
 type Type = K (U64 -< U64 * U64)
 
-program :: Hoas t => t Type
+program :: Hoas pos neg => pos Type
 program = fn $ \x ->
   let a = first x
       b = second x
    in a `add` b
 
-bound :: Bound t => Id.Stream -> t Type
+bound :: Bound pos neg => Id.Stream -> pos Type
 bound str = bindPoints str program
 
 malP :: Mal k => Id.Stream -> k Mal.Type.Unit (AsMal.AsObject Type)

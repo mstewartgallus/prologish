@@ -1,5 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 module Hoas.AsBound (Expr, bindPoints) where
 
@@ -7,14 +8,16 @@ import Id (Stream (..))
 import Hoas.Bound
 import qualified Hoas
 import Hoas.Type
+import Data.Kind
 import Prelude hiding ((.), id, curry, uncurry, (<*>))
 
-newtype Expr t (a :: T) = E (Stream -> t a)
+newtype Expr p (n :: T -> Type) (a :: T) = E (Stream -> p a)
+newtype Neg (p :: T -> Type) n (a :: T) = N (Stream -> n a)
 
-bindPoints :: Stream -> Expr t a -> t a
+bindPoints :: Stream -> Expr p n a -> p a
 bindPoints str (E x) = x str
 
-instance Bound t => Hoas.Hoas (Expr t) where
+instance Bound pos neg => Hoas.Hoas (Expr pos neg) (Neg pos neg) where
   kont t (E x) k = E $ \(Stream n xs ys) -> kont n t (x xs) $ \x -> case k (E $ \_ -> x) of
     E y -> y ys
 
@@ -41,11 +44,11 @@ instance Bound t => Hoas.Hoas (Expr t) where
 
   load t name = lift0 $ load t name
 
-lift0 :: t a -> Expr t a
+lift0 :: t a -> Expr t n a
 lift0 x = E $ const x
 
-lift1 :: (t a -> t b) -> Expr t a -> Expr t b
+lift1 :: (t a -> t b) -> Expr t n a -> Expr t n b
 lift1 f (E x) = E $ \xs -> f (x xs)
 
-lift2 :: (t a -> t b -> t c) -> Expr t a -> Expr t b -> Expr t c
+lift2 :: (t a -> t b -> t c) -> Expr t n a -> Expr t n b -> Expr t n c
 lift2 f (E x) (E y) = E $ \(Stream _ xs ys) -> f (x xs) (y ys)

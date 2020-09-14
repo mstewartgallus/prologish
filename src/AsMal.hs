@@ -1,5 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeFamilyDependencies #-}
@@ -35,7 +36,9 @@ asMal (PointFree x) = out x
 
 newtype PointFree k a = PointFree (Pf k Unit (AsObject a))
 
-instance Mal k => Bound.Bound (PointFree k) where
+newtype Neg k a = Neg (Pf k (AsObject a) Void)
+
+instance Mal k => Bound.Bound (PointFree k) (Neg k) where
   val (PointFree x) = PointFree (val x)
 
   kont n t (PointFree x) f = PointFree (kont x me)

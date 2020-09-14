@@ -1,5 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 module Hoas.AsView (View, view) where
 
@@ -11,7 +12,7 @@ newtype View (a :: T) = V String
 view :: View a -> String
 view (V v) = v
 
-instance Bound View where
+instance Bound View View where
   kont n t (V x) k = V (x ++ " \\ " ++ v ++ " : " ++ show t ++ ".\n" ++ body) where
         v = "k" ++ show n
         V body = k (V v)
