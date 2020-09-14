@@ -18,20 +18,23 @@ instance Bound View where
   jump n t (V f) k = V (f ++ " ! " ++ v ++ " : " ++ show t ++ ".\n" ++ body) where
         v = "v" ++ show n
         V body = k (V v)
-  val (V x) = V $ "(val " ++ x ++ ")"
+  val = op1 "val"
 
   unit = V "unit"
   V x &&& V y = V $ "<" ++ x ++ ", " ++ y ++ ">"
-  first (V x) = V $ "(π₁ " ++ x ++ ")"
-  second (V x) = V $ "(π₂ " ++ x ++ ")"
+  first = op1 "π₁"
+  second = op1 "π₂"
 
-  absurd (V x) = V $ "(absurd " ++ x ++ ")"
-  left (V x) = V $ "(i₁ " ++ x ++ ")"
-  right (V x) = V $ "(i₂ " ++ x ++ ")"
+  absurd = op1 "absurd"
+  left = op1 "i₁"
+  right = op1 "i₂"
 
-  pick (V x) = V $ "(pick " ++ x ++ ")"
+  pick = op1 "pick"
   true = V "true"
   false = V "false"
 
   u64 n = V $ show n
   add (V x) (V y) = V $ "(" ++ x ++ " + " ++ y ++ ")"
+
+op1 :: String -> View a -> View b
+op1 name (V x) = V $ "(" ++ name ++ " " ++ x ++ ")"

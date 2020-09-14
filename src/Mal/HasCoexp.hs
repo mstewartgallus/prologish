@@ -40,6 +40,9 @@ class HasSum k => HasCoexp k where
   jump :: k env (b |- a) -> k b a -> k env Void
   jump k x = mal (left . x) . k
 
+  coid :: k (a -< a) Void
+  coid = mal left
+
   coapply :: k (a -< b) env -> k a env -> k b env
   f `coapply` x = (x ||| id) . try f
 
@@ -47,3 +50,6 @@ class HasSum k => HasCoexp k where
   compose f g = mal ((g' ||| right) . f') where
     f' = try f
     g' = try g
+
+  annihilate :: k env (a |- a) -> k env Void
+  annihilate x = coid . x

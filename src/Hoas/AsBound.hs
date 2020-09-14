@@ -20,19 +20,30 @@ instance Bound t => Hoas.Hoas (Expr t) where
 
   jump t (E f) k = E $ \(Stream n fs ys) -> jump n t (f fs) $ \x -> case k (E $ \_ -> x) of
                         E y -> y ys
-  val (E x) = E $ \s -> val (x s)
+  val = lift1 val
 
-  unit = E $ const unit
-  E f &&& E g = E $ \(Stream _ fs gs) -> f fs &&& g gs
-  first (E x) = E $ \s -> first (x s)
-  second (E x) = E $ \s -> second (x s)
+  unit = lift0 unit
+  (&&&) = lift2 (&&&)
+  first = lift1 first
+  second = lift1 second
 
-  absurd (E x) = E $ \s -> absurd (x s)
+  absurd = lift1 absurd
   -- E x `isEither` (E f, E g) = E $ \(Stream _ xs (Stream _ gs fs)) -> x xs `isEither` (f fs, g gs)
-  left (E x) = E $ \s -> left (x s)
-  right (E x) = E $ \s -> right (x s)
+  left = lift1 left
+  right = lift1 right
 
-  pick (E f) = E $ \s -> pick (f s)
+  pick = lift1 pick
+  true = lift0 true
+  false = lift0 false
 
-  u64 n = E $ const $ u64 n
-  add (E x) (E y) = E $ \(Stream _ xs ys) -> add (x xs) (y ys)
+  u64 n = lift0 (u64 n)
+  add = lift2 add
+
+lift0 :: t a -> Expr t a
+lift0 x = E $ const x
+
+lift1 :: (t a -> t b) -> Expr t a -> Expr t b
+lift1 f (E x) = E $ \xs -> f (x xs)
+
+lift2 :: (t a -> t b -> t c) -> Expr t a -> Expr t b -> Expr t c
+lift2 f (E x) (E y) = E $ \(Stream _ xs ys) -> f (x xs) (y ys)
