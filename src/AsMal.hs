@@ -64,9 +64,10 @@ instance Mal k => Bound.Bound (PointFree k) (Neg k) where
   first (PointFree x) = PointFree (first . x)
   second (PointFree x) = PointFree (second . x)
 
-  absurd (PointFree x) = PointFree (absurd . x)
-  left (PointFree x) = PointFree (left . x)
-  right (PointFree x) = PointFree (right . x)
+  absurd = Neg absurd
+  Neg f ||| Neg g = Neg (f ||| g)
+  left (Neg x) = Neg (x . left)
+  right (Neg x) = Neg (x . right)
 
   u64 x = PointFree (u64 x)
   add (PointFree x) (PointFree y) = PointFree (add x y)

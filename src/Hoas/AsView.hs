@@ -26,7 +26,8 @@ instance Bound View View where
   first = op1 "π₁"
   second = op1 "π₂"
 
-  absurd = op1 "absurd"
+  absurd = V "absurd"
+  V x ||| V y = V $ "[" ++ x ++ " ; " ++ y ++ " ]"
   left = op1 "i₁"
   right = op1 "i₂"
 

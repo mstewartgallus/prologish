@@ -22,10 +22,10 @@ class Hoas pos neg | pos -> neg, neg -> pos where
   first :: pos (a * b) -> pos a
   second :: pos (a * b) -> pos b
 
-  absurd :: pos Void -> pos a
-  either :: pos (a + b) -> (pos a -> pos c, pos b -> pos c) -> pos c
-  left :: pos a -> pos (a + b)
-  right :: pos b -> pos (a + b)
+  absurd :: neg Void
+  (|||) :: neg a -> neg b -> neg (a + b)
+  left :: neg (a + b) -> neg a
+  right :: neg (a + b) -> neg b
 
   pick :: pos B -> pos (Unit + Unit)
   true :: pos B
@@ -47,6 +47,8 @@ class Hoas pos neg | pos -> neg, neg -> pos where
   x ! k = jump inferT x k
 
 infixl 9 &&&
+
+infixl 9 |||
 
 infixl 0 \+
 

@@ -30,10 +30,10 @@ instance Bound pos neg => Hoas.Hoas (Expr pos neg) (Neg pos neg) where
   first = lift1 first
   second = lift1 second
 
-  absurd = lift1 absurd
-  -- E x `isEither` (E f, E g) = E $ \(Stream _ xs (Stream _ gs fs)) -> x xs `isEither` (f fs, g gs)
-  left = lift1 left
-  right = lift1 right
+  absurd = lift0' absurd
+  (|||) = lift2' (|||)
+  left = lift1' left
+  right = lift1' right
 
   pick = lift1 pick
   true = lift0 true
@@ -52,3 +52,12 @@ lift1 f (E x) = E $ \xs -> f (x xs)
 
 lift2 :: (t a -> t b -> t c) -> Expr t n a -> Expr t n b -> Expr t n c
 lift2 f (E x) (E y) = E $ \(Stream _ xs ys) -> f (x xs) (y ys)
+
+lift0' :: n a -> Neg t n a
+lift0' x = N $ const x
+
+lift1' :: (n a -> n b) -> Neg t n a -> Neg t n b
+lift1' f (N x) = N $ \xs -> f (x xs)
+
+lift2' :: (n a -> n b -> n c) -> Neg t n a -> Neg t n b -> Neg t n c
+lift2' f (N x) (N y) = N $ \(Stream _ xs ys) -> f (x xs) (y ys)

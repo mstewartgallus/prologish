@@ -22,9 +22,10 @@ class Bound pos neg | pos -> neg, neg -> pos where
   first :: pos (a * b) -> pos a
   second :: pos (a * b) -> pos b
 
-  absurd :: pos Void -> pos a
-  left :: pos a -> pos (a + b)
-  right :: pos b -> pos (a + b)
+  absurd :: neg Void
+  (|||) :: neg a -> neg b -> neg (a + b)
+  left :: neg (a + b) -> neg a
+  right :: neg (a + b) -> neg b
 
   pick :: pos B -> pos (Unit + Unit)
   true :: pos B
