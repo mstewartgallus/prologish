@@ -8,15 +8,7 @@ import Hoas.Type
 import Prelude hiding (uncurry, (.), (<*>))
 
 class Hoas t where
-  (\+) :: KnownT a => t x -> (t a -> t Void) -> t (a -< x)
-  x \+ k = kont inferT x k
-
-  neg :: KnownT a => (t a -> t Void) -> t (K a)
-  neg k = unit \+ k
-
-  (!) :: KnownT x => t (a -< x) -> (t x -> t a) -> t c
-  x ! k = jump inferT x k
-
+  -- Basic higher order CPS combinators
   kont :: ST a -> t x -> (t a -> t Void) -> t (a -< x)
   jump :: ST x -> t (a -< x) -> (t x -> t a) -> t c
   val :: t (a -< x) -> t x
@@ -39,6 +31,16 @@ class Hoas t where
   add :: t U64 -> t U64 -> t U64
 
   load :: ST a -> String -> t a
+
+  -- | Syntactic sugar for easier programming
+  (\+) :: KnownT a => t x -> (t a -> t Void) -> t (a -< x)
+  x \+ k = kont inferT x k
+
+  fn :: (KnownT a, KnownT b) => (t b -> t a) -> t (K (a -< b))
+  fn f = unit \+ \x -> x ! f
+
+  (!) :: KnownT x => t (a -< x) -> (t x -> t a) -> t c
+  x ! k = jump inferT x k
 
 infixl 9 &&&
 

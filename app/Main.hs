@@ -40,11 +40,10 @@ main = do
 type Type = K (U64 -< U64 * U64)
 
 program :: Hoas t => t Type
-program = neg $ \x ->
-  x ! \x' ->
-    let a = first x'
-        b = second x'
-     in a `add` b
+program = fn $ \x ->
+  let a = first x
+      b = second x
+   in a `add` b
 
 bound :: Bound t => Id.Stream -> t Type
 bound str = bindPoints str program
