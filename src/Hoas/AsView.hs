@@ -12,11 +12,12 @@ view :: View a -> String
 view (V v) = v
 
 instance Bound View where
-  kont n t (V x) k = V (x ++ " kont " ++ v ++ " : " ++ show t ++ ".\n" ++ body) where
+  kont n t (V x) k = V (x ++ " ⊨ " ++ v ++ " : " ++ show t ++ ".\n" ++ body) where
         v = "k" ++ show n
         V body = k (V v)
-  val (V f) = V $ "(val " ++ f ++ ")"
-  jump (V f) (V x) = V $ "(" ++ f ++ " " ++ x ++ ")"
+  jump n t (V f) k = V (f ++ " ! " ++ v ++ " : " ++ show t ++ ".\n" ++ body) where
+        v = "v" ++ show n
+        V body = k (V v)
 
   unit = V "unit"
   V x &&& V y = V $ "<" ++ x ++ ", " ++ y ++ ">"
@@ -24,8 +25,6 @@ instance Bound View where
   second (V x) = V $ "(π₂ " ++ x ++ ")"
 
   absurd (V x) = V $ "(absurd " ++ x ++ ")"
-  -- V x `isEither` (V f, V g) = V $ "[" ++ x ++ " | " ++ f ++ "; " ++ g ++ "]"
-
   left (V x) = V $ "(i₁ " ++ x ++ ")"
   right (V x) = V $ "(i₂ " ++ x ++ ")"
 

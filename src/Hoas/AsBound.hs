@@ -18,10 +18,8 @@ instance Bound t => Hoas.Hoas (Expr t) where
   kont t (E x) k = E $ \(Stream n xs ys) -> kont n t (x xs) $ \x -> case k (E $ \_ -> x) of
     E y -> y ys
 
-  jump (E f) (E x) = E $ \(Stream _ fs xs) -> jump (f fs) (x xs)
-  val (E f) = E $ \fs -> val (f fs)
-  -- mal t (E x) k = E $ \(Stream n xs ys) -> mal n t (x xs) $ \x -> case k (E $ \_ -> x) of
-  --   E y -> y ys
+  jump t (E f) k = E $ \(Stream n fs ys) -> jump n t (f fs) $ \x -> case k (E $ \_ -> x) of
+                        E y -> y ys
 
   unit = E $ const unit
   E f &&& E g = E $ \(Stream _ fs gs) -> f fs &&& g gs

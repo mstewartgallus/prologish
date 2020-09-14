@@ -36,10 +36,15 @@ asMal (PointFree x) = out x
 newtype PointFree k a = PointFree (Pf k Unit (AsObject a))
 
 instance Mal k => Bound.Bound (PointFree k) where
-  val (PointFree x) = PointFree (val x)
-  jump (PointFree k) (PointFree x) = PointFree (jump k (x . unit))
-
   kont n t (PointFree x) f = PointFree (kont x me)
+    where
+      v = Var t n
+      PointFree body = f (PointFree (mkVar v))
+      me = case removeVar body v of
+        Nothing -> body . unit
+        Just y -> y . (id &&& unit)
+
+  jump n t (PointFree x) f = PointFree (jump x me)
     where
       v = Var t n
       PointFree body = f (PointFree (mkVar v))
@@ -106,7 +111,6 @@ instance Mal k => HasCoexp (Pf k) where
               (Just _, _) -> error "todo"
               _ -> Nothing
           }
-  val = lift1 val
   jump k x = me
     where
       me =
