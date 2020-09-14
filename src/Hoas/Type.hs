@@ -89,6 +89,6 @@ instance Show (ST a) where
     SUnit -> "unit"
     SB -> "b"
     SU64 -> "u64"
-    SCoexp x y -> "(" ++ show x ++ " |- " ++ show y ++ ")"
+    SCoexp x y -> "(" ++ show x ++ " ⊦ " ++ show y ++ ")"
     x :+: y -> "(" ++ show x ++ " + " ++ show y ++ ")"
     x :*: y -> "(" ++ show x ++ " × " ++ show y ++ ")"
