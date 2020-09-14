@@ -37,13 +37,14 @@ main = do
   putStrLn "Result"
   putStrLn (show (result x 4 9))
 
-type Type = (U64 -< (U64 * U64)) -< Unit
+type Type = K (U64 -< U64 * U64)
 
 program :: Hoas t => t Type
-program =
-  unit |= \x ->
-    x ! \x' ->
-      first x' `add` second x'
+program = neg $ \x ->
+  x ! \x' ->
+    let a = first x'
+        b = second x'
+     in a `add` b
 
 bound :: Bound t => Id.Stream -> t Type
 bound str = bindPoints str program

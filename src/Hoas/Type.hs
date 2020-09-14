@@ -4,18 +4,21 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module Hoas.Type (KnownT, inferT, eqT, ST (..), T, Void, Unit, type (-<), type (+), type (*), type B, type U64) where
+module Hoas.Type (KnownT, inferT, eqT, ST (..), T, K, Void, Unit, type (-<), type (+), type (*), type B, type U64) where
 
 import Data.Typeable ((:~:) (..))
 
 type (*) = 'Prod
-infixl 0 *
+infixl 9 *
 
 type (+) = 'Sum
-infixl 0 +
+infixl 9 +
 
 type (-<) = 'Coexp
-infixr 9 -<
+infixr 0 -<
+
+-- Basically logically negation ...
+type K x = x -< Unit
 
 type Void = 'Void
 type Unit = 'Unit
