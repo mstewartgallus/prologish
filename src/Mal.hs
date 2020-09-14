@@ -17,6 +17,8 @@ import Mal.Type
 import Prelude hiding ((.))
 
 class (HasProduct k, HasCoexp k) => Mal k where
+  true :: k Unit B
+  false :: k Unit B
   pick :: k B (Unit + Unit)
 
   u64 :: Word64 -> k Unit U64

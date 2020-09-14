@@ -4,7 +4,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module Hoas.Type (KnownT, inferT, eqT, ST (..), T, Not, Void, Unit, type (|-), type (-<), type (+), type (*), type B, type U64) where
+module Hoas.Type (KnownT, inferT, eqT, ST (..), T, Void, Unit, type (-<), type (+), type (*), type B, type U64) where
 
 import Data.Typeable ((:~:) (..))
 
@@ -12,18 +12,10 @@ type (*) = 'Prod
 infixl 0 *
 
 type (+) = 'Sum
-
 infixl 0 +
 
-type (|-) = 'Coexp
-
-infixl 9 |-
-
-type a -< b = b |- a
+type (-<) = 'Coexp
 infixr 9 -<
-
-type Not = (|-) Unit
-
 
 type Void = 'Void
 type Unit = 'Unit
@@ -37,7 +29,7 @@ data ST a where
   SVoid :: ST Void
   SB :: ST B
   SU64 :: ST U64
-  SCoexp :: ST a -> ST b -> ST (a |- b)
+  SCoexp :: ST a -> ST b -> ST (a -< b)
   (:+:) :: ST a -> ST b -> ST (a + b)
   (:*:) :: ST a -> ST b -> ST (a * b)
 
@@ -91,6 +83,6 @@ instance Show (ST a) where
     SUnit -> "unit"
     SB -> "b"
     SU64 -> "u64"
-    SCoexp x y -> "(" ++ show x ++ " ⊦ " ++ show y ++ ")"
+    SCoexp x y -> "(" ++ show x ++ " - " ++ show y ++ ")"
     x :+: y -> "(" ++ show x ++ " + " ++ show y ++ ")"
     x :*: y -> "(" ++ show x ++ " × " ++ show y ++ ")"

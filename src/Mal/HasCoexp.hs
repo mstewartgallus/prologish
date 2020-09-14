@@ -20,7 +20,7 @@ class HasSum k => HasCoexp k where
   --- env |- v : b      (x : c) |- y : Void
   -- ---------------------------------
   --  env |- v kont (x : c). y : c -< b
-  kont :: k env b -> k c Void -> k env (b |- c)
+  kont :: k env b -> k c Void -> k env (c -< b)
   kont x f = (((absurd . f) ||| id) . try id) . x
 
   -- | val rule, probably will only be useful for debugging purposes,
@@ -29,18 +29,19 @@ class HasSum k => HasCoexp k where
   --- env |- k : a -< b
   -- ---------------------------------
   --  env |- val k : b
-  val :: k env (b |- a) -> k env b
+  val :: k env (a -< b) -> k env b
   val x = mal right . x
 
   -- | jump rule
   --
   --- env |- k : a -< b      b |- x : a
   -- ---------------------------------
-  --  env |- k x
-  jump :: k env (b |- a) -> k b a -> k env Void
+  --  env |- k x : Void
+  jump :: k env (a -< b) -> k b a -> k env x
   jump k x = mal (left . x) . k
 
-  coid :: k (a -< a) Void
+  -- This might be a better jump rule maybe ...
+  coid :: k (a -< a) c
   coid = mal left
 
   coapply :: k (a -< b) env -> k a env -> k b env
@@ -51,5 +52,5 @@ class HasSum k => HasCoexp k where
     f' = try f
     g' = try g
 
-  annihilate :: k env (a |- a) -> k env Void
+  annihilate :: k env (a -< a) -> k env c
   annihilate x = coid . x

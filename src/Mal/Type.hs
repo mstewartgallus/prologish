@@ -3,25 +3,24 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module Mal.Type (T, ST (..), Unit, Void, type (-<), type (|-), type (*), type (+), type B, type U64, eqT) where
+module Mal.Type (T, ST (..), Unit, Void, type (-<), type (*), type (+), type B, type U64, eqT) where
 import Data.Typeable ((:~:) (..))
 
 type Void = 'Void
 type Unit = 'Unit
 
 type (-<) = 'Coexp
-type a |- b = b -< a
+infixr 9 -<
 
 type (+) = 'Sum
+infixl 0 +
+
 type (*) = 'Prod
+
+infixl 0 *
 
 type B = 'B
 type U64 = 'U64
-
-infixr 9 -<
-
-infixl 0 +
-infixl 0 *
 
 data T = U64 | B | Unit | Void | Sum T T | Prod T T | Coexp T T
 
@@ -31,7 +30,7 @@ data ST a where
   SVoid :: ST Void
   SB :: ST B
   SU64 :: ST U64
-  SCoexp :: ST a -> ST b -> ST (a |- b)
+  SCoexp :: ST a -> ST b -> ST (a -< b)
   (:+:) :: ST a -> ST b -> ST (a + b)
   (:*:) :: ST a -> ST b -> ST (a * b)
 
@@ -85,6 +84,6 @@ instance Show (ST a) where
     SUnit -> "unit"
     SB -> "b"
     SU64 -> "u64"
-    SCoexp x y -> "(" ++ show x ++ " ⊦ " ++ show y ++ ")"
+    SCoexp x y -> "(" ++ show x ++ " - " ++ show y ++ ")"
     x :+: y -> "(" ++ show x ++ " + " ++ show y ++ ")"
     x :*: y -> "(" ++ show x ++ " × " ++ show y ++ ")"

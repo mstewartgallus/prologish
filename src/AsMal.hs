@@ -57,6 +57,7 @@ instance Mal k => Bound.Bound (PointFree k) where
         Just y -> y . (id &&& unit)
 
   unit = PointFree unit
+  PointFree f &&& PointFree g = PointFree (f &&& g)
   first (PointFree x) = PointFree (first . x)
   second (PointFree x) = PointFree (second . x)
 
@@ -66,6 +67,10 @@ instance Mal k => Bound.Bound (PointFree k) where
 
   u64 x = PointFree (u64 x)
   add (PointFree x) (PointFree y) = PointFree (add x y)
+
+  true = PointFree true
+  false = PointFree false
+  pick (PointFree x) = PointFree (pick . x)
 
   load t str = PointFree (load (asObject t) str)
 
