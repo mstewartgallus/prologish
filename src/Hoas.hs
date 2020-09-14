@@ -10,8 +10,7 @@ import Prelude hiding (uncurry, (.), (<*>))
 class Hoas t where
   kont :: ST a -> t x -> (t a -> t Void) -> t (x |- a)
   jump :: ST x -> t (x |- a) -> (t x -> t a) -> t Void
-
-  try :: (t (a -< b) -> t env) -> t b -> t (a + env)
+  val :: t (x |- a) -> t x
 
   unit :: t Unit
   (&&&) :: t a -> t b -> t (a * b)

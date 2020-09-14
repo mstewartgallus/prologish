@@ -21,7 +21,8 @@ class HasSum k => HasCoexp k where
   kont :: k env b -> k c Void -> k env (b |- c)
   kont x f = (((absurd . f) ||| id) . try id) . x
 
-  -- | val rule, gives the closure environment !
+  -- | val rule, probably will only be useful for debugging purposes,
+  -- mostly.
   --
   --- env |- k : a -< b
   -- ---------------------------------

@@ -18,6 +18,7 @@ instance Bound View where
   jump n t (V f) k = V (f ++ " ! " ++ v ++ " : " ++ show t ++ ".\n" ++ body) where
         v = "v" ++ show n
         V body = k (V v)
+  val (V x) = V $ "(val " ++ x ++ ")"
 
   unit = V "unit"
   V x &&& V y = V $ "<" ++ x ++ ", " ++ y ++ ">"

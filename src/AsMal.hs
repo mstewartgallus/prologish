@@ -6,7 +6,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module AsMal (PointFree, asMal, foo, AsObject) where
+module AsMal (PointFree, asMal, AsObject) where
 
 import Control.Category
 import Data.Maybe
@@ -36,6 +36,8 @@ asMal (PointFree x) = out x
 newtype PointFree k a = PointFree (Pf k Unit (AsObject a))
 
 instance Mal k => Bound.Bound (PointFree k) where
+  val (PointFree x) = PointFree (val x)
+
   kont n t (PointFree x) f = PointFree (kont x me)
     where
       v = Var t n
@@ -79,6 +81,8 @@ instance Mal k => Category (Pf k) where
 
 instance Mal k => HasSum (Pf k) where
   absurd = lift0 absurd
+
+  -- fixme optimize ||| better
   f ||| g = me
     where
       me =
@@ -86,7 +90,9 @@ instance Mal k => HasSum (Pf k) where
           { out = out f ||| out g,
             removeVar = \v -> case (removeVar f v, removeVar g v) of
               (Just f', Just g') -> Just $ (f' ||| g') . factorIn
-              _ -> error "todo"
+              (Just f', _) -> Just $ (f' ||| (g . second)) . factorIn
+              (_, Just g') -> Just $ ((f . second) ||| g') . factorIn
+              _ -> Nothing
           }
   left = lift0 left
   right = lift0 right
@@ -98,17 +104,19 @@ instance Mal k => HasProduct (Pf k) where
   second = lift0 second
 
 instance Mal k => HasCoexp (Pf k) where
-  -- fixme... figure out which case are linearity error and which are
-  -- not
+  val = lift1 val
+
+  -- fixme... figure out which cases are really linearity errors and
+  -- which are not
   kont x k = me
     where
       me =
         V
           { out = kont (out x) (out k),
             removeVar = \v -> case (removeVar x v, removeVar k v) of
-              (Just _, Just _) -> error "todo"
-              (_, Just _) -> error "todo"
-              (Just _, _) -> error "todo"
+              (Just _, Just _) -> error "linearity error"
+              (_, Just _) -> error "linearity error"
+              (Just x', _) -> Just $ kont x' k
               _ -> Nothing
           }
   jump k x = me
@@ -117,16 +125,11 @@ instance Mal k => HasCoexp (Pf k) where
         V
           { out = jump (out k) (out x),
             removeVar = \v -> case (removeVar k v, removeVar x v) of
-              (Just _, Just _) -> error "todo"
-              (_, Just _) -> error "todo"
+              (Just _, Just _) -> error "linearity error"
+              (_, Just _) -> error "linearity error"
               (Just k', _) -> Just $ jump k' x
               _ -> Nothing
           }
-
-foo f = factorOut . mal ((left ||| (right . factorIn)) . f)
-
-bar :: Mal k => k (v * b) (a + env) -> k (v * (a -< b)) env
-bar f = undefined
 
 instance Mal k => Mal (Pf k) where
   u64 x = lift0 (u64 x)
