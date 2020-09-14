@@ -13,4 +13,7 @@ class Category k => HasProduct k where
   first :: k (a * b) a
   second :: k (a * b) b
 
+  commuteProduct :: k (a * b) (b * a)
+  commuteProduct = second &&& first
+
 infixl 9 &&&

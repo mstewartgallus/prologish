@@ -8,6 +8,11 @@ import Hoas.Type
 import Prelude hiding (uncurry, (.), (<*>))
 
 class Hoas t where
+  (|=) :: KnownT a => t x -> (t a -> t Void) -> t (x |- a)
+  x |= k = kont inferT x k
+  (!) :: KnownT x => t (x |- a) -> (t x -> t a) -> t Void
+  x ! k = jump inferT x k
+
   kont :: ST a -> t x -> (t a -> t Void) -> t (x |- a)
   jump :: ST x -> t (x |- a) -> (t x -> t a) -> t Void
   val :: t (x |- a) -> t x
@@ -30,3 +35,7 @@ class Hoas t where
   add :: t U64 -> t U64 -> t U64
 
 infixl 9 &&&
+
+infixl 0 |=
+
+infixl 0 !

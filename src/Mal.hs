@@ -27,6 +27,3 @@ class (HasProduct k, HasCoexp k) => Mal k where
 
   factorOut :: k ((a * b) + (a * c)) (a * (b + c))
   factorOut = (first ||| first) &&& ((left . second) ||| (right . second))
-
-  commuteSum :: k (a + b) (b + a)
-  commuteSum = right ||| left

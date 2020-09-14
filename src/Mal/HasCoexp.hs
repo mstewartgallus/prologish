@@ -10,7 +10,9 @@ import Prelude hiding ((.), id, (<*>), uncurry)
 
 -- | The categorical definition of a coexponential
 class HasSum k => HasCoexp k where
+  -- | dual to curry
   mal :: k b (a + env) -> k (a -< b) env
+  -- | dual to uncurry
   try :: k (a -< b) env -> k b (a + env)
 
   -- | kont rule
@@ -37,3 +39,11 @@ class HasSum k => HasCoexp k where
   --  env |- k x
   jump :: k env (b |- a) -> k b a -> k env Void
   jump k x = mal (left . x) . k
+
+  coapply :: k (a -< b) env -> k a env -> k b env
+  f `coapply` x = (x ||| id) . try f
+
+  compose :: k (b -< c) env -> k (a -< b) env -> k (a -< c) env
+  compose f g = mal ((g' ||| right) . f') where
+    f' = try f
+    g' = try g

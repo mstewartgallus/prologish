@@ -12,4 +12,7 @@ class Category k => HasSum k where
   left :: k a (a + b)
   right :: k b (a + b)
 
+  commuteSum :: k (a + b) (b + a)
+  commuteSum = right ||| left
+
 infixl 9 |||

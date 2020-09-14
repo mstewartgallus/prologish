@@ -41,8 +41,9 @@ type Type = Unit |- ((U64 * U64) |- U64)
 
 program :: Hoas t => t Type
 program =
-  kont inferT unit $ \x ->
-    jump inferT x $ \x' -> first x' `add` second x'
+  unit |= \x ->
+    x ! \x' ->
+      first x' `add` second x'
 
 bound :: Bound t => Id.Stream -> t Type
 bound str = bindPoints str program
