@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: d65c9967ca829870fcbe2f023cf5f903fdd847a130dafb0e02eb6830b0e04e55
+-- hash: ea29cc48b5d1fa8f457a73b9de799c789cf5f5373406c3dd7a49f4fa7028ac69
 
 name:           hoas
 version:        0.1.0.0
@@ -29,7 +29,6 @@ library
   exposed-modules:
       AsEval
       AsMal
-      AsTerm
       Hoas
       Hoas.AsBound
       Hoas.AsView
@@ -42,8 +41,6 @@ library
       Mal.HasProduct
       Mal.HasSum
       Mal.Type
-      Term
-      Term.AsView
   other-modules:
       Paths_hoas
   hs-source-dirs:

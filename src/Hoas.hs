@@ -9,6 +9,10 @@ import Prelude hiding (uncurry, (.), (<*>))
 
 class Hoas t where
   kont :: ST a -> t x -> (t a -> t Void) -> t (x |- a)
+
+  -- do something like.. instead and remove val
+  -- we need something like this for linearity.
+  -- jump :: t (x |- a) -> (t x -> t a) -> t Void
   jump :: t (x |- a) -> t a -> t Void
   val :: t (x |- a) -> t x
 

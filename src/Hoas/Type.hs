@@ -25,18 +25,17 @@ infixr 9 -<
 
 type Void = 'Void
 type Unit = 'Unit
-type Not a = Unit |- a
 type B = 'B
 type U64 = 'U64
 
-data T = Unit | Void | Coexp T T | Sum T T | Prod T T | Not T | B | U64
+data T = Unit | Void | Coexp T T | Sum T T | Prod T T | B | U64
 
 data ST a where
   SUnit :: ST Unit
   SVoid :: ST Void
   SB :: ST B
   SU64 :: ST U64
-  (:-) :: ST a -> ST b -> ST (a |- b)
+  SCoexp :: ST a -> ST b -> ST (a |- b)
   (:+:) :: ST a -> ST b -> ST (a + b)
   (:*:) :: ST a -> ST b -> ST (a * b)
 
@@ -56,7 +55,7 @@ instance KnownT 'Void where
   inferT = SVoid
 
 instance (KnownT a, KnownT b) => KnownT ('Coexp a b) where
-  inferT = inferT :- inferT
+  inferT = SCoexp inferT inferT
 
 instance (KnownT a, KnownT b) => KnownT ('Sum a b) where
   inferT = inferT :+: inferT
@@ -78,7 +77,7 @@ eqT l r = case (l, r) of
     Refl <- eqT x x'
     Refl <- eqT y y'
     return Refl
-  (x :- y, x' :- y') -> do
+  (SCoexp x y, SCoexp x' y') -> do
     Refl <- eqT x x'
     Refl <- eqT y y'
     return Refl
@@ -90,6 +89,6 @@ instance Show (ST a) where
     SUnit -> "unit"
     SB -> "b"
     SU64 -> "u64"
-    x :- y -> "(" ++ show x ++ " |- " ++ show y ++ ")"
+    SCoexp x y -> "(" ++ show x ++ " |- " ++ show y ++ ")"
     x :+: y -> "(" ++ show x ++ " + " ++ show y ++ ")"
     x :*: y -> "(" ++ show x ++ " × " ++ show y ++ ")"

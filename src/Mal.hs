@@ -23,7 +23,10 @@ class (HasProduct k, HasCoexp k) => Mal k where
   add :: k env U64 -> k env U64 -> k env U64
 
   factorIn :: k (v * (a + b)) ((v * a) + (v * b))
-  factorIn = error "todo"
+  factorIn = try (mal (right . first) &&& mal (commuteSum . (try (mal (right . first) &&& mal (commuteSum . second)))))
 
   factorOut :: k ((a * b) + (a * c)) (a * (b + c))
   factorOut = (first ||| first) &&& ((left . second) ||| (right . second))
+
+  commuteSum :: k (a + b) (b + a)
+  commuteSum = right ||| left
