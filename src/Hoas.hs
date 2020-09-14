@@ -34,6 +34,8 @@ class Hoas t where
   u64 :: Word64 -> t U64
   add :: t U64 -> t U64 -> t U64
 
+  load :: ST a -> String -> t a
+
 infixl 9 &&&
 
 infixl 0 |=

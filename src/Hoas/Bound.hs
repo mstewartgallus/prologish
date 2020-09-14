@@ -28,3 +28,5 @@ class Bound t where
 
   u64 :: Word64 -> t U64
   add :: t U64 -> t U64 -> t U64
+
+  load :: ST a -> String -> t a

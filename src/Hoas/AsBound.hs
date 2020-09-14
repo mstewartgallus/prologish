@@ -39,6 +39,8 @@ instance Bound t => Hoas.Hoas (Expr t) where
   u64 n = lift0 (u64 n)
   add = lift2 add
 
+  load t name = lift0 $ load t name
+
 lift0 :: t a -> Expr t a
 lift0 x = E $ const x
 

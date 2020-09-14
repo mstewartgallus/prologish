@@ -27,3 +27,5 @@ class (HasProduct k, HasCoexp k) => Mal k where
 
   factorOut :: k ((a * b) + (a * c)) (a * (b + c))
   factorOut = (first ||| first) &&& ((left . second) ||| (right . second))
+
+  load :: ST a -> String -> k Unit a

@@ -40,7 +40,8 @@ instance Mal k => Bound.Bound (PointFree k) where
 
   kont n t (PointFree x) f = PointFree (kont x me)
     where
-      v = Var t n
+      t' = asObject t
+      v = Var t' n
       PointFree body = f (PointFree (mkVar v))
       me = case removeVar body v of
         Nothing -> body . unit
@@ -48,7 +49,8 @@ instance Mal k => Bound.Bound (PointFree k) where
 
   jump n t (PointFree x) f = PointFree (jump x me)
     where
-      v = Var t n
+      t' = asObject t
+      v = Var t' n
       PointFree body = f (PointFree (mkVar v))
       me = case removeVar body v of
         Nothing -> body . unit
@@ -64,6 +66,8 @@ instance Mal k => Bound.Bound (PointFree k) where
 
   u64 x = PointFree (u64 x)
   add (PointFree x) (PointFree y) = PointFree (add x y)
+
+  load t str = PointFree (load (asObject t) str)
 
 instance Mal k => Category (Pf k) where
   id = lift0 id
@@ -90,7 +94,7 @@ instance Mal k => HasSum (Pf k) where
           { out = out f ||| out g,
             removeVar = \v -> case (removeVar f v, removeVar g v) of
               (Just f', Just g') -> Just $ (f' ||| g') . factorIn
-              (Just f', _) -> Just $ (f' ||| (g . second)) . factorIn
+              (Just f', _) -> Just $ ((f' ||| (g . second)) . factorIn)
               (_, Just g') -> Just $ ((f . second) ||| g') . factorIn
               _ -> Nothing
           }
@@ -132,22 +136,33 @@ instance Mal k => HasCoexp (Pf k) where
           }
 
 instance Mal k => Mal (Pf k) where
+  load t str = lift0 (load t str)
   u64 x = lift0 (u64 x)
   add = lift2 add
 
 data Pf k env (b :: T) = V
   { out :: k env b,
-    removeVar :: forall v. Var v -> Maybe (Pf k (AsObject v * env) b)
+    removeVar :: forall v. Var v -> Maybe (Pf k (v * env) b)
   }
 
-data Var a = Var (Type.ST a) Id
+asObject :: Type.ST a -> ST (AsObject a)
+asObject t = case t of
+  (a Type.:+: b) -> asObject a :+: asObject b
+  (a Type.:*: b) -> asObject a :*: asObject b
+  (a `Type.SCoexp` b) -> asObject a `SCoexp` asObject b
+  Type.SVoid -> SVoid
+  Type.SUnit -> SUnit
+  Type.SB -> SB
+  Type.SU64 -> SU64
+
+data Var a = Var (ST a) Id
 
 eqVar :: Var a -> Var b -> Maybe (a :~: b)
 eqVar (Var t m) (Var t' n)
-  | m == n = Type.eqT t t'
+  | m == n = eqT t t'
   | otherwise = Nothing
 
-mkVar :: Mal k => Var a -> Pf k Unit (AsObject a)
+mkVar :: Mal k => Var a -> Pf k Unit a
 mkVar v@(Var _ n) = me
   where
     me =

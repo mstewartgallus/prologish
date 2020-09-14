@@ -37,7 +37,7 @@ main = do
   putStrLn "Result"
   putStrLn (show (result x 4 9))
 
-type Type = Unit |- ((U64 * U64) |- U64)
+type Type = (U64 -< (U64 * U64)) -< Unit
 
 program :: Hoas t => t Type
 program =

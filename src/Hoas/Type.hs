@@ -4,7 +4,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module Hoas.Type (KnownT, inferT, eqT, ST (..), T, Void, Unit, type (|-), type (-<), type (+), type (*), type B, type U64) where
+module Hoas.Type (KnownT, inferT, eqT, ST (..), T, Not, Void, Unit, type (|-), type (-<), type (+), type (*), type B, type U64) where
 
 import Data.Typeable ((:~:) (..))
 
@@ -21,6 +21,8 @@ infixl 9 |-
 
 type a -< b = b |- a
 infixr 9 -<
+
+type Not = (|-) Unit
 
 
 type Void = 'Void
