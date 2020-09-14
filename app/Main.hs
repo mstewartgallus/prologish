@@ -35,14 +35,14 @@ main = do
 
   putStrLn ""
   putStrLn "Result"
-  putStrLn (show (result x))
+  putStrLn (show (result x 4 9))
 
-type Type = Unit |- (U64 |- U64)
+type Type = Unit |- ((U64 * U64) |- U64)
 
 program :: Hoas t => t Type
 program =
   kont inferT unit $ \x ->
-    jump inferT x $ \x' -> x' `add` u64 9
+    jump inferT x $ \x' -> first x' `add` second x'
 
 bound :: Bound t => Id.Stream -> t Type
 bound str = bindPoints str program
@@ -53,12 +53,11 @@ malP str = AsMal.asMal (bound str)
 compiled :: MonadCont m => Id.Stream -> m (Value m (AsMal.AsObject Type))
 compiled str = AsEval.asEval (malP str) Coin
 
-result :: Id.Stream -> Word64
-result str = flip runCont id $
+result :: Id.Stream -> Word64 -> Word64 -> Word64
+result str x y = flip runCont id $
   callCC $ \k -> do
     Coin :- c <- compiled str
     abs <-
       c $
-        Value64 5 :- \(Value64 x) -> do
-          k x
+        (Value64 x ::: Value64 y) :- \(Value64 z) -> k z
     Void.absurd abs
