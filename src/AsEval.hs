@@ -85,8 +85,4 @@ instance MonadCont m => HasCoexp (Expr m) where
 
 instance MonadCont m => Mal (Expr m) where
   u64 x = E $ \Coin -> pure $ Value64 x
-
--- add (E x) (E y) = E $ \env -> do
---   Value64 x' <- x env
---   Value64 y' <- y env
---   pure $ Value64 (x' + y')
+  add = E $ \(Value64 x ::: Value64 y) -> pure $ Value64 (x + y)

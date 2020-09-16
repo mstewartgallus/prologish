@@ -24,12 +24,13 @@ class Category t => Bound t where
   first :: t x (a * b) -> t x a
   second :: t x (a * b) -> t x b
 
-  empty :: t Void r
+  absurd :: t Void r
   (|||) :: t a r -> t b r -> t (a + b) r
   left :: t (a + b) r -> t a r
   right :: t (a + b) r -> t b r
 
   u64 :: Word64 -> t x U64
+  add :: t x U64 -> t x U64 -> t x U64
 
 infixr 9 &&&
 infixr 9 |||

@@ -41,7 +41,7 @@ instance Mal k => Category (PointFree k) where
 
 instance Mal k => Bound.Bound (PointFree k) where
   E f `try` E x = E (f <*> x)
-  E f ||| E x = E (f ||| x)
+  mal (E f) = E (mal f)
 
   letLabel n t f = E me
     where
@@ -53,10 +53,17 @@ instance Mal k => Bound.Bound (PointFree k) where
         Just y -> y
 
   unit = E unit
-  empty = E absurd
+  E f &&& E x = E (f &&& x)
+  first (E x) = E (first . x)
+  second (E x) = E (second . x)
 
-  mal (E f) = E (mal f)
+  absurd = E absurd
+  E f ||| E x = E (f ||| x)
+  left (E x) = E (x . left)
+  right (E x) = E (x . right)
+
   u64 x = E (u64 x . unit)
+  E x `add` E y = E (add . (x &&& y))
 
 instance Mal k => Category (Pf k) where
   id = lift0 id
@@ -108,6 +115,7 @@ shuffleSum :: HasSum k => k b (a + (v + c)) -> k b (v + (a + c))
 shuffleSum x = ((right . left) ||| (left ||| (right . right))) . x
 
 instance Mal k => Mal (Pf k) where
+  add = lift0 add
   u64 x = lift0 $ u64 x
 
 data Pf k (a :: T) (b :: T) = V
@@ -185,7 +193,7 @@ colift2 f x y = me
         { out = f (out x) (out y),
           removeLabel = \v -> case (removeLabel x v, removeLabel y v) of
             (Just x', Just y') -> Just $ colift2 f x' y'
-            (_, Just y') -> error "foo"
-            (Just x', _) -> error "foo"
+            (_, Just y') -> Just $ colift2 f (right . x) y'
+            (Just x', _) -> Just $ colift2 f x' (right . y)
             _ -> Nothing
         }

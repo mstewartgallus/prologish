@@ -24,12 +24,18 @@ instance Bound t => Hoas.Hoas (Expr t) where
   letLabel t f = E $ \(Stream n _ ys) -> letLabel n t $ \x -> case f (E $ \_ -> x) of
     E y -> y ys
 
-  adbmal (E f) = E $ \fs -> mal (f fs)
+  mal (E f) = E $ \fs -> mal (f fs)
   E f `try` E x = E $ \(Stream _ fs xs) -> f fs `try` x xs
 
   unit = E $ const unit
-  E f ||| E x = E $ \(Stream _ fs xs) -> f fs ||| x xs
+  E f &&& E x = E $ \(Stream _ fs xs) -> f fs &&& x xs
+  first (E x) = E $ \xs -> first (x xs)
+  second (E x) = E $ \xs -> second (x xs)
 
-  empty = E $ const empty
+  absurd = E $ const absurd
+  E f ||| E x = E $ \(Stream _ fs xs) -> f fs ||| x xs
+  left (E x) = E $ \xs -> left (x xs)
+  right (E x) = E $ \xs -> right (x xs)
 
   u64 x = E $ const (u64 x)
+  E x `add` E y = E $ \(Stream _ xs ys) -> x xs `add` y ys

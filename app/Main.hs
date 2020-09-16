@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE EmptyCase #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
@@ -6,6 +7,7 @@ module Main where
 
 import AsEval
 import qualified AsTerm
+import Control.Category
 import Control.Monad.Cont
 import qualified Data.Void as Void
 import Data.Word
@@ -18,7 +20,7 @@ import qualified Id
 import Mal (Mal)
 import Mal.AsView
 import qualified Mal.Type
-import Prelude hiding ((<*>))
+import Prelude hiding (id, (.), (<*>))
 
 main :: IO ()
 main = do
@@ -35,27 +37,29 @@ main = do
   putStrLn "Result"
   putStrLn (show (result x))
 
-type TYPE = (U64 -< Unit) -< Unit
+type TYPE = U64 -< (U64 * U64)
 
-program :: Hoas t => t Unit TYPE
-program =
-  unit |= \k ->
-    k ! u64 3
+program :: Hoas t => t TYPE Void
+program = mal $
+  letLabel inferT $ \k ->
+    (doAdd `try` k) <<< (first id &&& second id)
 
-bound :: Bound t => Id.Stream -> t Unit TYPE
+doAdd :: Hoas t => t (U64 -< (U64 * U64)) Void
+doAdd = mal $
+  letLabel inferT $ \k ->
+    k <<< first id `add` second id
+
+bound :: Bound t => Id.Stream -> t TYPE Void
 bound str = bindPoints str program
 
-malP :: Mal k => Id.Stream -> k Mal.Type.Unit (AsTerm.AsObject TYPE)
+malP :: Mal k => Id.Stream -> k (AsTerm.AsObject TYPE) Mal.Type.Void
 malP str = AsTerm.pointFree (bound str)
 
-compiled :: MonadCont m => Id.Stream -> m (Value m (AsTerm.AsObject TYPE))
-compiled str = AsEval.asEval (malP str) Coin
+compiled :: MonadCont m => Id.Stream -> Value m (AsTerm.AsObject TYPE) -> m (Value m Mal.Type.Void)
+compiled str = AsEval.asEval (malP str)
 
 result :: Id.Stream -> Word64
 result str = flip runCont id $
   callCC $ \k -> do
-    Coin :- c <- compiled str
-    abs <-
-      c $
-        Coin :- \(Value64 z) -> k z
-    Void.absurd abs
+    abs <- compiled str $ (Value64 2 ::: Value64 4) :- \(Value64 z) -> k z
+    case abs of

@@ -18,6 +18,7 @@ import Prelude hiding (curry, id, uncurry, (.))
 
 class (HasSum k, HasProduct k, HasCoexp k) => Mal k where
   u64 :: Word64 -> k Unit U64
+  add :: k (U64 * U64) U64
 
   commuteSum :: k (a + b) (b + a)
   commuteSum = right ||| left

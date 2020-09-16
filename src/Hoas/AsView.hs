@@ -26,8 +26,12 @@ instance Bound View where
   E f `try` E x = E ("(" ++ f ++ " " ++ x ++ ")")
 
   E f ||| E x = E $ "[" ++ f ++ " ; " ++ x ++ "]"
+  left (E x) = E $ "(i₁ " ++ x ++ ")"
+  right (E x) = E $ "(i₂ " ++ x ++ ")"
 
-  unit = E "unit"
-  empty = E "empty"
+  E f &&& E x = E $ "⟨" ++ f ++ " , " ++ x ++ "⟩"
+  first (E x) = E $ "(π₁ " ++ x ++ ")"
+  second (E x) = E $ "(π₂ " ++ x ++ ")"
 
   u64 n = E (show n)
+  add (E x) (E y) = E $ "(" ++ x ++ " + " ++ y ++ ")"
