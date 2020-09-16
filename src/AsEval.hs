@@ -88,3 +88,4 @@ instance MonadCont m => Mal (Expr m) where
   u64 x = E $ \Coin -> pure $ Value64 x
 
   global (Global (SU64 :*: SU64) SU64 "core" "add") = E $ \(Value64 x ::: Value64 y) -> pure $ Value64 (x + y)
+  global (Global SU64 SU64 "core" "succ") = E $ \(Value64 x) -> pure $ Value64 (x + 1)

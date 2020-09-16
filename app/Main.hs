@@ -20,7 +20,7 @@ import qualified Id
 import Mal (Mal)
 import Mal.AsView
 import qualified Mal.Type
-import Prelude hiding (id, (.), (<*>))
+import Prelude hiding (id, succ, (.), (<*>))
 
 main :: IO ()
 main = do
@@ -35,14 +35,14 @@ main = do
 
   putStrLn ""
   putStrLn "Result"
-  putStrLn (show (result x))
+  putStrLn (show (result x 8))
 
-type TYPE = U64 -< (U64 * U64)
+type TYPE = U64 -< U64 -< U64
 
 program :: Hoas t => t TYPE Void
-program = mal $
-  letLabel inferT $ \k ->
-    k <<< (add <<< (first id &&& second id))
+program = mal inferT $ \k ->
+  mal inferT $ \_ ->
+    k <<< succ <<< id
 
 bound :: Bound t => Id.Stream -> t TYPE Void
 bound str = bindPoints str program
@@ -53,8 +53,8 @@ malP str = AsTerm.pointFree (bound str)
 compiled :: MonadCont m => Id.Stream -> Value m (AsTerm.AsObject TYPE) -> m (Value m Mal.Type.Void)
 compiled str = AsEval.asEval (malP str)
 
-result :: Id.Stream -> Word64
-result str = flip runCont id $
+result :: Id.Stream -> Word64 -> Word64
+result str x = flip runCont id $
   callCC $ \k -> do
-    abs <- compiled str $ (Value64 2 ::: Value64 4) :- \(Value64 z) -> k z
+    abs <- compiled str $ (Value64 x) :- (\(Value64 z) -> k z) :- (\(Value64 z) -> k z)
     case abs of

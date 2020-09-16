@@ -21,21 +21,13 @@ instance Category t => Category (Expr t) where
   E f . E x = E $ \(Stream _ fs xs) -> f fs . x xs
 
 instance Bound t => Hoas.Hoas (Expr t) where
-  letLabel t f = E $ \(Stream n _ ys) -> letLabel n t $ \x -> case f (E $ \_ -> x) of
+  label t f = E $ \(Stream n _ ys) -> label n t $ \x -> case f (E $ \_ -> x) of
+    E y -> y ys
+  mal t f = E $ \(Stream n _ ys) -> mal n t $ \x -> case f (E $ \_ -> x) of
     E y -> y ys
 
-  mal (E f) = E $ \fs -> mal (f fs)
-  E f `try` E x = E $ \(Stream _ fs xs) -> f fs `try` x xs
-
-  unit = E $ const unit
-  E f &&& E x = E $ \(Stream _ fs xs) -> f fs &&& x xs
-  first (E x) = E $ \xs -> first (x xs)
-  second (E x) = E $ \xs -> second (x xs)
-
-  absurd = E $ const absurd
-  E f ||| E x = E $ \(Stream _ fs xs) -> f fs ||| x xs
-  left (E x) = E $ \xs -> left (x xs)
-  right (E x) = E $ \xs -> right (x xs)
+  lift (E x) = E $ \xs -> lift (x xs)
+  pass (E x) = E $ \xs -> pass (x xs)
 
   u64 x = E $ const (u64 x)
 

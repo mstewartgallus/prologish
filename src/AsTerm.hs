@@ -51,10 +51,7 @@ instance Mal k => Category (PointFree k) where
   id = E id
 
 instance Mal k => Bound.Bound (PointFree k) where
-  E f `try` E x = E (f <*> x)
-  mal (E f) = E (mal f)
-
-  letLabel n t f = E me
+  label n t f = E me
     where
       k = Label t n
       E body = f (E (mkLabel k))
@@ -63,15 +60,17 @@ instance Mal k => Bound.Bound (PointFree k) where
         Nothing -> right . body
         Just y -> y
 
-  unit = E unit
-  E f &&& E x = E (f &&& x)
-  first (E x) = E (first . x)
-  second (E x) = E (second . x)
+  mal n t f = E (mal me)
+    where
+      k = Label t n
+      E body = f (E (mkLabel k))
 
-  absurd = E absurd
-  E f ||| E x = E (f ||| x)
-  left (E x) = E (x . left)
-  right (E x) = E (x . right)
+      me = case removeLabel body k of
+        Nothing -> right . body
+        Just y -> y
+
+  -- lift (E x) = E (x . left)
+  -- pass (E x) = E (x . right)
 
   u64 x = E (u64 x . unit)
   global g = E (global (toG g))

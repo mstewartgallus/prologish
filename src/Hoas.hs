@@ -16,34 +16,30 @@ import Prelude hiding (id, (.), (<*>))
 class Category t => Hoas t where
   -- The rule for variable binding is based off the kappa calculus
   -- contextual rule, something like
+
+  -- Kappa calculus rules
   --
-  -- kappa :: ST a -> (t Unit a -> t b c) -> t (a * b) c
-  -- Let label is dual to the kappa calculus rule...
-  letLabel :: ST a -> (t a Void -> t b r) -> t b (a + r)
+  -- kappa :: ST c -> (t Unit c -> t a b) -> t (c * a) b
+  -- lift :: t Unit c -> t a (c * a)
+  --
+  -- Function rules
+  --
+  -- fn :: ST c -> (t Unit c -> t a b) -> t a (c ~> b)
+  -- pass :: t Unit c -> t (c ~> b) b
 
-  -- Dual rules to the exponential rules
-  mal :: t b (a + r) -> t (a -< b) r
-  try :: t (a -< b) r -> t a r -> t b r
+  -- Dual to the kappa calculus rules
+  label :: ST c -> (t c Void -> t b a) -> t b (c + a)
+  lift :: t c Void -> t (c + a) a
 
-  unit :: t x Unit
-  (&&&) :: t x a -> t x b -> t x (a * b)
-  first :: t x (a * b) -> t x a
-  second :: t x (a * b) -> t x b
-
-  -- By having a domain as well as a codomain we can present sum types
-  -- dually as sort of a pattern matching language.
-  absurd :: t Void r
-  (|||) :: t a r -> t b r -> t (a + b) r
-  left :: t (a + b) r -> t a r
-  right :: t (a + b) r -> t b r
+  mal :: ST c -> (t c Void -> t b a) -> t (c -< b) a
+  pass :: t c Void -> t b (c -< b)
 
   global :: Global a b -> t a b
 
   u64 :: Word64 -> t x U64
 
+  succ :: t U64 U64
+  succ = global $ Global inferT inferT "core" "succ"
+
   add :: t (U64 * U64) U64
   add = global $ Global inferT inferT "core" "add"
-
-infixr 9 &&&
-
-infixr 9 |||
