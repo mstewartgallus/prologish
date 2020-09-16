@@ -20,13 +20,7 @@ instance Bound View where
 
   E f ||| E x = E $ "[" ++ f ++ " ; " ++ x ++ "]"
 
-  thunk n t f = E ("thunk " ++ v ++ ": " ++ show t ++ ".\n" ++ body) where
-        v = "k" ++ show n
-        E body = f (E v)
-  letBe n t f = E ("let " ++ v ++ ": " ++ show t ++ ".\n" ++ body) where
-        v = "v" ++ show n
-        E body = f (E v)
-
+  var = E "id"
 
   E f `jump` E x = E ("⟨" ++ f ++ " | " ++ x ++ "⟩")
 

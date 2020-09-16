@@ -50,21 +50,7 @@ instance Mal k => Bound.Bound (PointFree k) where
         Nothing -> right . body
         Just y -> y
 
-  thunk n t f = E me
-    where
-      v = Label t n
-      E body = f (E (mkLabel v))
-      me = case removeLabel body v of
-        Nothing -> absurd . body
-        Just y -> (id ||| absurd) . y
-  letBe n t f = E me
-    where
-      v = Var t n
-      E body = f (E (mkVar v))
-      me = case removeVar body v of
-        Nothing -> body . unit
-        Just y -> y . (id &&& unit)
-
+  var = E id
   unit = E unit
   empty = E absurd
 

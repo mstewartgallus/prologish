@@ -9,9 +9,11 @@ module Hoas (Hoas (..)) where
 import Data.Kind
 import Data.Word (Word64)
 import Hoas.Type
-import Prelude hiding (break, (<*>))
+import Prelude hiding (id, (<*>))
 
 class Hoas t where
+  var :: t a a
+
   mal :: ST a -> (t a r -> t b r) -> t (a -< b) r
   try :: t (a -< b) r -> t a r -> t b r
 
@@ -27,7 +29,9 @@ class Hoas t where
 
   jump :: t a r -> t x a -> t x r
   thunk :: ST a -> (forall r. t a r -> t x r) -> t x a
+  thunk _ f = f var
   letBe :: ST a -> (forall x. t x a -> t x r) -> t a r
+  letBe _ f = f var
 
   kont ::
     ST a ->

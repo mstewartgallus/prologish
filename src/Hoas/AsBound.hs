@@ -16,14 +16,10 @@ bindPoints :: Stream -> Expr t a b -> t a b
 bindPoints str (E x) = x str
 
 instance Bound t => Hoas.Hoas (Expr t) where
+  var = E $ const var
   mal t f = E $ \(Stream n _ ys) -> mal n t $ \x -> case f (E $ \_ -> x) of
     E y -> y ys
   E f `try` E x = E $ \(Stream _ fs xs) -> f fs `try` x xs
-
-  thunk t f = E $ \(Stream n _ ys) -> thunk n t $ \x -> case f (E $ \_ -> x) of
-    E y -> y ys
-  letBe t f = E $ \(Stream n _ ys) -> letBe n t $ \x -> case f (E $ \_ -> x) of
-    E y -> y ys
 
   E f `jump` E x = E $ \(Stream _ fs xs) -> f fs `jump` x xs
 

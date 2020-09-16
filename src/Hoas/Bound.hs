@@ -13,6 +13,8 @@ import Data.Kind
 import Data.Word (Word64)
 
 class Bound t where
+  var :: t a a
+
   mal :: Id -> ST a -> (t a r -> t b r) -> t (a -< b) r
   try :: t (a -< b) r -> t a r -> t b r
 
@@ -27,8 +29,6 @@ class Bound t where
   right :: t (a + b) r -> t b r
 
   jump :: t a r -> t x a -> t x r
-  thunk :: Id -> ST a -> (forall r. t a r -> t x r) -> t x a
-  letBe :: Id -> ST a -> (forall x. t x a -> t x r) -> t a r
 
   u64 :: Word64 -> t x U64
 
