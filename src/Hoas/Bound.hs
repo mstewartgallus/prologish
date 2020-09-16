@@ -11,10 +11,9 @@ import Prelude hiding ((.), id, (<*>), uncurry)
 import Id (Id)
 import Data.Kind
 import Data.Word (Word64)
+import Control.Category
 
-class Bound t where
-  var :: t a a
-
+class Category t => Bound t where
   mal :: Id -> ST a -> (t a r -> t b r) -> t (a -< b) r
   try :: t (a -< b) r -> t a r -> t b r
 
@@ -27,8 +26,6 @@ class Bound t where
   (|||) :: t a r -> t b r -> t (a + b) r
   left :: t (a + b) r -> t a r
   right :: t (a + b) r -> t b r
-
-  jump :: t a r -> t x a -> t x r
 
   u64 :: Word64 -> t x U64
 

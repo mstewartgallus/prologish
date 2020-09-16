@@ -6,14 +6,13 @@
 
 module Hoas (Hoas (..)) where
 
+import Control.Category
 import Data.Kind
 import Data.Word (Word64)
 import Hoas.Type
-import Prelude hiding (id, (<*>))
+import Prelude hiding (id, (.), (<*>))
 
-class Hoas t where
-  var :: t a a
-
+class Category t => Hoas t where
   mal :: ST a -> (t a r -> t b r) -> t (a -< b) r
   try :: t (a -< b) r -> t a r -> t b r
 
@@ -27,11 +26,10 @@ class Hoas t where
   left :: t (a + b) r -> t a r
   right :: t (a + b) r -> t b r
 
-  jump :: t a r -> t x a -> t x r
   thunk :: ST a -> (forall r. t a r -> t x r) -> t x a
-  thunk _ f = f var
+  thunk _ f = f id
   letBe :: ST a -> (forall x. t x a -> t x r) -> t a r
-  letBe _ f = f var
+  letBe _ f = f id
 
   kont ::
     ST a ->
@@ -39,13 +37,13 @@ class Hoas t where
     t x a ->
     (forall x r. t x b -> t x r) ->
     t x (b -< a)
-  kont s t x f = thunk (t :-< s) (\k -> (k `try` letBe t f) `jump` x)
+  kont s t x f = thunk (t :-< s) (\k -> (k `try` letBe t f) . x)
 
-  jmp :: ST a -> t x (a -< b) -> (forall x. t x a) -> t x r
-  jmp t k x = mal t (\k -> jump k x) `jump` k
+  jump :: ST a -> t x (a -< b) -> (forall x. t x a) -> t x r
+  jump t k x = mal t (\k -> k . x) . k
 
   env :: ST a -> ST b -> t x (a -< b) -> t x b
-  env a b k = thunk b $ \x -> mal a (const x) `jump` k
+  env a b k = thunk b $ \x -> mal a (const x) . k
 
   u64 :: Word64 -> t x U64
 
@@ -61,7 +59,7 @@ class Hoas t where
     t x (a -< b) ->
     (forall x. t x a) ->
     t x r
-  k ! x = jmp inferT k x
+  k ! x = jump inferT k x
 
 infixl 0 |=
 

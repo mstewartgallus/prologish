@@ -6,11 +6,16 @@ module Hoas.AsView (View, view) where
 
 import Hoas.Bound
 import Hoas.Type
+import Control.Category
 
 data View (a :: T) (b :: T) = E String
 
 view :: View a b -> String
 view (E v) = v
+
+instance Category View where
+  id = E "id"
+  E f . E x = E ("⟨" ++ f ++ " | " ++ x ++ "⟩")
 
 instance Bound View where
   mal n t f = E ("mal " ++ v ++ ": " ++ show t ++ ".\n" ++ body) where
@@ -19,10 +24,6 @@ instance Bound View where
   E f `try` E x = E ("(" ++ f ++ " " ++ x ++ ")")
 
   E f ||| E x = E $ "[" ++ f ++ " ; " ++ x ++ "]"
-
-  var = E "id"
-
-  E f `jump` E x = E ("⟨" ++ f ++ " | " ++ x ++ "⟩")
 
   unit = E "unit"
   empty = E "empty"

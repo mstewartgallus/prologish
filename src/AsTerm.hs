@@ -35,11 +35,13 @@ pointFree (E x) = out x
 
 data PointFree (k :: T -> T -> Type) a b = E (Pf k (AsObject a) (AsObject b))
 
+instance Mal k => Category (PointFree k) where
+  E f . E g = E (f . g)
+  id = E id
+
 instance Mal k => Bound.Bound (PointFree k) where
   E f `try` E x = E (f <*> x)
   E f ||| E x = E (f ||| x)
-
-  E f `jump` E g = E (f . g)
 
   mal n t f = E (mal me)
     where
@@ -50,7 +52,6 @@ instance Mal k => Bound.Bound (PointFree k) where
         Nothing -> right . body
         Just y -> y
 
-  var = E id
   unit = E unit
   empty = E absurd
 
