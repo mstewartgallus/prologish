@@ -130,7 +130,7 @@ eqLabel (Label t m) (Label t' n)
   | m == n = Type.eqT t t'
   | otherwise = Nothing
 
-mkLabel :: HasSum k => Label a -> Pf k (AsObject a) x
+mkLabel :: HasSum k => Label a -> Pf k (AsObject a) Void
 mkLabel v@(Label _ n) = me
   where
     me =

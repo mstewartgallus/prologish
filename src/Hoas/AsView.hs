@@ -25,10 +25,12 @@ instance Bound View where
   mal (E f) = E $ "(mal " ++ f ++ ")"
   E f `try` E x = E ("(" ++ f ++ " " ++ x ++ ")")
 
+  absurd = E "absurd"
   E f ||| E x = E $ "[" ++ f ++ " ; " ++ x ++ "]"
   left (E x) = E $ "(i₁ " ++ x ++ ")"
   right (E x) = E $ "(i₂ " ++ x ++ ")"
 
+  unit = E "unit"
   E f &&& E x = E $ "⟨" ++ f ++ " , " ++ x ++ "⟩"
   first (E x) = E $ "(π₁ " ++ x ++ ")"
   second (E x) = E $ "(π₂ " ++ x ++ ")"

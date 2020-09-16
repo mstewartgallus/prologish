@@ -13,8 +13,14 @@ import Hoas.Type
 import Prelude hiding (id, (.), (<*>))
 
 class Category t => Hoas t where
-  letLabel :: ST a -> (t a r -> t b r) -> t b (a + r)
+  -- The rule for variable binding is based off the kappa calculus
+  -- contextual rule, something like
+  --
+  -- kappa :: ST a -> (t Unit a -> t b c) -> t (a * b) c
+  -- Let label is dual to the kappa calculus rule...
+  letLabel :: ST a -> (t a Void -> t b r) -> t b (a + r)
 
+  -- Dual rules to the exponential rules
   mal :: t b (a + r) -> t (a -< b) r
   try :: t (a -< b) r -> t a r -> t b r
 
@@ -23,6 +29,8 @@ class Category t => Hoas t where
   first :: t x (a * b) -> t x a
   second :: t x (a * b) -> t x b
 
+  -- By having a domain as well as a codomain we can present sum types
+  -- dually as sort of a pattern matching language.
   absurd :: t Void r
   (|||) :: t a r -> t b r -> t (a + b) r
   left :: t (a + b) r -> t a r
