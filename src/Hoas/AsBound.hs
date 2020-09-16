@@ -1,6 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE KindSignatures #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module Hoas.AsBound (Expr, bindPoints) where
 
@@ -8,56 +8,32 @@ import Id (Stream (..))
 import Hoas.Bound
 import qualified Hoas
 import Hoas.Type
-import Data.Kind
-import Prelude hiding ((.), id, curry, uncurry, (<*>))
+import Prelude hiding ((.), id, curry, uncurry, (<*>), break)
 
-newtype Expr p (n :: T -> Type) (a :: T) = E (Stream -> p a)
-newtype Neg (p :: T -> Type) n (a :: T) = N (Stream -> n a)
+data AsBound t
 
-bindPoints :: Stream -> Expr p n a -> p a
+bindPoints :: Stream -> Hoas.Expr (AsBound t) a -> Expr t a
 bindPoints str (E x) = x str
 
-instance Bound pos neg => Hoas.Hoas (Expr pos neg) (Neg pos neg) where
-  kont t (E x) k = E $ \(Stream n xs ys) -> kont n t (x xs) $ \x -> case k (E $ \_ -> x) of
-    E y -> y ys
+instance Bound t => Hoas.Hoas (AsBound t) where
+  newtype Jump (AsBound t) = J (Stream -> Jump t)
+  newtype Expr (AsBound t) (a :: T) = E (Stream -> Expr t a)
+  newtype Case (AsBound t) (a :: T) = C (Stream -> Case t a)
 
-  jump t (E f) k = E $ \(Stream n fs ys) -> jump n t (f fs) $ \x -> case k (E $ \_ -> x) of
-                        E y -> y ys
-  val = lift1 val
+  adbmal s t f = C $ \(Stream m _ (Stream n _ ys)) -> adbmal m s n t $ \x y -> case f (C $ \_ -> x) (E $ \_ -> y) of
+    J y -> y ys
+  C f `try` C x = C $ \(Stream _ fs xs) -> f fs `try` x xs
 
-  unit = lift0 unit
-  (&&&) = lift2 (&&&)
-  first = lift1 first
-  second = lift1 second
+  thunk t f = E $ \(Stream n _ ys) -> thunk n t $ \x -> case f (C $ \_ -> x) of
+    J y -> y ys
+  letBe t f = C $ \(Stream n _ ys) -> letBe n t $ \x -> case f (E $ \_ -> x) of
+    J y -> y ys
 
-  absurd = lift0' absurd
-  (|||) = lift2' (|||)
-  left = lift1' left
-  right = lift1' right
+  C f `jump` E x = J $ \(Stream _ fs xs) -> f fs `jump` x xs
 
-  pick = lift1 pick
-  true = lift0 true
-  false = lift0 false
+  unit = E $ const unit
+  C f ||| C x = C $ \(Stream _ fs xs) -> f fs ||| x xs
 
-  u64 n = lift0 (u64 n)
-  add = lift2 add
+  empty = C $ const empty
 
-  load t name = lift0 $ load t name
-
-lift0 :: t a -> Expr t n a
-lift0 x = E $ const x
-
-lift1 :: (t a -> t b) -> Expr t n a -> Expr t n b
-lift1 f (E x) = E $ \xs -> f (x xs)
-
-lift2 :: (t a -> t b -> t c) -> Expr t n a -> Expr t n b -> Expr t n c
-lift2 f (E x) (E y) = E $ \(Stream _ xs ys) -> f (x xs) (y ys)
-
-lift0' :: n a -> Neg t n a
-lift0' x = N $ const x
-
-lift1' :: (n a -> n b) -> Neg t n a -> Neg t n b
-lift1' f (N x) = N $ \xs -> f (x xs)
-
-lift2' :: (n a -> n b -> n c) -> Neg t n a -> Neg t n b -> Neg t n c
-lift2' f (N x) (N y) = N $ \(Stream _ xs ys) -> f (x xs) (y ys)
+  u64 x = E $ const (u64 x)

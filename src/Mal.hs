@@ -14,20 +14,16 @@ import Mal.HasCoexp
 import Mal.HasProduct
 import Mal.HasSum
 import Mal.Type
-import Prelude hiding ((.))
+import Prelude hiding (curry, id, uncurry, (.))
 
-class (HasProduct k, HasCoexp k) => Mal k where
-  true :: k Unit B
-  false :: k Unit B
-  pick :: k B (Unit + Unit)
-
+class (HasSum k, HasProduct k, HasCoexp k) => Mal k where
   u64 :: Word64 -> k Unit U64
-  add :: k env U64 -> k env U64 -> k env U64
+
+  commuteSum :: k (a + b) (b + a)
+  commuteSum = right ||| left
 
   factorIn :: k (v * (a + b)) ((v * a) + (v * b))
   factorIn = try (mal (right . first) &&& mal (commuteSum . (try (mal (right . first) &&& mal (commuteSum . second)))))
 
   factorOut :: k ((a * b) + (a * c)) (a * (b + c))
   factorOut = (first ||| first) &&& ((left . second) ||| (right . second))
-
-  load :: ST a -> String -> k Unit a

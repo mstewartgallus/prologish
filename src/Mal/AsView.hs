@@ -4,40 +4,38 @@
 module Mal.AsView (View, view) where
 
 import Control.Category
-import Mal.HasCoexp
 import Mal
-import Mal.HasSum
+import Mal.HasCoexp
 import Mal.HasProduct
+import Mal.HasSum
 import Mal.Type
 
-newtype View (a :: T) (b :: T) = V String
+newtype View (a :: T) (b :: T) = View String
 
 view :: View a b -> String
-view (V v) = v
+view (View v) = v
 
 instance Category View where
-  id = V "id"
-  V f . V g = V (f ++ " ∘ " ++ g)
+  id = View "id"
+  View f . View g = View (f ++ " ∘ " ++ g)
 
 instance HasProduct View where
-  unit = V "unit"
+  unit = View "unit"
 
-  V f &&& V x = V ("<" ++ f ++ ", " ++ x ++ ">")
-  first = V "π₁"
-  second = V "π₂"
+  View f &&& View x = View ("⟨" ++ f ++ " , " ++ x ++ "⟩")
+  first = View "π₁"
+  second = View "π₂"
 
 instance HasSum View where
-  absurd = V "absurd"
+  absurd = View "absurd"
 
-  V f ||| V g = V ("[" ++ f ++ "; " ++ g ++ "]")
-  left = V "i₁"
-  right = V "i₂"
+  View f ||| View x = View ("[" ++ f ++ " ; " ++ x ++ "]")
+  left = View "i₁"
+  right = View "i₂"
 
 instance HasCoexp View where
-  mal (V f) = V ("(⊨ " ++ f ++ ")")
-  try (V f) = V ("(try " ++ f ++ ")")
+  mal (View f) = View ("(mal " ++ f ++ ")")
+  try (View f) = View ("(! " ++ f ++ ")")
 
 instance Mal View where
-  pick = V "pick"
-  u64 x = V (show x)
-  add (V x) (V y) = V $ "(" ++ x ++ " + " ++ y ++ ")"
+  u64 x = View (show x)

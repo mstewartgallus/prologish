@@ -1,42 +1,41 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE KindSignatures #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module Hoas.AsView (View, view) where
 
 import Hoas.Bound
 import Hoas.Type
 
-newtype View (a :: T) = V String
+data View
 
-view :: View a -> String
-view (V v) = v
+view :: Expr View a -> String
+view (E v) = v
 
-instance Bound View View where
-  kont n t (V x) k = V (x ++ " \\ " ++ v ++ " : " ++ show t ++ ".\n" ++ body) where
-        v = "k" ++ show n
-        V body = k (V v)
-  jump n t (V f) k = V (f ++ " ! " ++ v ++ " : " ++ show t ++ ".\n" ++ body) where
+instance Bound View where
+  newtype Jump View = J String
+  newtype Expr View (a :: T) = E String
+  newtype Case View (a :: T) = C String
+
+  adbmal m s n t f = C ("abdmal " ++ k ++ ": " ++ show s ++ ", " ++ v ++ ": " ++ show t ++ ".\n" ++ body) where
+        k = "k" ++ show m
         v = "v" ++ show n
-        V body = k (V v)
-  val = op1 "val"
+        J body = f (C k) (E v)
+  C f `try` C x = C ("(" ++ f ++ " " ++ x ++ ")")
 
-  unit = V "unit"
-  V x &&& V y = V $ "<" ++ x ++ ", " ++ y ++ ">"
-  first = op1 "π₁"
-  second = op1 "π₂"
+  C f ||| C x = C $ "[" ++ f ++ " ; " ++ x ++ "]"
 
-  absurd = V "absurd"
-  V x ||| V y = V $ "[" ++ x ++ " ; " ++ y ++ " ]"
-  left = op1 "i₁"
-  right = op1 "i₂"
+  thunk n t f = E ("thunk " ++ v ++ ": " ++ show t ++ ".\n" ++ body) where
+        v = "k" ++ show n
+        J body = f (C v)
+  letBe n t f = C ("let " ++ v ++ ": " ++ show t ++ ".\n" ++ body) where
+        v = "v" ++ show n
+        J body = f (E v)
 
-  pick = op1 "pick"
-  true = V "true"
-  false = V "false"
 
-  u64 n = V $ show n
-  add (V x) (V y) = V $ "(" ++ x ++ " + " ++ y ++ ")"
+  C f `jump` E x = J ("⟨" ++ f ++ " | " ++ x ++ "⟩")
 
-op1 :: String -> View a -> View b
-op1 name (V x) = V $ "(" ++ name ++ " " ++ x ++ ")"
+  unit = E "unit"
+  empty = C "empty"
+
+  u64 n = E (show n)

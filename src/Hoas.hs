@@ -1,55 +1,72 @@
-{-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
 module Hoas (Hoas (..)) where
 
+import Data.Kind
 import Data.Word (Word64)
 import Hoas.Type
-import Prelude hiding (uncurry, (.), (<*>))
+import Prelude hiding (break, (<*>))
 
-class Hoas pos neg | pos -> neg, neg -> pos where
-  apply :: neg a -> pos a -> pos c
+class Hoas t where
+  data Jump t
+  data Expr t :: T -> Type
+  data Case t :: T -> Type
 
-  -- Basic higher order CPS combinators
-  kont :: ST a -> pos x -> (pos a -> pos Void) -> pos (a -< x)
-  jump :: ST x -> pos (a -< x) -> (pos x -> pos a) -> pos c
-  val :: pos (a -< x) -> pos x
+  mal :: ST a -> ST b -> (Case t a -> Case t b) -> Case t (a -< b)
+  mal a b f = adbmal a b (\x -> jump (f x))
 
-  unit :: pos Unit
-  (&&&) :: pos a -> pos b -> pos (a * b)
-  first :: pos (a * b) -> pos a
-  second :: pos (a * b) -> pos b
+  adbmal :: ST a -> ST b -> (Case t a -> Expr t b -> Jump t) -> Case t (a -< b)
+  try :: Case t (a -< b) -> Case t a -> Case t b
 
-  absurd :: neg Void
-  (|||) :: neg a -> neg b -> neg (a + b)
-  left :: neg (a + b) -> neg a
-  right :: neg (a + b) -> neg b
+  unit :: Expr t Unit
+  (&&&) :: Expr t a -> Expr t b -> Expr t (a * b)
+  first :: Expr t (a * b) -> Expr t a
+  second :: Expr t (a * b) -> Expr t b
 
-  pick :: pos B -> pos (Unit + Unit)
-  true :: pos B
-  false :: pos B
+  empty :: Case t Void
+  (|||) :: Case t a -> Case t b -> Case t (a + b)
+  left :: Case t (a + b) -> Case t a
+  right :: Case t (a + b) -> Case t b
 
-  u64 :: Word64 -> pos U64
-  add :: pos U64 -> pos U64 -> pos U64
+  jump :: Case t a -> Expr t a -> Jump t
+  thunk :: ST a -> (Case t a -> Jump t) -> Expr t a
+  letBe :: ST a -> (Expr t a -> Jump t) -> Case t a
 
-  load :: ST a -> String -> pos a
+  kont ::
+    ST a ->
+    ST b ->
+    Expr t a ->
+    (Expr t b -> Jump t) ->
+    Expr t (b -< a)
+  kont s t x f = thunk (t :-< s) (\k -> (k `try` letBe t f) `jump` x)
 
-  -- | Syntactic sugar for easier programming
-  (\+) :: KnownT a => pos x -> (pos a -> pos Void) -> pos (a -< x)
-  x \+ k = kont inferT x k
+  jmp :: ST a -> ST b -> Expr t (a -< b) -> Expr t a -> Jump t
+  jmp t b k x = adbmal t b (\k _ -> jump k x) `jump` k
 
-  fn :: (KnownT a, KnownT b) => (pos b -> pos a) -> pos (K (a -< b))
-  fn f = unit \+ \x -> x ! f
+  env :: ST a -> ST b -> Expr t (a -< b) -> Expr t b
+  env a b k = thunk b $ \x -> mal a b (const x) `jump` k
 
-  (!) :: KnownT x => pos (a -< x) -> (pos x -> pos a) -> pos c
-  x ! k = jump inferT x k
+  u64 :: Word64 -> Expr t U64
 
-infixl 9 &&&
+  (|=) ::
+    (KnownT a, KnownT b) =>
+    Expr t a ->
+    (Expr t b -> Jump t) ->
+    Expr t (b -< a)
+  x |= f = kont inferT inferT x f
 
-infixl 9 |||
+  (!) ::
+    (KnownT a, KnownT b) =>
+    Expr t (a -< b) ->
+    Expr t a ->
+    Jump t
+  k ! x = jmp inferT inferT k x
 
-infixl 0 \+
+infixl 0 |=
 
-infixl 0 !
+infixr 9 &&&
+
+infixr 9 |||

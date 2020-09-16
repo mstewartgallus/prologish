@@ -4,55 +4,42 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module Hoas.Type (KnownT, inferT, eqT, ST (..), T, K, Void, Unit, type (-<), type (+), type (*), type B, type U64) where
+module Hoas.Type (KnownT, inferT, eqT, ST (..), T, Void, Unit, type (+), type (*), type (-<), type U64) where
 
 import Data.Typeable ((:~:) (..))
 
-type (*) = 'Prod
-infixl 9 *
-
-type (+) = 'Sum
-infixl 9 +
-
 type (-<) = 'Coexp
-infixr 0 -<
+type (+) = 'Sum
+infixr 9 +
+type (*) = 'Prod
+infixr 9 *
 
--- Basically logically negation ...
-type K x = x -< Unit
-
+type U64 = 'U64
 type Void = 'Void
 type Unit = 'Unit
-type B = 'B
-type U64 = 'U64
 
-data T = Unit | Void | Coexp T T | Sum T T | Prod T T | B | U64
+infixr 9 -<
+
+data T = U64 | Void | Unit | Prod T T | Sum T T | Coexp T T
 
 data ST a where
-  SUnit :: ST Unit
-  SVoid :: ST Void
-  SB :: ST B
   SU64 :: ST U64
-  SCoexp :: ST a -> ST b -> ST (a -< b)
+  SVoid :: ST Void
+  SUnit :: ST Unit
   (:+:) :: ST a -> ST b -> ST (a + b)
   (:*:) :: ST a -> ST b -> ST (a * b)
+  (:-<) :: ST a -> ST b -> ST (a -< b)
 
 class KnownT t where
   inferT :: ST t
-
-instance KnownT 'B where
-  inferT = SB
 
 instance KnownT 'U64 where
   inferT = SU64
 
 instance KnownT 'Unit where
   inferT = SUnit
-
 instance KnownT 'Void where
   inferT = SVoid
-
-instance (KnownT a, KnownT b) => KnownT ('Coexp a b) where
-  inferT = SCoexp inferT inferT
 
 instance (KnownT a, KnownT b) => KnownT ('Sum a b) where
   inferT = inferT :+: inferT
@@ -60,21 +47,23 @@ instance (KnownT a, KnownT b) => KnownT ('Sum a b) where
 instance (KnownT a, KnownT b) => KnownT ('Prod a b) where
   inferT = inferT :*: inferT
 
+instance (KnownT a, KnownT b) => KnownT ('Coexp a b) where
+  inferT = inferT :-< inferT
+
 eqT :: ST a -> ST b -> Maybe (a :~: b)
 eqT l r = case (l, r) of
+  (SU64, SU64) -> Just Refl
   (SVoid, SVoid) -> Just Refl
   (SUnit, SUnit) -> Just Refl
-  (SB, SB) -> Just Refl
-  (SU64, SU64) -> Just Refl
-  (x :+: y, x' :+: y') -> do
-    Refl <- eqT x x'
-    Refl <- eqT y y'
-    return Refl
   (x :*: y, x' :*: y') -> do
     Refl <- eqT x x'
     Refl <- eqT y y'
     return Refl
-  (SCoexp x y, SCoexp x' y') -> do
+  (x :+: y, x' :+: y') -> do
+    Refl <- eqT x x'
+    Refl <- eqT y y'
+    return Refl
+  (x :-< y, x' :-< y') -> do
     Refl <- eqT x x'
     Refl <- eqT y y'
     return Refl
@@ -82,10 +71,9 @@ eqT l r = case (l, r) of
 
 instance Show (ST a) where
   show expr = case expr of
+    SU64 -> "u64"
     SVoid -> "void"
     SUnit -> "unit"
-    SB -> "b"
-    SU64 -> "u64"
-    SCoexp x y -> "(" ++ show x ++ " - " ++ show y ++ ")"
     x :+: y -> "(" ++ show x ++ " + " ++ show y ++ ")"
-    x :*: y -> "(" ++ show x ++ " × " ++ show y ++ ")"
+    x :*: y -> "(" ++ show x ++ " * " ++ show y ++ ")"
+    x :-< y -> "(" ++ show x ++ " - " ++ show y ++ ")"

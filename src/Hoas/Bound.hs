@@ -1,37 +1,40 @@
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE NoStarIsType #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE FunctionalDependencies #-}
 
 module Hoas.Bound (Bound (..)) where
 
 import Hoas.Type
 import Prelude hiding ((.), id, (<*>), uncurry)
 import Id (Id)
+import Data.Kind
 import Data.Word (Word64)
 
-class Bound pos neg | pos -> neg, neg -> pos where
-  apply :: neg a -> pos a -> pos c
+class Bound t where
+  data Jump t
+  data Case t :: T -> Type
+  data Expr t :: T -> Type
 
-  kont :: Id -> ST a -> pos x -> (pos a -> pos Void) -> pos (a -< x)
-  jump :: Id -> ST x -> pos (a -< x) -> (pos x -> pos a) -> pos c
-  val :: pos (a -< x) -> pos x
+  adbmal :: Id -> ST a -> Id -> ST b -> (Case t a -> Expr t b -> Jump t) -> Case t (a -< b)
+  try :: Case t (a -< b) -> Case t a -> Case t b
 
-  unit :: pos Unit
-  (&&&) :: pos a -> pos b -> pos (a * b)
-  first :: pos (a * b) -> pos a
-  second :: pos (a * b) -> pos b
+  u64 :: Word64 -> Expr t U64
 
-  absurd :: neg Void
-  (|||) :: neg a -> neg b -> neg (a + b)
-  left :: neg (a + b) -> neg a
-  right :: neg (a + b) -> neg b
+  unit :: Expr t Unit
+  (&&&) :: Expr t a -> Expr t b -> Expr t (a * b)
+  first :: Expr t (a * b) -> Expr t a
+  second :: Expr t (a * b) -> Expr t b
 
-  pick :: pos B -> pos (Unit + Unit)
-  true :: pos B
-  false :: pos B
+  empty :: Case t Void
+  (|||) :: Case t a -> Case t b -> Case t (a + b)
+  left :: Case t (a + b) -> Case t a
+  right :: Case t (a + b) -> Case t b
 
-  u64 :: Word64 -> pos U64
-  add :: pos U64 -> pos U64 -> pos U64
+  thunk :: Id -> ST a -> (Case t a -> Jump t) -> Expr t a
+  letBe :: Id -> ST a -> (Expr t a -> Jump t) -> Case t a
 
-  load :: ST a -> String -> pos a
+  jump :: Case t a -> Expr t a -> Jump t
+
+infixr 9 &&&
+infixr 9 |||

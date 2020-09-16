@@ -30,8 +30,6 @@ asEval (E x) = x
 
 data family Value (m :: Type -> Type) (a :: T)
 
-data instance Value m B = True | False
-
 data instance Value m (a + b) = Left (Value m a) | Right (Value m b)
 
 data instance Value m (a * b) = Value m a ::: Value m b
@@ -86,13 +84,9 @@ instance MonadCont m => HasCoexp (Expr m) where
     pure (Right env)
 
 instance MonadCont m => Mal (Expr m) where
-  pick = E $ \x -> case x of
-    True -> pure $ Left Coin
-    False -> pure $ Right Coin
-
   u64 x = E $ \Coin -> pure $ Value64 x
 
-  add (E x) (E y) = E $ \env -> do
-    Value64 x' <- x env
-    Value64 y' <- y env
-    pure $ Value64 (x' + y')
+-- add (E x) (E y) = E $ \env -> do
+--   Value64 x' <- x env
+--   Value64 y' <- y env
+--   pure $ Value64 (x' + y')
