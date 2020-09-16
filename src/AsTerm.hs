@@ -63,7 +63,10 @@ instance Mal k => Bound.Bound (PointFree k) where
   right (E x) = E (x . right)
 
   u64 x = E (u64 x . unit)
-  E x `add` E y = E (add . (x &&& y))
+  add = E (lift add)
+
+lift :: Mal k => k a b -> k (b -< a) Void
+lift x = mal (left . x)
 
 instance Mal k => Category (Pf k) where
   id = lift0 id

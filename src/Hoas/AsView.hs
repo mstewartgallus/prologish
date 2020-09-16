@@ -36,4 +36,4 @@ instance Bound View where
   second (E x) = E $ "(π₂ " ++ x ++ ")"
 
   u64 n = E (show n)
-  add (E x) (E y) = E $ "(" ++ x ++ " + " ++ y ++ ")"
+  add = E "add"

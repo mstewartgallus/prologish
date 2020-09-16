@@ -42,12 +42,7 @@ type TYPE = U64 -< (U64 * U64)
 program :: Hoas t => t TYPE Void
 program = mal $
   letLabel inferT $ \k ->
-    (doAdd `try` k) <<< (first id &&& second id)
-
-doAdd :: Hoas t => t (U64 -< (U64 * U64)) Void
-doAdd = mal $
-  letLabel inferT $ \k ->
-    k <<< first id `add` second id
+    (add `try` k) <<< (first id &&& second id)
 
 bound :: Bound t => Id.Stream -> t TYPE Void
 bound str = bindPoints str program

@@ -37,7 +37,7 @@ class Category t => Hoas t where
   right :: t (a + b) r -> t b r
 
   u64 :: Word64 -> t x U64
-  add :: t x U64 -> t x U64 -> t x U64
+  add :: t (U64 -< (U64 * U64)) Void
 
 infixr 9 &&&
 

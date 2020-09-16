@@ -38,4 +38,4 @@ instance Bound t => Hoas.Hoas (Expr t) where
   right (E x) = E $ \xs -> right (x xs)
 
   u64 x = E $ const (u64 x)
-  E x `add` E y = E $ \(Stream _ xs ys) -> x xs `add` y ys
+  add = E $ const add
