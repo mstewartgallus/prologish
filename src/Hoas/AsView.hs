@@ -18,9 +18,11 @@ instance Category View where
   E f . E x = E ("⟨" ++ f ++ " | " ++ x ++ "⟩")
 
 instance Bound View where
-  mal n t f = E ("mal " ++ v ++ ": " ++ show t ++ ".\n" ++ body) where
-        v = "v" ++ show n
+  letLabel n t f = E (v ++ ": " ++ show t ++ ".\n" ++ body) where
+        v = "k" ++ show n
         E body = f (E v)
+
+  mal (E f) = E $ "(mal " ++ f ++ ")"
   E f `try` E x = E ("(" ++ f ++ " " ++ x ++ ")")
 
   E f ||| E x = E $ "[" ++ f ++ " ; " ++ x ++ "]"

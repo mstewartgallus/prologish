@@ -14,7 +14,9 @@ import Data.Word (Word64)
 import Control.Category
 
 class Category t => Bound t where
-  mal :: Id -> ST a -> (t a r -> t b r) -> t (a -< b) r
+  letLabel :: Id -> ST a -> (t a r -> t b r) -> t b (a + r)
+
+  mal :: t b (a + r) -> t (a -< b) r
   try :: t (a -< b) r -> t a r -> t b r
 
   unit :: t x Unit

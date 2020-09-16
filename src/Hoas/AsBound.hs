@@ -21,8 +21,10 @@ instance Category t => Category (Expr t) where
   E f . E x = E $ \(Stream _ fs xs) -> f fs . x xs
 
 instance Bound t => Hoas.Hoas (Expr t) where
-  mal t f = E $ \(Stream n _ ys) -> mal n t $ \x -> case f (E $ \_ -> x) of
+  letLabel t f = E $ \(Stream n _ ys) -> letLabel n t $ \x -> case f (E $ \_ -> x) of
     E y -> y ys
+
+  adbmal (E f) = E $ \fs -> mal (f fs)
   E f `try` E x = E $ \(Stream _ fs xs) -> f fs `try` x xs
 
   unit = E $ const unit

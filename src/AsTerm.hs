@@ -43,7 +43,7 @@ instance Mal k => Bound.Bound (PointFree k) where
   E f `try` E x = E (f <*> x)
   E f ||| E x = E (f ||| x)
 
-  mal n t f = E (mal me)
+  letLabel n t f = E me
     where
       k = Label t n
       E body = f (E (mkLabel k))
@@ -55,6 +55,7 @@ instance Mal k => Bound.Bound (PointFree k) where
   unit = E unit
   empty = E absurd
 
+  mal (E f) = E (mal f)
   u64 x = E (u64 x . unit)
 
 instance Mal k => Category (Pf k) where
