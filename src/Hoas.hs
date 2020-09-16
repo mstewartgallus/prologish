@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
@@ -11,59 +12,52 @@ import Hoas.Type
 import Prelude hiding (break, (<*>))
 
 class Hoas t where
-  data Jump t
-  data Expr t :: T -> Type
-  data Case t :: T -> Type
+  mal :: ST a -> (t a r -> t b r) -> t (a -< b) r
+  try :: t (a -< b) r -> t a r -> t b r
 
-  mal :: ST a -> ST b -> (Case t a -> Case t b) -> Case t (a -< b)
-  mal a b f = adbmal a b (\x -> jump (f x))
+  unit :: t x Unit
+  (&&&) :: t x a -> t x b -> t x (a * b)
+  first :: t x (a * b) -> t x a
+  second :: t x (a * b) -> t x b
 
-  adbmal :: ST a -> ST b -> (Case t a -> Expr t b -> Jump t) -> Case t (a -< b)
-  try :: Case t (a -< b) -> Case t a -> Case t b
+  empty :: t Void r
+  (|||) :: t a r -> t b r -> t (a + b) r
+  left :: t (a + b) r -> t a r
+  right :: t (a + b) r -> t b r
 
-  unit :: Expr t Unit
-  (&&&) :: Expr t a -> Expr t b -> Expr t (a * b)
-  first :: Expr t (a * b) -> Expr t a
-  second :: Expr t (a * b) -> Expr t b
-
-  empty :: Case t Void
-  (|||) :: Case t a -> Case t b -> Case t (a + b)
-  left :: Case t (a + b) -> Case t a
-  right :: Case t (a + b) -> Case t b
-
-  jump :: Case t a -> Expr t a -> Jump t
-  thunk :: ST a -> (Case t a -> Jump t) -> Expr t a
-  letBe :: ST a -> (Expr t a -> Jump t) -> Case t a
+  jump :: t a r -> t x a -> t x r
+  thunk :: ST a -> (forall r. t a r -> t x r) -> t x a
+  letBe :: ST a -> (forall x. t x a -> t x r) -> t a r
 
   kont ::
     ST a ->
     ST b ->
-    Expr t a ->
-    (Expr t b -> Jump t) ->
-    Expr t (b -< a)
+    t x a ->
+    (forall x r. t x b -> t x r) ->
+    t x (b -< a)
   kont s t x f = thunk (t :-< s) (\k -> (k `try` letBe t f) `jump` x)
 
-  jmp :: ST a -> ST b -> Expr t (a -< b) -> Expr t a -> Jump t
-  jmp t b k x = adbmal t b (\k _ -> jump k x) `jump` k
+  jmp :: ST a -> t x (a -< b) -> (forall x. t x a) -> t x r
+  jmp t k x = mal t (\k -> jump k x) `jump` k
 
-  env :: ST a -> ST b -> Expr t (a -< b) -> Expr t b
-  env a b k = thunk b $ \x -> mal a b (const x) `jump` k
+  env :: ST a -> ST b -> t x (a -< b) -> t x b
+  env a b k = thunk b $ \x -> mal a (const x) `jump` k
 
-  u64 :: Word64 -> Expr t U64
+  u64 :: Word64 -> t x U64
 
   (|=) ::
     (KnownT a, KnownT b) =>
-    Expr t a ->
-    (Expr t b -> Jump t) ->
-    Expr t (b -< a)
+    t x a ->
+    (forall x r. t x b -> t x r) ->
+    t x (b -< a)
   x |= f = kont inferT inferT x f
 
   (!) ::
-    (KnownT a, KnownT b) =>
-    Expr t (a -< b) ->
-    Expr t a ->
-    Jump t
-  k ! x = jmp inferT inferT k x
+    (KnownT a) =>
+    t x (a -< b) ->
+    (forall x. t x a) ->
+    t x r
+  k ! x = jmp inferT k x
 
 infixl 0 |=
 

@@ -37,12 +37,12 @@ main = do
 
 type TYPE = (U64 -< Unit) -< Unit
 
-program :: Hoas t => Hoas.Expr t TYPE
+program :: Hoas t => t Unit TYPE
 program =
   unit |= \k ->
     k ! u64 3
 
-bound :: Bound t => Id.Stream -> Hoas.AsBound.Expr t TYPE
+bound :: Bound t => Id.Stream -> t Unit TYPE
 bound str = bindPoints str program
 
 malP :: Mal k => Id.Stream -> k Mal.Type.Unit (AsTerm.AsObject TYPE)

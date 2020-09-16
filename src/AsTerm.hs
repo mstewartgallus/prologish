@@ -30,53 +30,45 @@ type family AsObject a = r | r -> a where
   AsObject Type.Void = Void
   AsObject Type.U64 = U64
 
-pointFree :: Bound.Expr (PointFree k) a -> k Unit (AsObject a)
+pointFree :: PointFree k a b -> k (AsObject a) (AsObject b)
 pointFree (E x) = out x
 
-data PointFree (k :: T -> T -> Type)
+data PointFree (k :: T -> T -> Type) a b = E (Pf k (AsObject a) (AsObject b))
 
 instance Mal k => Bound.Bound (PointFree k) where
-  data Jump (PointFree k) = J (Pf k Unit Void)
-  data Expr (PointFree k) a = E (Pf k Unit (AsObject a))
-  data Case (PointFree k) a = C (Pf k (AsObject a) Void)
+  E f `try` E x = E (f <*> x)
+  E f ||| E x = E (f ||| x)
 
-  C f `try` C x = C (f <*> x)
-  C f ||| C x = C (f ||| x)
+  E f `jump` E g = E (f . g)
 
-  C f `jump` E g = J (f . g)
-
-  adbmal m s n t f = C (mal me')
+  mal n t f = E (mal me)
     where
-      v = Var t n
-      k = Label s m
-      J body = f (C (mkLabel k)) (E (mkVar v))
+      k = Label t n
+      E body = f (E (mkLabel k))
 
-      me = case removeVar body v of
-        Nothing -> body . unit
-        Just y -> y . (id &&& unit)
-      me' = case removeLabel me k of
-        Nothing -> absurd . me
+      me = case removeLabel body k of
+        Nothing -> right . body
         Just y -> y
 
   thunk n t f = E me
     where
       v = Label t n
-      J body = f (C (mkLabel v))
+      E body = f (E (mkLabel v))
       me = case removeLabel body v of
         Nothing -> absurd . body
         Just y -> (id ||| absurd) . y
-  letBe n t f = C me
+  letBe n t f = E me
     where
       v = Var t n
-      J body = f (E (mkVar v))
+      E body = f (E (mkVar v))
       me = case removeVar body v of
         Nothing -> body . unit
         Just y -> y . (id &&& unit)
 
   unit = E unit
-  empty = C absurd
+  empty = E absurd
 
-  u64 x = E (u64 x)
+  u64 x = E (u64 x . unit)
 
 instance Mal k => Category (Pf k) where
   id = lift0 id
@@ -116,7 +108,7 @@ instance Mal k => HasCoexp (Pf k) where
         V
           { out = mal $ out f,
             removeVar = \v -> case removeVar f v of
-              Just f' -> Just $ swp f'
+              Just f' -> Just $ swp (mal f')
               _ -> Nothing,
             removeLabel = \v -> case removeLabel f v of
               Just f' -> Just $ mal (shuffleSum f')
@@ -136,9 +128,9 @@ instance Mal k => HasCoexp (Pf k) where
           }
 
 -- | Impossible for the same reasons
--- k (a * c) (v + b) -> k c (v + (a -> b))
+-- k c (a -> (v + b)) -> k c (v + (a -> b))
 -- is impossible ...
-swp :: Mal k => k (v * b) (a + c) -> k (v * (a -< b)) c
+swp :: Mal k => k (a -< (v * b)) c -> k (v * (a -< b)) c
 swp _ = error "impossible"
 
 shuffleSum :: HasSum k => k b (a + (v + c)) -> k b (v + (a + c))
@@ -167,7 +159,7 @@ eqLabel (Label t m) (Label t' n)
   | m == n = Type.eqT t t'
   | otherwise = Nothing
 
-mkVar :: HasProduct k => Var a -> Pf k Unit (AsObject a)
+mkVar :: HasProduct k => Var a -> Pf k x (AsObject a)
 mkVar v@(Var _ n) = me
   where
     me =
@@ -179,7 +171,7 @@ mkVar v@(Var _ n) = me
           removeLabel = const Nothing
         }
 
-mkLabel :: HasSum k => Label a -> Pf k (AsObject a) Void
+mkLabel :: HasSum k => Label a -> Pf k (AsObject a) x
 mkLabel v@(Label _ n) = me
   where
     me =
