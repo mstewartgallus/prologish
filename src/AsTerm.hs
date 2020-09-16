@@ -69,8 +69,8 @@ instance Mal k => Bound.Bound (PointFree k) where
         Nothing -> right . body
         Just y -> y
 
-  -- lift (E x) = E (x . left)
-  -- pass (E x) = E (x . right)
+  lift (E x) = E ((absurd . x) ||| id)
+  pass (E x) = E (id <*> (absurd . x))
 
   u64 x = E (u64 x . unit)
   global g = E (global (toG g))

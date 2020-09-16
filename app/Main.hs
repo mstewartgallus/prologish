@@ -40,8 +40,8 @@ main = do
 type TYPE = U64 -< U64 -< U64
 
 program :: Hoas t => t TYPE Void
-program = mal inferT $ \k ->
-  mal inferT $ \_ ->
+program = mal inferT $ \_ ->
+  mal inferT $ \k ->
     k <<< succ <<< id
 
 bound :: Bound t => Id.Stream -> t TYPE Void
