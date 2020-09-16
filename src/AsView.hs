@@ -1,16 +1,19 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE TypeFamilies #-}
 
-module Mal.AsView (View, view) where
+module AsView (View, view) where
 
 import Control.Category
+import Global
+import HasCoexp
+import HasProduct
+import HasSum
+import Hoas.Bound
 import Mal
-import Mal.HasCoexp
-import Mal.HasProduct
-import Mal.HasSum
-import Mal.Type
+import Type
 
-newtype View (a :: T) (b :: T) = V String
+data View (a :: T) (b :: T) = V String
 
 view :: View a b -> String
 view (V v) = v
@@ -18,6 +21,24 @@ view (V v) = v
 instance Category View where
   id = V "id"
   V f . V g = V (f ++ " ∘ " ++ g)
+
+instance Cokappa View where
+  label n t f = V ("κ " ++ v ++ ": " ++ show t ++ ".\n" ++ body)
+    where
+      v = "k" ++ show n
+      V body = f (V v)
+  lift (V x) = V $ "(lift " ++ x ++ ")"
+
+instance Cozeta View where
+  mal n t f = V ("ζ " ++ v ++ ": " ++ show t ++ ".\n" ++ body)
+    where
+      v = "k" ++ show n
+      V body = f (V v)
+  pass (V x) = V $ "(pass " ++ x ++ ")"
+
+instance Bound View where
+  u64 n = V (show n)
+  global g = V (show g)
 
 instance HasProduct View where
   unit = V "unit"

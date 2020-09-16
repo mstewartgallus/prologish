@@ -1,9 +1,9 @@
 {-# LANGUAGE TypeOperators #-}
 
-module Mal.HasSum (HasSum (..)) where
+module HasSum (HasSum (..)) where
 
 import Control.Category
-import Mal.Type
+import Type
 
 class Category k => HasSum k where
   absurd :: k Void x

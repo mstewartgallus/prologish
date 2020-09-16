@@ -4,18 +4,24 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module Hoas.Type (KnownT, inferT, eqT, ST (..), T, Void, Unit, type (+), type (*), type (-<), type U64) where
+module Type (KnownT, inferT, eqT, ST (..), T, Void, Unit, type (+), type (*), type (-<), type U64) where
 
 import Data.Typeable ((:~:) (..))
 
 type (-<) = 'Coexp
+
 type (+) = 'Sum
+
 infixr 9 +
+
 type (*) = 'Prod
+
 infixr 9 *
 
 type U64 = 'U64
+
 type Void = 'Void
+
 type Unit = 'Unit
 
 infixr 9 -<
@@ -66,6 +72,7 @@ instance KnownT 'U64 where
 
 instance KnownT 'Unit where
   inferT = SUnit
+
 instance KnownT 'Void where
   inferT = SVoid
 
@@ -77,4 +84,3 @@ instance (KnownT a, KnownT b) => KnownT ('Prod a b) where
 
 instance (KnownT a, KnownT b) => KnownT ('Coexp a b) where
   inferT = inferT :-< inferT
-

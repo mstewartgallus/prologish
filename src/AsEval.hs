@@ -18,12 +18,12 @@ import Control.Monad.Cont
 import Data.Kind
 import qualified Data.Void as Void
 import Data.Word
+import Global
+import HasCoexp
+import HasProduct
+import HasSum
 import Mal
-import Mal.Global
-import Mal.HasCoexp
-import Mal.HasProduct
-import Mal.HasSum
-import Mal.Type
+import Type
 import Prelude hiding (Bool (..), Either (..), id, (.))
 
 asEval :: Expr m a b -> Value m a -> m (Value m b)

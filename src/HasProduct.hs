@@ -2,10 +2,10 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module Mal.HasProduct (HasProduct (..)) where
+module HasProduct (HasProduct (..)) where
 
 import Control.Category
-import Mal.Type
+import Type
 
 class Category k => HasProduct k where
   unit :: k x Unit

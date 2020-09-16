@@ -10,11 +10,11 @@ module Mal (Mal (..)) where
 
 import Control.Category
 import Data.Word (Word64)
-import Mal.Global
-import Mal.HasCoexp
-import Mal.HasProduct
-import Mal.HasSum
-import Mal.Type
+import Global
+import HasCoexp
+import HasProduct
+import HasSum
+import Type
 import Prelude hiding (curry, id, uncurry, (.))
 
 class (HasSum k, HasProduct k, HasCoexp k) => Mal k where

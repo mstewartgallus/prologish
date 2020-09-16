@@ -6,51 +6,32 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module AsTerm (PointFree, pointFree, AsObject) where
+module AsTerm (PointFree, pointFree) where
 
 import Control.Category
 import Data.Kind
 import Data.Maybe
 import Data.Typeable ((:~:) (..))
+import Global
+import HasCoexp
+import HasProduct
+import HasSum
 import qualified Hoas.Bound as Bound
-import qualified Hoas.Global as Hoas
-import qualified Hoas.Type as Type
 import Id (Id)
 import Mal
-import Mal.Global
-import Mal.HasCoexp
-import Mal.HasProduct
-import Mal.HasSum
-import Mal.Type
+import Type
 import Prelude hiding (curry, id, uncurry, (.), (<*>))
 
-type family AsObject a = r | r -> a where
-  AsObject (a Type.+ b) = AsObject a + AsObject b
-  AsObject (a Type.* b) = AsObject a * AsObject b
-  AsObject (a Type.-< b) = AsObject a -< AsObject b
-  AsObject Type.Unit = Unit
-  AsObject Type.Void = Void
-  AsObject Type.U64 = U64
-
-asObject :: Type.ST a -> ST (AsObject a)
-asObject expr = case expr of
-  (a Type.:+: b) -> asObject a :+: asObject b
-  (a Type.:*: b) -> asObject a :*: asObject b
-  (a Type.:-< b) -> asObject a :-< asObject b
-  Type.SUnit -> SUnit
-  Type.SVoid -> SVoid
-  Type.SU64 -> SU64
-
-pointFree :: PointFree k a b -> k (AsObject a) (AsObject b)
+pointFree :: PointFree k a b -> k a b
 pointFree (E x) = out x
 
-data PointFree (k :: T -> T -> Type) a b = E (Pf k (AsObject a) (AsObject b))
+data PointFree (k :: T -> T -> Type) a b = E (Pf k (a) (b))
 
 instance Mal k => Category (PointFree k) where
   E f . E g = E (f . g)
   id = E id
 
-instance Mal k => Bound.Bound (PointFree k) where
+instance Mal k => Bound.Cokappa (PointFree k) where
   label n t f = E me
     where
       k = Label t n
@@ -59,7 +40,9 @@ instance Mal k => Bound.Bound (PointFree k) where
       me = case removeLabel body k of
         Nothing -> right . body
         Just y -> y
+  lift (E x) = E ((absurd . x) ||| id)
 
+instance Mal k => Bound.Cozeta (PointFree k) where
   mal n t f = E (mal me)
     where
       k = Label t n
@@ -68,15 +51,11 @@ instance Mal k => Bound.Bound (PointFree k) where
       me = case removeLabel body k of
         Nothing -> right . body
         Just y -> y
-
-  lift (E x) = E ((absurd . x) ||| id)
   pass (E x) = E (id <*> (absurd . x))
 
+instance Mal k => Bound.Bound (PointFree k) where
   u64 x = E (u64 x . unit)
-  global g = E (global (toG g))
-
-toG :: Hoas.Global a b -> Global (AsObject a) (AsObject b)
-toG (Hoas.Global dom cod p n) = Global (asObject dom) (asObject cod) p n
+  global g = E (global g)
 
 instance Mal k => Category (Pf k) where
   id = lift0 id
@@ -133,17 +112,17 @@ instance Mal k => Mal (Pf k) where
 
 data Pf k (a :: T) (b :: T) = V
   { out :: k a b,
-    removeLabel :: forall v. Label v -> Maybe (Pf k a (AsObject v + b))
+    removeLabel :: forall v. Label v -> Maybe (Pf k a (v + b))
   }
 
-data Label a = Label (Type.ST a) Id
+data Label a = Label (ST a) Id
 
 eqLabel :: Label a -> Label b -> Maybe (a :~: b)
 eqLabel (Label t m) (Label t' n)
-  | m == n = Type.eqT t t'
+  | m == n = eqT t t'
   | otherwise = Nothing
 
-mkLabel :: HasSum k => Label a -> Pf k (AsObject a) Void
+mkLabel :: HasSum k => Label a -> Pf k (a) Void
 mkLabel v@(Label _ n) = me
   where
     me =

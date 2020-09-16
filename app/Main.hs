@@ -7,19 +7,17 @@ module Main where
 
 import AsEval
 import qualified AsTerm
+import AsView
 import Control.Category
 import Control.Monad.Cont
 import qualified Data.Void as Void
 import Data.Word
 import Hoas
 import Hoas.AsBound
-import qualified Hoas.AsView as AsHoasView
 import Hoas.Bound (Bound)
-import Hoas.Type
 import qualified Id
 import Mal (Mal)
-import Mal.AsView
-import qualified Mal.Type
+import Type
 import Prelude hiding (id, succ, (.), (<*>))
 
 main :: IO ()
@@ -27,7 +25,7 @@ main = do
   x <- Id.stream
 
   putStrLn "The Program"
-  putStrLn (AsHoasView.view (bound x))
+  putStrLn (view (bound x))
 
   putStrLn ""
   putStrLn "Point-Free Program"
@@ -47,10 +45,10 @@ program = mal inferT $ \_ ->
 bound :: Bound t => Id.Stream -> t TYPE Void
 bound str = bindPoints str program
 
-malP :: Mal k => Id.Stream -> k (AsTerm.AsObject TYPE) Mal.Type.Void
+malP :: Mal k => Id.Stream -> k TYPE Void
 malP str = AsTerm.pointFree (bound str)
 
-compiled :: MonadCont m => Id.Stream -> Value m (AsTerm.AsObject TYPE) -> m (Value m Mal.Type.Void)
+compiled :: MonadCont m => Id.Stream -> Value m TYPE -> m (Value m Void)
 compiled str = AsEval.asEval (malP str)
 
 result :: Id.Stream -> Word64 -> Word64
