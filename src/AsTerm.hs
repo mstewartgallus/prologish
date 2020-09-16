@@ -13,9 +13,11 @@ import Data.Kind
 import Data.Maybe
 import Data.Typeable ((:~:) (..))
 import qualified Hoas.Bound as Bound
+import qualified Hoas.Global as Hoas
 import qualified Hoas.Type as Type
 import Id (Id)
 import Mal
+import Mal.Global
 import Mal.HasCoexp
 import Mal.HasProduct
 import Mal.HasSum
@@ -29,6 +31,15 @@ type family AsObject a = r | r -> a where
   AsObject Type.Unit = Unit
   AsObject Type.Void = Void
   AsObject Type.U64 = U64
+
+asObject :: Type.ST a -> ST (AsObject a)
+asObject expr = case expr of
+  (a Type.:+: b) -> asObject a :+: asObject b
+  (a Type.:*: b) -> asObject a :*: asObject b
+  (a Type.:-< b) -> asObject a :-< asObject b
+  Type.SUnit -> SUnit
+  Type.SVoid -> SVoid
+  Type.SU64 -> SU64
 
 pointFree :: PointFree k a b -> k (AsObject a) (AsObject b)
 pointFree (E x) = out x
@@ -63,10 +74,10 @@ instance Mal k => Bound.Bound (PointFree k) where
   right (E x) = E (x . right)
 
   u64 x = E (u64 x . unit)
-  add = E (lift add)
+  global g = E (global (toG g))
 
-lift :: Mal k => k a b -> k (b -< a) Void
-lift x = mal (left . x)
+toG :: Hoas.Global a b -> Global (AsObject a) (AsObject b)
+toG (Hoas.Global dom cod p n) = Global (asObject dom) (asObject cod) p n
 
 instance Mal k => Category (Pf k) where
   id = lift0 id
@@ -118,7 +129,7 @@ shuffleSum :: HasSum k => k b (a + (v + c)) -> k b (v + (a + c))
 shuffleSum x = ((right . left) ||| (left ||| (right . right))) . x
 
 instance Mal k => Mal (Pf k) where
-  add = lift0 add
+  global g = lift0 $ global g
   u64 x = lift0 $ u64 x
 
 data Pf k (a :: T) (b :: T) = V

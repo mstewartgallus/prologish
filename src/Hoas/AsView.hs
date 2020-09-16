@@ -7,6 +7,7 @@ module Hoas.AsView (View, view) where
 import Hoas.Bound
 import Hoas.Type
 import Control.Category
+import Hoas.Global
 
 data View (a :: T) (b :: T) = E String
 
@@ -36,4 +37,5 @@ instance Bound View where
   second (E x) = E $ "(π₂ " ++ x ++ ")"
 
   u64 n = E (show n)
-  add = E "add"
+
+  global g = E (show g)

@@ -9,6 +9,7 @@ module Hoas.Bound (Bound (..)) where
 import Hoas.Type
 import Prelude hiding ((.), id, (<*>), uncurry)
 import Id (Id)
+import Hoas.Global
 import Data.Kind
 import Data.Word (Word64)
 import Control.Category
@@ -29,8 +30,9 @@ class Category t => Bound t where
   left :: t (a + b) r -> t a r
   right :: t (a + b) r -> t b r
 
+  global :: Global a b -> t a b
+
   u64 :: Word64 -> t x U64
-  add :: t (U64 -< (U64 * U64)) Void
 
 infixr 9 &&&
 infixr 9 |||

@@ -19,6 +19,7 @@ import Data.Kind
 import qualified Data.Void as Void
 import Data.Word
 import Mal
+import Mal.Global
 import Mal.HasCoexp
 import Mal.HasProduct
 import Mal.HasSum
@@ -85,4 +86,5 @@ instance MonadCont m => HasCoexp (Expr m) where
 
 instance MonadCont m => Mal (Expr m) where
   u64 x = E $ \Coin -> pure $ Value64 x
-  add = E $ \(Value64 x ::: Value64 y) -> pure $ Value64 (x + y)
+
+  global (Global (SU64 :*: SU64) SU64 "core" "add") = E $ \(Value64 x ::: Value64 y) -> pure $ Value64 (x + y)

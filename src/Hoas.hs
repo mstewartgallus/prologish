@@ -9,6 +9,7 @@ module Hoas (Hoas (..)) where
 import Control.Category
 import Data.Kind
 import Data.Word (Word64)
+import Hoas.Global
 import Hoas.Type
 import Prelude hiding (id, (.), (<*>))
 
@@ -36,8 +37,12 @@ class Category t => Hoas t where
   left :: t (a + b) r -> t a r
   right :: t (a + b) r -> t b r
 
+  global :: Global a b -> t a b
+
   u64 :: Word64 -> t x U64
-  add :: t (U64 -< (U64 * U64)) Void
+
+  add :: t (U64 * U64) U64
+  add = global $ Global inferT inferT "core" "add"
 
 infixr 9 &&&
 

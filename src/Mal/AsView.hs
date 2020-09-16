@@ -38,5 +38,6 @@ instance HasCoexp View where
   try (V f) = V ("(! " ++ f ++ ")")
 
 instance Mal View where
-  add = V "add"
+  global g = V (show g)
+
   u64 x = V (show x)

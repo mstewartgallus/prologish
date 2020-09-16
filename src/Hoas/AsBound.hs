@@ -38,4 +38,5 @@ instance Bound t => Hoas.Hoas (Expr t) where
   right (E x) = E $ \xs -> right (x xs)
 
   u64 x = E $ const (u64 x)
-  add = E $ const add
+
+  global g = E $ const (global g)

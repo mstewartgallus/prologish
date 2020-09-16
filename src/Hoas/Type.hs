@@ -30,26 +30,6 @@ data ST a where
   (:*:) :: ST a -> ST b -> ST (a * b)
   (:-<) :: ST a -> ST b -> ST (a -< b)
 
-class KnownT t where
-  inferT :: ST t
-
-instance KnownT 'U64 where
-  inferT = SU64
-
-instance KnownT 'Unit where
-  inferT = SUnit
-instance KnownT 'Void where
-  inferT = SVoid
-
-instance (KnownT a, KnownT b) => KnownT ('Sum a b) where
-  inferT = inferT :+: inferT
-
-instance (KnownT a, KnownT b) => KnownT ('Prod a b) where
-  inferT = inferT :*: inferT
-
-instance (KnownT a, KnownT b) => KnownT ('Coexp a b) where
-  inferT = inferT :-< inferT
-
 eqT :: ST a -> ST b -> Maybe (a :~: b)
 eqT l r = case (l, r) of
   (SU64, SU64) -> Just Refl
@@ -77,3 +57,24 @@ instance Show (ST a) where
     x :+: y -> "(" ++ show x ++ " + " ++ show y ++ ")"
     x :*: y -> "(" ++ show x ++ " * " ++ show y ++ ")"
     x :-< y -> "(" ++ show x ++ " - " ++ show y ++ ")"
+
+class KnownT t where
+  inferT :: ST t
+
+instance KnownT 'U64 where
+  inferT = SU64
+
+instance KnownT 'Unit where
+  inferT = SUnit
+instance KnownT 'Void where
+  inferT = SVoid
+
+instance (KnownT a, KnownT b) => KnownT ('Sum a b) where
+  inferT = inferT :+: inferT
+
+instance (KnownT a, KnownT b) => KnownT ('Prod a b) where
+  inferT = inferT :*: inferT
+
+instance (KnownT a, KnownT b) => KnownT ('Coexp a b) where
+  inferT = inferT :-< inferT
+

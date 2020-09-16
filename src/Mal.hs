@@ -10,6 +10,7 @@ module Mal (Mal (..)) where
 
 import Control.Category
 import Data.Word (Word64)
+import Mal.Global
 import Mal.HasCoexp
 import Mal.HasProduct
 import Mal.HasSum
@@ -18,7 +19,8 @@ import Prelude hiding (curry, id, uncurry, (.))
 
 class (HasSum k, HasProduct k, HasCoexp k) => Mal k where
   u64 :: Word64 -> k Unit U64
-  add :: k (U64 * U64) U64
+
+  global :: Global a b -> k a b
 
   commuteSum :: k (a + b) (b + a)
   commuteSum = right ||| left
