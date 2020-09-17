@@ -32,24 +32,24 @@ instance Mal k => Category (PointFree k) where
   id = E id
 
 instance Mal k => Bound.Cokappa (PointFree k) where
-  label n t f = E me
+  label n t f = E (try me)
     where
       k = Label t n
       E body = f (E (mkLabel k))
 
       me = case removeLabel body k of
-        Nothing -> right . body
+        Nothing -> mal (right . body)
         Just y -> y
   lift (E x) = E ((absurd . x) ||| id)
 
 instance Mal k => Bound.Cozeta (PointFree k) where
-  mal n t f = E (mal me)
+  mal n t f = E me
     where
       k = Label t n
       E body = f (E (mkLabel k))
 
       me = case removeLabel body k of
-        Nothing -> right . body
+        Nothing -> mal (right . body)
         Just y -> y
   pass (E x) = E (id <*> (absurd . x))
 
@@ -65,9 +65,9 @@ instance Mal k => Category (Pf k) where
         V
           { out = out f . out g,
             removeLabel = \v -> case (removeLabel f v, removeLabel g v) of
-              (Just f', Just g') -> Just $ (left ||| f') . g'
-              (_, Just g') -> Just $ (left ||| (right . f)) . g'
-              (Just f', _) -> Just $ f' . g
+              (Just f', Just g') -> Just $ mal ((left ||| try f') . try g')
+              (_, Just g') -> Just $ f . g'
+              (Just f', _) -> Just $ mal (try f' . g)
               _ -> Nothing
           }
 
@@ -75,7 +75,17 @@ instance Mal k => HasSum (Pf k) where
   absurd = lift0 absurd
   left = lift0 left
   right = lift0 right
-  (|||) = colift2 (|||)
+  x ||| y = me
+    where
+      me =
+        V
+          { out = out x ||| out y,
+            removeLabel = \v -> case (removeLabel x v, removeLabel y v) of
+              (Just x', Just y') -> Just $ mal (try x' ||| try y')
+              (_, Just y') -> Just $ mal ((right . x) ||| try y')
+              (Just x', _) -> Just $ mal (try x' ||| (right . y))
+              _ -> Nothing
+          }
 
 instance Mal k => HasProduct (Pf k) where
   unit = lift0 unit
@@ -90,7 +100,7 @@ instance Mal k => HasCoexp (Pf k) where
         V
           { out = mal $ out f,
             removeLabel = \v -> case removeLabel f v of
-              Just f' -> Just $ mal (shuffleSum f')
+              Just f' -> Just $ mal $ mal (shuffleSum (try f'))
               _ -> Nothing
           }
   try f = me
@@ -99,7 +109,7 @@ instance Mal k => HasCoexp (Pf k) where
         V
           { out = try $ out f,
             removeLabel = \v -> case removeLabel f v of
-              Just f' -> Just $ shuffleSum (try f')
+              Just f' -> Just $ mal (shuffleSum (try (try f')))
               _ -> Nothing
           }
 
@@ -112,7 +122,7 @@ instance Mal k => Mal (Pf k) where
 
 data Pf k (a :: T) (b :: T) = V
   { out :: k a b,
-    removeLabel :: forall v. Label v -> Maybe (Pf k a (v + b))
+    removeLabel :: forall v. Label v -> Maybe (Pf k (v -< a) b)
   }
 
 data Label a = Label (ST a) Id
@@ -122,7 +132,7 @@ eqLabel (Label t m) (Label t' n)
   | m == n = eqT t t'
   | otherwise = Nothing
 
-mkLabel :: HasSum k => Label a -> Pf k (a) Void
+mkLabel :: HasCoexp k => Label a -> Pf k (a) Void
 mkLabel v@(Label _ n) = me
   where
     me =
@@ -130,7 +140,7 @@ mkLabel v@(Label _ n) = me
         { out = error ("free label " ++ show n),
           removeLabel = \maybeV -> case eqLabel v maybeV of
             Nothing -> Nothing
-            Just Refl -> Just (lift0 left)
+            Just Refl -> Just (lift0 (mal left))
         }
 
 lift0 :: k a b -> Pf k a b
@@ -140,18 +150,6 @@ lift0 x = me
       V
         { out = x,
           removeLabel = const Nothing
-        }
-
-lift1 ::
-  Mal k =>
-  (forall env. k env a -> k env c) ->
-  Pf k env a ->
-  Pf k env c
-lift1 f x = me
-  where
-    me =
-      V
-        { out = f (out x)
         }
 
 lift2 ::
@@ -169,23 +167,5 @@ lift2 f x y = me
             (Just x', Just y') -> error "foo"
             (_, Just y') -> error "foo"
             (Just x', _) -> error "foo"
-            _ -> Nothing
-        }
-
-colift2 ::
-  Mal k =>
-  (forall env. k a env -> k b env -> k c env) ->
-  Pf k a env ->
-  Pf k b env ->
-  Pf k c env
-colift2 f x y = me
-  where
-    me =
-      V
-        { out = f (out x) (out y),
-          removeLabel = \v -> case (removeLabel x v, removeLabel y v) of
-            (Just x', Just y') -> Just $ colift2 f x' y'
-            (_, Just y') -> Just $ colift2 f (right . x) y'
-            (Just x', _) -> Just $ colift2 f x' (right . y)
             _ -> Nothing
         }

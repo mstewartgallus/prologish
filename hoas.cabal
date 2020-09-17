@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 35c2fd0a8cf756c0e1513c61fd2f6f84317b336a3c38016f12fe2fd533494682
+-- hash: a4fa89565395024900a36e15c575dc243b5dfc1432f01a5caecb89af3035ea93
 
 name:           hoas
 version:        0.1.0.0
@@ -32,6 +32,7 @@ library
       AsView
       Global
       HasCoexp
+      HasDomain
       HasProduct
       HasSum
       Hoas
