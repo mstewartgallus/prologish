@@ -23,6 +23,7 @@ dependencies:
 - base >= 4.7 && < 5
 - mtl >= 2.2 && < 3
 - atomic-primops >= 0.8 && <0.9
+- containers >= 0.6 && <0.7
 
 library:
   source-dirs: src

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a4fa89565395024900a36e15c575dc243b5dfc1432f01a5caecb89af3035ea93
+-- hash: a7c1767d4b8de4787e0e3bc8e4e7b2988b57ed7d3b28eccc71addfc04394c1c7
 
 name:           hoas
 version:        0.1.0.0
@@ -28,6 +28,7 @@ source-repository head
 library
   exposed-modules:
       AsEval
+      AsSubset
       AsTerm
       AsView
       Global
@@ -48,6 +49,7 @@ library
   build-depends:
       atomic-primops >=0.8 && <0.9
     , base >=4.7 && <5
+    , containers >=0.6 && <0.7
     , mtl >=2.2 && <3
   default-language: Haskell2010
 
@@ -61,6 +63,7 @@ executable hoas-exe
   build-depends:
       atomic-primops >=0.8 && <0.9
     , base >=4.7 && <5
+    , containers >=0.6 && <0.7
     , hoas
     , mtl >=2.2 && <3
   default-language: Haskell2010
@@ -76,6 +79,7 @@ test-suite hoas-test
   build-depends:
       atomic-primops >=0.8 && <0.9
     , base >=4.7 && <5
+    , containers >=0.6 && <0.7
     , hoas
     , mtl >=2.2 && <3
   default-language: Haskell2010

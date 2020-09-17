@@ -1,15 +1,19 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE EmptyCase #-}
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
 module Main where
 
 import AsEval
+import qualified AsSubset
 import qualified AsTerm
 import AsView
 import Control.Category
 import Control.Monad.Cont
+import Data.Set (Set)
+import qualified Data.Set as Set
 import qualified Data.Void as Void
 import Data.Word
 import Hoas
@@ -35,6 +39,16 @@ main = do
   putStrLn "Result"
   putStrLn (show (result x 8))
 
+  putStrLn ""
+  putStrLn "Set Result"
+  putStrLn (show (setResult x left right))
+
+left :: Set Word64
+left = Set.fromList [8]
+
+right :: Set Word64
+right = Set.fromList [8]
+
 type TYPE = U64 -< U64 -< U64
 
 program :: Hoas t => t TYPE Void
@@ -57,3 +71,15 @@ result str x = flip runCont id $
   callCC $ \k -> do
     abs <- compiled str $ (Value64 x) :- (\(Value64 z) -> k z) :- (\(Value64 z) -> k z)
     case abs of
+
+sub :: Id.Stream -> AsSubset.Value TYPE
+sub str = AsSubset.asSubset (malP str) AsSubset.EmptySet
+
+setResult :: Id.Stream -> Set Word64 -> Set Word64 -> Set Word64
+setResult str x y = case sub str of
+  AsSubset.EmptySet -> Set.empty
+  AsSubset.ValueCoexp f -> case f $ AsSubset.Value64 x of
+    AsSubset.EmptySet -> Set.empty
+    AsSubset.ValueCoexp g -> case g $ AsSubset.Value64 y of
+      AsSubset.EmptySet -> Set.empty
+      AsSubset.Value64 z -> z
