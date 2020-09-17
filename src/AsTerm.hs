@@ -91,7 +91,17 @@ instance Mal k => HasProduct (Pf k) where
   unit = lift0 unit
   first = lift0 first
   second = lift0 second
-  (&&&) = lift2 (&&&)
+  x &&& y = me
+    where
+      me =
+        V
+          { out = out x &&& out y,
+            removeLabel = \v -> case (removeLabel x v, removeLabel y v) of
+              (Just x', Just y') -> Just (x' &&& y')
+              (_, Just y') -> Just (mal (right . x) &&& y')
+              (Just x', _) -> Just (x' &&& mal (right . y))
+              _ -> Nothing
+          }
 
 instance Mal k => HasCoexp (Pf k) where
   mal f = me
@@ -150,22 +160,4 @@ lift0 x = me
       V
         { out = x,
           removeLabel = const Nothing
-        }
-
-lift2 ::
-  Mal k =>
-  (forall env. k env a -> k env b -> k env c) ->
-  Pf k env a ->
-  Pf k env b ->
-  Pf k env c
-lift2 f x y = me
-  where
-    me =
-      V
-        { out = f (out x) (out y),
-          removeLabel = \v -> case (removeLabel x v, removeLabel y v) of
-            (Just x', Just y') -> error "foo"
-            (_, Just y') -> error "foo"
-            (Just x', _) -> error "foo"
-            _ -> Nothing
         }
