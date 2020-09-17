@@ -1,12 +1,15 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module Type (KnownT, inferT, eqT, ST (..), T, Void, Unit, type (+), type (*), type (-<), type U64) where
+module Type (inferT, eqT, ST (..), T, Void, Unit, type (+), type (*), type (-<), type U64) where
 
+import Data.Maybe
 import Data.Typeable ((:~:) (..))
+import Type.Reflection
 
 type (-<) = 'Coexp
 
@@ -64,23 +67,35 @@ instance Show (ST a) where
     x :*: y -> "(" ++ show x ++ " * " ++ show y ++ ")"
     x :-< y -> "(" ++ show x ++ " - " ++ show y ++ ")"
 
-class KnownT t where
-  inferT :: ST t
+inferT :: Typeable a => ST a
+inferT = fromTypeRep typeRep
 
-instance KnownT 'U64 where
-  inferT = SU64
-
-instance KnownT 'Unit where
-  inferT = SUnit
-
-instance KnownT 'Void where
-  inferT = SVoid
-
-instance (KnownT a, KnownT b) => KnownT ('Sum a b) where
-  inferT = inferT :+: inferT
-
-instance (KnownT a, KnownT b) => KnownT ('Prod a b) where
-  inferT = inferT :*: inferT
-
-instance (KnownT a, KnownT b) => KnownT ('Coexp a b) where
-  inferT = inferT :-< inferT
+fromTypeRep :: TypeRep a -> ST a
+fromTypeRep expr =
+  head $
+    catMaybes $
+      [ do
+          HRefl <- eqTypeRep expr (typeRep @U64)
+          pure SU64,
+        do
+          HRefl <- eqTypeRep expr (typeRep @Unit)
+          pure SUnit,
+        do
+          HRefl <- eqTypeRep expr (typeRep @Void)
+          pure SVoid,
+        case expr of
+          App (App f x) y -> do
+            HRefl <- eqTypeRep (typeRep @'Sum) f
+            pure (fromTypeRep x :+: fromTypeRep y)
+          _ -> Nothing,
+        case expr of
+          App (App f x) y -> do
+            HRefl <- eqTypeRep (typeRep @'Prod) f
+            pure (fromTypeRep x :*: fromTypeRep y)
+          _ -> Nothing,
+        case expr of
+          App (App f x) y -> do
+            HRefl <- eqTypeRep (typeRep @'Coexp) f
+            pure (fromTypeRep x :-< fromTypeRep y)
+          _ -> Nothing
+      ]
