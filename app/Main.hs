@@ -7,7 +7,6 @@
 module Main where
 
 import AsEval
-import qualified AsSubset
 import qualified AsTerm
 import AsView
 import Control.Category
@@ -37,25 +36,15 @@ main = do
 
   putStrLn ""
   putStrLn "Result"
-  putStrLn (show (result x 8))
+  putStrLn (show (result x (Prelude.Left Prelude.True)))
 
-  putStrLn ""
-  putStrLn "Set Result"
-  putStrLn (show (setResult x left right))
-
-left :: Set Word64
-left = Set.fromList [8]
-
-right :: Set Word64
-right = Set.fromList [8]
-
-type TYPE = U64 -< U64 -< U64
+type TYPE = B -< B -< (B + B)
 
 program :: Hoas t => t TYPE Void
 program =
-  mal inferT $ \_ ->
-    mal inferT $ \k ->
-      k <<< succ <<< id
+  st inferT $ \s0 ->
+    st inferT $ \s1 ->
+      s0 ||| s1
 
 bound :: Bound t => Id.Stream -> t TYPE Void
 bound str = bindPoints str program
@@ -66,20 +55,20 @@ malP str = AsTerm.pointFree (bound str)
 compiled :: MonadCont m => Id.Stream -> Value m TYPE -> m (Value m Void)
 compiled str = AsEval.asEval (malP str)
 
-result :: Id.Stream -> Word64 -> Word64
+result :: Id.Stream -> Either Bool Bool -> Bool
 result str x = flip runCont id $
   callCC $ \k -> do
-    abs <- compiled str $ (Value64 x) :- (\(Value64 z) -> k z) :- (\(Value64 z) -> k z)
+    abs <- compiled str $ from x :- (\z -> k (toBool z)) :- (\z -> k (toBool z))
     case abs of
 
-sub :: Id.Stream -> AsSubset.Value TYPE
-sub str = AsSubset.asSubset (malP str) AsSubset.EmptySet
+from :: Either Bool Bool -> Value m (B + B)
+from (Prelude.Left x) = AsEval.Left (fromBool x)
+from (Prelude.Right x) = AsEval.Right (fromBool x)
 
-setResult :: Id.Stream -> Set Word64 -> Set Word64 -> Set Word64
-setResult str x y = case sub str of
-  AsSubset.EmptySet -> Set.empty
-  AsSubset.ValueCoexp f -> case f $ AsSubset.Value64 x of
-    AsSubset.EmptySet -> Set.empty
-    AsSubset.ValueCoexp g -> case g $ AsSubset.Value64 y of
-      AsSubset.EmptySet -> Set.empty
-      AsSubset.Value64 z -> z
+fromBool :: Bool -> Value m B
+fromBool expr = if expr then AsEval.True else AsEval.False
+
+toBool :: Value m B -> Bool
+toBool expr = case expr of
+  AsEval.True -> Prelude.True
+  AsEval.False -> Prelude.False

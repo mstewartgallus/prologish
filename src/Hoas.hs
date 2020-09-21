@@ -4,7 +4,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module Hoas (Cokappa (..), Cozeta (..), Hoas (..)) where
+module Hoas (Hoas (..)) where
 
 import Control.Category
 import Data.Kind
@@ -13,30 +13,15 @@ import Global
 import Type
 import Prelude hiding (id, (.), (<*>))
 
--- | Kappa calculus rules
---
--- kappa :: ST c -> (t Unit c -> t a b) -> t (c * a) b
--- lift :: t Unit c -> t a (c * a)
-class Category t => Cokappa t where
-  label :: ST c -> (t c Void -> t b a) -> t b (c + a)
-  lift :: t c Void -> t (c + a) a
+class Category t => Hoas t where
+  -- | set of values such that ...
+  st :: ST c -> (t c Void -> t b a) -> t (c -< b) a
 
--- | Zeta rules
---
--- zeta :: ST c -> (t Unit c -> t a b) -> t a (c ~> b)
--- pass :: t Unit c -> t (c ~> b) b
-class Category t => Cozeta t where
-  mal :: ST c -> (t c Void -> t b a) -> t (c -< b) a
-  pass :: t c Void -> t b (c -< b)
+  -- | check if the set includes the other set
+  try :: t (b -< c) x -> t b x -> t c x
 
--- |
--- Based on the union of two categories somewhat like Hasegawa.
---
--- Masahito Hasegawa. 1995. Decomposing Typed Lambda Calculus into a
--- Couple of Categorical Programming Languages. In Proceedings of the
--- 6th International Conference on Category Theory and Computer
--- Science (CTCS '95). Springer-Verlag, Berlin, Heidelberg, 200–219.
-class (Cokappa t, Cozeta t) => Hoas t where
+  (|||) :: t x c -> t y c -> t (x + y) c
+
   global :: Global a b -> t a b
   u64 :: Word64 -> t x U64
 

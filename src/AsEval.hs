@@ -37,6 +37,8 @@ data instance Value m (a * b) = Value m a ::: Value m b
 
 data instance Value m (a -< b) = Value m b :- (Value m a -> m Void.Void)
 
+data instance Value m B = True | False
+
 infixl 9 :-
 
 data instance Value m Unit = Coin
@@ -73,7 +75,7 @@ instance Monad m => HasSum (Expr m) where
   right = E (pure . Right)
 
 instance MonadCont m => HasCoexp (Expr m) where
-  mal (E f) = E $ \(x :- k) -> do
+  st (E f) = E $ \(x :- k) -> do
     y <- f x
     case y of
       Left l -> do

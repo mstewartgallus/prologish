@@ -20,17 +20,12 @@ instance Category t => Category (Expr t) where
   id = E $ const id
   E f . E x = E $ \(Stream _ fs xs) -> f fs . x xs
 
-instance Cokappa t => Hoas.Cokappa (Expr t) where
-  label t f = E $ \(Stream n _ ys) -> label n t $ \x -> case f (E $ \_ -> x) of
-    E y -> y ys
-  lift (E x) = E $ \xs -> lift (x xs)
-
-instance Cozeta t => Hoas.Cozeta (Expr t) where
-  mal t f = E $ \(Stream n _ ys) -> mal n t $ \x -> case f (E $ \_ -> x) of
-    E y -> y ys
-  pass (E x) = E $ \xs -> pass (x xs)
-
 instance Bound t => Hoas.Hoas (Expr t) where
+  st t f = E $ \(Stream n _ ys) -> st n t $ \x -> case f (E $ \_ -> x) of
+    E y -> y ys
+  try (E f) (E x) = E $ \(Stream _ fs xs) -> try (f xs) (x xs)
+  E f ||| E x = E $ \(Stream _ fs xs) -> f xs ||| x xs
+
   u64 x = E $ const (u64 x)
 
   global g = E $ const (global g)

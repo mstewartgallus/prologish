@@ -31,29 +31,18 @@ instance Mal k => Category (PointFree k) where
   E f . E g = E (f . g)
   id = E id
 
-instance Mal k => Bound.Cokappa (PointFree k) where
-  label n t f = E (try me)
-    where
-      k = Label t n
-      E body = f (E (mkLabel k))
-
-      me = case removeLabel body k of
-        Nothing -> mal (right . body)
-        Just y -> y
-  lift (E x) = E ((absurd . x) ||| id)
-
-instance Mal k => Bound.Cozeta (PointFree k) where
-  mal n t f = E me
-    where
-      k = Label t n
-      E body = f (E (mkLabel k))
-
-      me = case removeLabel body k of
-        Nothing -> mal (right . body)
-        Just y -> y
-  pass (E x) = E (id <*> (absurd . x))
-
 instance Mal k => Bound.Bound (PointFree k) where
+  st n t f = E me
+    where
+      k = Label t n
+      E body = f (E (mkLabel k))
+
+      me = case removeLabel body k of
+        Nothing -> mal (right . body)
+        Just y -> y
+  try (E f) (E x) = E (f <*> x)
+  E f ||| E x = E (f ||| x)
+
   u64 x = E (u64 x . unit)
   global g = E (global g)
 
@@ -104,11 +93,11 @@ instance Mal k => HasProduct (Pf k) where
           }
 
 instance Mal k => HasCoexp (Pf k) where
-  mal f = me
+  st f = me
     where
       me =
         V
-          { out = mal $ out f,
+          { out = st $ out f,
             removeLabel = \v -> case removeLabel f v of
               Just f' -> Just $ mal $ mal (shuffleSum (try f'))
               _ -> Nothing

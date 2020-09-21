@@ -22,21 +22,15 @@ instance Category View where
   id = V "id"
   V f . V g = V (f ++ " ∘ " ++ g)
 
-instance Cokappa View where
-  label n t f = V ("κ " ++ v ++ ": " ++ show t ++ ".\n" ++ body)
-    where
-      v = "k" ++ show n
-      V body = f (V v)
-  lift (V x) = V $ "(lift " ++ x ++ ")"
-
-instance Cozeta View where
-  mal n t f = V ("ζ " ++ v ++ ": " ++ show t ++ ".\n" ++ body)
-    where
-      v = "k" ++ show n
-      V body = f (V v)
-  pass (V x) = V $ "(pass " ++ x ++ ")"
-
 instance Bound View where
+  st n t f = V ("{ " ++ v ++ ": " ++ show t ++ " |\n" ++ body ++ "}")
+    where
+      v = "s" ++ show n
+      V body = f (V v)
+  try (V f) (V x) = V $ "(" ++ x ++ " ∈ " ++ f ++ ")"
+
+  V f ||| V x = V $ "(" ++ f ++ " ∪ " ++ x ++ ")"
+
   u64 n = V (show n)
   global g = V (show g)
 
@@ -55,8 +49,8 @@ instance HasSum View where
   right = V "i₂"
 
 instance HasCoexp View where
-  mal (V f) = V ("(mal " ++ f ++ ")")
-  try (V f) = V ("(! " ++ f ++ ")")
+  st (V f) = V ("{|" ++ f ++ "}")
+  try (V f) = V ("(∋ " ++ f ++ ")")
 
 instance Mal View where
   global g = V (show g)
