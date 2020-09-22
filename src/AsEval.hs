@@ -87,6 +87,8 @@ instance MonadCont m => HasCoexp (Expr m) where
     pure (Right env)
 
 instance MonadCont m => Mal (Expr m) where
+  true = E $ \Coin -> pure True
+  false = E $ \Coin -> pure False
   u64 x = E $ \Coin -> pure $ Value64 x
 
   global (Global (SU64 :*: SU64) SU64 "core" "add") = E $ \(Value64 x ::: Value64 y) -> pure $ Value64 (x + y)

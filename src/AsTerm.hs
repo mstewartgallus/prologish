@@ -41,10 +41,23 @@ instance Mal k => Bound.Bound (PointFree k) where
         Nothing -> mal (right . body)
         Just y -> y
   try (E f) (E x) = E (f <*> x)
-  E f ||| E x = E (f ||| x)
+
+  E x `amb` E y = E (x `amb` y)
+
+  true = E (true . unit)
+  false = E (false . unit)
 
   u64 x = E (u64 x . unit)
   global g = E (global g)
+
+instance Mal k => HasSum (PointFree k) where
+  absurd = E absurd
+  E f ||| E x = E (f ||| x)
+
+instance Mal k => HasProduct (PointFree k) where
+  E f &&& E x = E (f &&& x)
+  first = E first
+  second = E second
 
 instance Mal k => Category (Pf k) where
   id = lift0 id
@@ -116,6 +129,20 @@ shuffleSum :: HasSum k => k b (a + (v + c)) -> k b (v + (a + c))
 shuffleSum x = ((right . left) ||| (left ||| (right . right))) . x
 
 instance Mal k => Mal (Pf k) where
+  x `amb` y = me
+    where
+      me =
+        V
+          { out = out x `amb` out y,
+            removeLabel = \v -> case (removeLabel x v, removeLabel y v) of
+              (Just x', Just y') -> Just (x' `amb` y')
+              (_, Just y') -> Just (mal (right . x) `amb` y')
+              (Just x', _) -> Just (x' `amb` mal (right . y))
+              _ -> Nothing
+          }
+
+  true = lift0 true
+  false = lift0 false
   global g = lift0 $ global g
   u64 x = lift0 $ u64 x
 

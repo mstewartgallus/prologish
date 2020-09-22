@@ -5,13 +5,33 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoStarIsType #-}
 
-module Type (inferT, eqT, ST (..), T, Void, Unit, type B, type (+), type (*), type (-<), type U64) where
+module Type
+  ( inferT,
+    eqT,
+    ST (..),
+    T,
+    Void,
+    Unit,
+    type B,
+    type (-),
+    type (-<),
+    type (+),
+    type (*),
+    type U64,
+  )
+where
 
 import Data.Maybe
 import Data.Typeable ((:~:) (..))
 import Type.Reflection
 
 type (-<) = 'Coexp
+
+type (-) = 'Coexp
+
+infixr 9 -
+
+infixr 9 -<
 
 type (+) = 'Sum
 
@@ -23,13 +43,11 @@ infixr 9 *
 
 type B = 'B
 
-type U64 = 'U64
-
 type Void = 'Void
 
 type Unit = 'Unit
 
-infixr 9 -<
+type U64 = 'U64
 
 data T
   = B
@@ -42,12 +60,12 @@ data T
 
 data ST a where
   SB :: ST B
-  SU64 :: ST U64
   SVoid :: ST Void
   SUnit :: ST Unit
   (:+:) :: ST a -> ST b -> ST (a + b)
   (:*:) :: ST a -> ST b -> ST (a * b)
   (:-<) :: ST a -> ST b -> ST (a -< b)
+  SU64 :: ST U64
 
 eqT :: ST a -> ST b -> Maybe (a :~: b)
 eqT l r = case (l, r) of

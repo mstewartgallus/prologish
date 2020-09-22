@@ -18,6 +18,11 @@ import Type
 import Prelude hiding (curry, id, uncurry, (.))
 
 class (HasSum k, HasProduct k, HasCoexp k) => Mal k where
+  true :: k Unit B
+  false :: k Unit B
+
+  amb :: k x Void -> k x Void -> k x Void
+
   u64 :: Word64 -> k Unit U64
 
   global :: Global a b -> k a b

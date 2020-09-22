@@ -20,18 +20,24 @@ view (V v) = v
 
 instance Category View where
   id = V "id"
-  V f . V g = V (f ++ " ∘ " ++ g)
+
+  -- not sure which direction is best ⊊ or ⊋
+  V f . V g = V (f ++ " ⊊ " ++ g)
 
 instance Bound View where
-  st n t f = V ("{ " ++ v ++ ": " ++ show t ++ " |\n" ++ body ++ "}")
+  st n t f = V ("{" ++ v ++ ": " ++ show t ++ " | ⊥ ← " ++ body ++ "}")
     where
-      v = "s" ++ show n
+      v = "x" ++ show n
       V body = f (V v)
-  try (V f) (V x) = V $ "(" ++ x ++ " ∈ " ++ f ++ ")"
 
-  V f ||| V x = V $ "(" ++ f ++ " ∪ " ++ x ++ ")"
+  V f `try` V x = V $ "(" ++ x ++ " \\ " ++ f ++ ")"
 
-  u64 n = V (show n)
+  V x `amb` V y = V $ "(" ++ x ++ " amb " ++ y ++ ")"
+
+  true = V "true"
+  false = V "false"
+
+  u64 n = V $ "{" ++ show n ++ "}"
   global g = V (show g)
 
 instance HasProduct View where
@@ -42,17 +48,22 @@ instance HasProduct View where
   second = V "π₂"
 
 instance HasSum View where
-  absurd = V "absurd"
+  absurd = V "∅"
 
   V f ||| V x = V ("[" ++ f ++ " ; " ++ x ++ "]")
   left = V "i₁"
   right = V "i₂"
 
 instance HasCoexp View where
-  st (V f) = V ("{|" ++ f ++ "}")
-  try (V f) = V ("(∋ " ++ f ++ ")")
+  st (V f) = V ("(← " ++ f ++ ")")
+  try (V f) = V ("(\\ " ++ f ++ ")")
 
 instance Mal View where
+  V x `amb` V y = V $ "(" ++ x ++ " amb " ++ y ++ ")"
+
   global g = V (show g)
 
-  u64 x = V (show x)
+  true = V "true"
+  false = V "false"
+
+  u64 x = V $ "{" ++ show x ++ "}"
